@@ -583,34 +583,37 @@ async def seed_database():
         await db.flush()
         
         # ==================== Ship Repair Module Demo Data ====================
-        from app.models.ship_repair import (
-            RepairPlan, RepairTask, DailyReport, NCR, SparePartRisk
-        )
-        
-        # Create ship repair order
-        ship_repair_order = Order(
-            order_no="ORD20260601001",
-            customer_id=customers[0].id,
-            vessel_id=vessels[0].id,
-            project_type=ProjectType.SHIP_REPAIR,
-            status=OrderStatus.IN_PROGRESS,
-            currency=Currency.CNY,
-            total_amount=Decimal("2800000"),
-            delivery_date=date.today() + timedelta(days=25),
-            pm_id=pm_user.id,
-            notes="远洋号坞修项目 - 主机大修、船体除锈涂装"
-        )
-        db.add(ship_repair_order)
-        await db.flush()
-        
-        # Repair Plan with plan_text for AI disassembly
-        repair_plan = RepairPlan(
-            order_id=ship_repair_order.id,
-            source="SHIPOWNER",
-            version="v1.0",
-            uploaded_by=pm_user.id,
-            plan_name="远洋号坞修计划 2026年6月",
-            plan_text="""船舶维修需求清单:
+        try:
+            from app.models.ship_repair import (
+                RepairPlan, RepairTask, DailyReport, NCR, SparePartRisk
+            )
+        except ImportError as exc:
+            print(f"Ship repair demo seed skipped: {exc}")
+        else:
+            # Create ship repair order
+            ship_repair_order = Order(
+                order_no="ORD20260601001",
+                customer_id=customers[0].id,
+                vessel_id=vessels[0].id,
+                project_type=ProjectType.SHIP_REPAIR,
+                status=OrderStatus.IN_PROGRESS,
+                currency=Currency.CNY,
+                total_amount=Decimal("2800000"),
+                delivery_date=date.today() + timedelta(days=25),
+                pm_id=pm_user.id,
+                notes="远洋号坞修项目 - 主机大修、船体除锈涂装"
+            )
+            db.add(ship_repair_order)
+            await db.flush()
+
+            # Repair Plan with plan_text for AI disassembly
+            repair_plan = RepairPlan(
+                order_id=ship_repair_order.id,
+                source="SHIPOWNER",
+                version="v1.0",
+                uploaded_by=pm_user.id,
+                plan_name="远洋号坞修计划 2026年6月",
+                plan_text="""船舶维修需求清单:
 1. 主机大修：拆检主机缸套、活塞、轴承，更换磨损件，预计需要7天
 2. 船体除锈涂装：水线以下区域Sa2.5级喷砂除锈，涂刷环氧底漆和防污漆，预计需要5天
 3. 舵机维护保养：检查液压系统，更换密封件，测试舵角，预计需要2天
@@ -621,119 +624,119 @@ async def seed_database():
 8. 甲板设备保养：绞缆机、克令吊等甲板机械检查保养，预计需要2天
 
 总预计工期：25天""",
-            plan_duration_days=25,
-            start_date=date.today() + timedelta(days=3),
-            end_date=date.today() + timedelta(days=28),
-            notes="船东要求6月15日前完工",
-            ai_disassembled=False,
-            human_confirmed=False
-        )
-        db.add(repair_plan)
-        await db.flush()
-        
-        # Another repair plan that's already confirmed (to show different states)
-        repair_plan_confirmed = RepairPlan(
-            order_id=ship_repair_order.id,
-            source="INTERNAL",
-            version="v0.9",
-            uploaded_by=pm_user.id,
-            plan_name="初步修船计划（已确认）",
-            plan_text="简要修船计划：主机检修、船体涂装",
-            plan_duration_days=20,
-            start_date=date.today(),
-            end_date=date.today() + timedelta(days=20),
-            ai_disassembled=True,
-            human_confirmed=True,
-            ai_task_output={"summary": "已拆解为8个主要任务", "tasks": []}
-        )
-        db.add(repair_plan_confirmed)
-        await db.flush()
-        
-        # Daily Report
-        daily_report = DailyReport(
-            order_id=ship_repair_order.id,
-            report_date=date.today(),
-            reporter_id=pm_user.id,
-            site_status="HAS_RISK",
-            completed_tasks="完成主机缸套拆检，发现2号缸磨损较严重；完成船体水线以下30%除锈作业",
-            unfinished_tasks="主机活塞检查因工具未到位推迟；舵机液压系统发现漏油需要处理",
-            unfinished_reason="SPARE_PART_MISSING",
-            affects_schedule=True,
-            estimated_delay_days=2,
-            affects_quality=False,
-            affects_safety=False,
-            requires_gm_decision=True,
-            gm_decision_items="是否同时更换1号缸和3号缸的缸套（船东未明确要求但建议更换）",
-            one_line_summary="进度正常但存在备件短缺和设备漏油问题",
-            notes="明天需要协调备件采购和液压维修工"
-        )
-        db.add(daily_report)
-        await db.flush()
-        
-        # NCR 1 - Active, no root cause yet
-        ncr1 = NCR(
-            ncr_number=f"NCR-{date.today().strftime('%Y%m%d')}-001",
-            order_id=ship_repair_order.id,
-            issue_description="舵机液压系统发现漏油，漏油点位于液压缸与管路连接处，现场已用临时容器收集漏油。检查发现密封圈老化严重，需要立即更换。漏油量约500ml/小时，如不及时处理可能导致液压系统失效，影响舵机正常工作。",
-            discovered_by=pm_user.id,
-            discovered_date=date.today(),
-            responsible_party="SHIPYARD",
-            status="PENDING"
-        )
-        db.add(ncr1)
-        await db.flush()
-        
-        # NCR 2 - Has root cause, pending rectification
-        ncr2 = NCR(
-            ncr_number=f"NCR-{date.today().strftime('%Y%m%d')}-002",
-            order_id=ship_repair_order.id,
-            issue_description="主机2号缸缸套内壁发现异常磨损，磨损深度超过规范允许值0.5mm，磨损位置集中在活塞上止点附近，呈椭圆形磨损痕迹。",
-            discovered_by=pm_user.id,
-            discovered_date=date.today() - timedelta(days=1),
-            responsible_party="INTERNAL",
-            root_cause_analysis="初步分析认为是长期使用劣质润滑油导致润滑不足，加上冷却水温度控制不当造成局部高温，加速了缸套磨损。此外活塞环可能也存在磨损或卡滞现象。",
-            status="IN_PROGRESS"
-        )
-        db.add(ncr2)
-        await db.flush()
-        
-        # NCR 3 - Complete with rectification
-        ncr3 = NCR(
-            ncr_number=f"NCR-{date.today().strftime('%Y%m%d')}-003",
-            order_id=ship_repair_order.id,
-            issue_description="船体除锈作业中发现左舷水线下方约2平方米区域钢板减薄严重，测厚仪显示厚度仅为原设计厚度的60%，存在结构强度隐患。",
-            discovered_by=pm_user.id,
-            discovered_date=date.today() - timedelta(days=3),
-            responsible_party="SHIPYARD",
-            root_cause_analysis="该区域长期受海水腐蚀，加上该部位为污水舱外板，内部污水酸性较强，造成内外双重腐蚀。日常检查中未能及时发现并采取防护措施。",
-            rectification_measures="已联系船厂焊工，计划采用局部换板方式处理。切除减薄板材约2.5平方米，更换为8mm新钢板，按船级社规范要求进行焊接和探伤检验。",
-            planned_completion_date=date.today() + timedelta(days=5),
-            status="PENDING_REVIEW"
-        )
-        db.add(ncr3)
-        await db.flush()
-        
-        # Spare Part Risk
-        spare_risk = SparePartRisk(
-            risk_number=f"RISK-{date.today().strftime('%Y%m%d')}-001",
-            order_id=ship_repair_order.id,
-            spare_part_name="主机缸套",
-            model_specification="MAN B&W 6S50MC-C 型号 Φ500x850mm",
-            quantity=1,
-            unit="件",
-            belonging_equipment_system="主机系统",
-            installation_location="2号缸",
-            affects_schedule=True,
-            estimated_delay_days=7,
-            urgency="HIGH",
-            demand_reason="NCR-20260609-002中发现2号缸缸套磨损超标，必须更换。该备件交货期较长，需立即启动采购。",
-            supervisor_notes="已联系3家供应商询价，预计交货期最快7天（空运）。建议同时订购1号和3号缸备用缸套。",
-            expected_arrival_date=date.today() + timedelta(days=7),
-            submitted_by=pm_user.id,
-            status="DRAFT"
-        )
-        db.add(spare_risk)
-        await db.flush()
+                plan_duration_days=25,
+                start_date=date.today() + timedelta(days=3),
+                end_date=date.today() + timedelta(days=28),
+                notes="船东要求6月15日前完工",
+                ai_disassembled=False,
+                human_confirmed=False
+            )
+            db.add(repair_plan)
+            await db.flush()
+
+            # Another repair plan that's already confirmed (to show different states)
+            repair_plan_confirmed = RepairPlan(
+                order_id=ship_repair_order.id,
+                source="INTERNAL",
+                version="v0.9",
+                uploaded_by=pm_user.id,
+                plan_name="初步修船计划（已确认）",
+                plan_text="简要修船计划：主机检修、船体涂装",
+                plan_duration_days=20,
+                start_date=date.today(),
+                end_date=date.today() + timedelta(days=20),
+                ai_disassembled=True,
+                human_confirmed=True,
+                ai_task_output={"summary": "已拆解为8个主要任务", "tasks": []}
+            )
+            db.add(repair_plan_confirmed)
+            await db.flush()
+
+            # Daily Report
+            daily_report = DailyReport(
+                order_id=ship_repair_order.id,
+                report_date=date.today(),
+                reporter_id=pm_user.id,
+                site_status="HAS_RISK",
+                completed_tasks="完成主机缸套拆检，发现2号缸磨损较严重；完成船体水线以下30%除锈作业",
+                unfinished_tasks="主机活塞检查因工具未到位推迟；舵机液压系统发现漏油需要处理",
+                unfinished_reason="SPARE_PART_MISSING",
+                affects_schedule=True,
+                estimated_delay_days=2,
+                affects_quality=False,
+                affects_safety=False,
+                requires_gm_decision=True,
+                gm_decision_items="是否同时更换1号缸和3号缸的缸套（船东未明确要求但建议更换）",
+                one_line_summary="进度正常但存在备件短缺和设备漏油问题",
+                notes="明天需要协调备件采购和液压维修工"
+            )
+            db.add(daily_report)
+            await db.flush()
+
+            # NCR 1 - Active, no root cause yet
+            ncr1 = NCR(
+                ncr_number=f"NCR-{date.today().strftime('%Y%m%d')}-001",
+                order_id=ship_repair_order.id,
+                issue_description="舵机液压系统发现漏油，漏油点位于液压缸与管路连接处，现场已用临时容器收集漏油。检查发现密封圈老化严重，需要立即更换。漏油量约500ml/小时，如不及时处理可能导致液压系统失效，影响舵机正常工作。",
+                discovered_by=pm_user.id,
+                discovered_date=date.today(),
+                responsible_party="SHIPYARD",
+                status="PENDING"
+            )
+            db.add(ncr1)
+            await db.flush()
+
+            # NCR 2 - Has root cause, pending rectification
+            ncr2 = NCR(
+                ncr_number=f"NCR-{date.today().strftime('%Y%m%d')}-002",
+                order_id=ship_repair_order.id,
+                issue_description="主机2号缸缸套内壁发现异常磨损，磨损深度超过规范允许值0.5mm，磨损位置集中在活塞上止点附近，呈椭圆形磨损痕迹。",
+                discovered_by=pm_user.id,
+                discovered_date=date.today() - timedelta(days=1),
+                responsible_party="INTERNAL",
+                root_cause_analysis="初步分析认为是长期使用劣质润滑油导致润滑不足，加上冷却水温度控制不当造成局部高温，加速了缸套磨损。此外活塞环可能也存在磨损或卡滞现象。",
+                status="IN_PROGRESS"
+            )
+            db.add(ncr2)
+            await db.flush()
+
+            # NCR 3 - Complete with rectification
+            ncr3 = NCR(
+                ncr_number=f"NCR-{date.today().strftime('%Y%m%d')}-003",
+                order_id=ship_repair_order.id,
+                issue_description="船体除锈作业中发现左舷水线下方约2平方米区域钢板减薄严重，测厚仪显示厚度仅为原设计厚度的60%，存在结构强度隐患。",
+                discovered_by=pm_user.id,
+                discovered_date=date.today() - timedelta(days=3),
+                responsible_party="SHIPYARD",
+                root_cause_analysis="该区域长期受海水腐蚀，加上该部位为污水舱外板，内部污水酸性较强，造成内外双重腐蚀。日常检查中未能及时发现并采取防护措施。",
+                rectification_measures="已联系船厂焊工，计划采用局部换板方式处理。切除减薄板材约2.5平方米，更换为8mm新钢板，按船级社规范要求进行焊接和探伤检验。",
+                planned_completion_date=date.today() + timedelta(days=5),
+                status="PENDING_REVIEW"
+            )
+            db.add(ncr3)
+            await db.flush()
+
+            # Spare Part Risk
+            spare_risk = SparePartRisk(
+                risk_number=f"RISK-{date.today().strftime('%Y%m%d')}-001",
+                order_id=ship_repair_order.id,
+                spare_part_name="主机缸套",
+                model_specification="MAN B&W 6S50MC-C 型号 Φ500x850mm",
+                quantity=1,
+                unit="件",
+                belonging_equipment_system="主机系统",
+                installation_location="2号缸",
+                affects_schedule=True,
+                estimated_delay_days=7,
+                urgency="HIGH",
+                demand_reason="NCR-20260609-002中发现2号缸缸套磨损超标，必须更换。该备件交货期较长，需立即启动采购。",
+                supervisor_notes="已联系3家供应商询价，预计交货期最快7天（空运）。建议同时订购1号和3号缸备用缸套。",
+                expected_arrival_date=date.today() + timedelta(days=7),
+                submitted_by=pm_user.id,
+                status="DRAFT"
+            )
+            db.add(spare_risk)
+            await db.flush()
         
         await db.commit()
         print("✅ Database seeded successfully!")
