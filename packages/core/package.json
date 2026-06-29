@@ -1,0 +1,50 @@
+{
+  "name": "@lg/core",
+  "version": "1.0.0",
+  "description": "LG Management - Shared core domain models, enums, and utilities",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./domain": {
+      "types": "./dist/domain/index.d.ts",
+      "import": "./dist/domain/index.mjs",
+      "require": "./dist/domain/index.js"
+    },
+    "./rbac": {
+      "types": "./dist/rbac/index.d.ts",
+      "import": "./dist/rbac/index.mjs",
+      "require": "./dist/rbac/index.js"
+    },
+    "./money": {
+      "types": "./dist/money/index.d.ts",
+      "import": "./dist/money/index.mjs",
+      "require": "./dist/money/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.mjs",
+      "require": "./dist/utils/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/domain/index.ts src/rbac/index.ts src/money/index.ts src/utils/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts src/domain/index.ts src/rbac/index.ts src/money/index.ts src/utils/index.ts --format cjs,esm --dts --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+.eggs/
+*.egg-info/
+.venv/
+venv/
+ENV/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+.pytest_cache/
+htmlcov/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# uni-app
+unpackage/
+
+# Docker
+.docker/
+
+# MinIO data (local dev)
+minio-data/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# IDE specific
+*.sublime-*
+

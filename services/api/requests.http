@@ -1,0 +1,274 @@
+### LG Management API Test
+
+@baseUrl = http://localhost:8000/api
+@token = 
+
+### ========== Auth ==========
+
+### 登录 - Owner
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "owner",
+  "password": "123456"
+}
+
+### 登录 - PM
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "pm",
+  "password": "123456"
+}
+
+### 获取当前用户
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### ========== Customers ==========
+
+### 获取客户列表
+GET {{baseUrl}}/customers
+Authorization: Bearer {{token}}
+
+### 创建客户
+POST {{baseUrl}}/customers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "测试船舶公司",
+  "code": "TEST001",
+  "contact_person": "张三",
+  "contact_phone": "13800138000"
+}
+
+### ========== Orders ==========
+
+### 获取订单列表
+GET {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+
+### 获取订单列表（筛选）
+GET {{baseUrl}}/orders?status=IN_PROGRESS&page=1&size=10
+Authorization: Bearer {{token}}
+
+### 创建订单
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "customer_id": 1,
+  "vessel_id": 1,
+  "project_type": "SPARE_PARTS",
+  "currency": "CNY",
+  "notes": "测试订单"
+}
+
+### 获取订单详情
+GET {{baseUrl}}/orders/1
+Authorization: Bearer {{token}}
+
+### 更新订单状态
+PUT {{baseUrl}}/orders/1/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "IN_PROGRESS"
+}
+
+### ========== Quotes ==========
+
+### 获取报价列表
+GET {{baseUrl}}/quotes
+Authorization: Bearer {{token}}
+
+### 获取订单的报价
+GET {{baseUrl}}/quotes?order_id=1
+Authorization: Bearer {{token}}
+
+### 创建报价
+POST {{baseUrl}}/quotes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "order_id": 1,
+  "currency": "CNY",
+  "line_items": [
+    {
+      "product_name": "船用发动机缸套",
+      "specification": "MAN型号",
+      "unit": "件",
+      "quantity": 2,
+      "unit_price": 50000
+    }
+  ]
+}
+
+### ========== Contracts ==========
+
+### 获取合同列表
+GET {{baseUrl}}/contracts
+Authorization: Bearer {{token}}
+
+### 创建合同
+POST {{baseUrl}}/contracts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "order_id": 1,
+  "customer_id": 1,
+  "title": "测试合同",
+  "currency": "CNY",
+  "total_amount": 125000,
+  "payment_plans": [
+    {
+      "phase": "预付款",
+      "percentage": 30,
+      "planned_amount": 37500,
+      "planned_date": "2026-01-15"
+    }
+  ]
+}
+
+### ========== Procurements ==========
+
+### 获取采购单列表
+GET {{baseUrl}}/procurements
+Authorization: Bearer {{token}}
+
+### 创建采购单
+POST {{baseUrl}}/procurements
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "supplier_id": 1,
+  "order_id": 1,
+  "currency": "CNY",
+  "line_items": [
+    {
+      "product_id": 1,
+      "product_name": "船用发动机缸套",
+      "specification": "MAN型号",
+      "unit": "件",
+      "quantity": 2,
+      "unit_price": 45000
+    }
+  ]
+}
+
+### 提交采购单审批
+POST {{baseUrl}}/procurements/1/submit
+Authorization: Bearer {{token}}
+
+### 审批采购单
+POST {{baseUrl}}/procurements/1/approve
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "approved": true
+}
+
+### ========== Products & Suppliers ==========
+
+### 获取商品列表
+GET {{baseUrl}}/products
+Authorization: Bearer {{token}}
+
+### 获取供应商列表
+GET {{baseUrl}}/suppliers
+Authorization: Bearer {{token}}
+
+### ========== Inventory ==========
+
+### 获取库存汇总
+GET {{baseUrl}}/inventory/summary
+Authorization: Bearer {{token}}
+
+### 获取库存批次
+GET {{baseUrl}}/inventory/batches
+Authorization: Bearer {{token}}
+
+### ========== Tracking ==========
+
+### 获取节点模板
+GET {{baseUrl}}/tracking/templates?project_type=SPARE_PARTS
+Authorization: Bearer {{token}}
+
+### 从模板初始化跟单节点
+POST {{baseUrl}}/tracking/init-from-template
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "order_id": 1,
+  "project_type": "SPARE_PARTS"
+}
+
+### 获取订单跟单节点
+GET {{baseUrl}}/tracking/nodes?order_id=1
+Authorization: Bearer {{token}}
+
+### 更新节点状态
+PUT {{baseUrl}}/tracking/nodes/1/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "COMPLETED",
+  "actual_date": "2026-01-08"
+}
+
+### ========== Settlement ==========
+
+### 获取结项列表
+GET {{baseUrl}}/settlements
+Authorization: Bearer {{token}}
+
+### 创建结项申请
+POST {{baseUrl}}/settlements
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "order_id": 1,
+  "contract_id": 1
+}
+
+### 获取订单成本汇总
+GET {{baseUrl}}/settlements/order-summary/1
+Authorization: Bearer {{token}}
+
+### 获取费用科目
+GET {{baseUrl}}/settlements/categories
+Authorization: Bearer {{token}}
+
+### 获取汇率
+GET {{baseUrl}}/settlements/exchange-rates
+Authorization: Bearer {{token}}
+
+### ========== Files ==========
+
+### 获取文件列表
+GET {{baseUrl}}/files?object_type=ORDER&object_id=1
+Authorization: Bearer {{token}}
+
+### 获取预签名上传URL
+POST {{baseUrl}}/files/presigned-url
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "filename": "test.jpg",
+  "content_type": "image/jpeg",
+  "object_type": "ORDER",
+  "object_id": 1
+}

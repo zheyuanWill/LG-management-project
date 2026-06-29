@@ -1,0 +1,43 @@
+{
+  "name": "@lg/api-client",
+  "version": "1.0.0",
+  "description": "LG Management - API Client with typed HTTP requests",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./uni-adapter": {
+      "types": "./dist/uni-adapter.d.ts",
+      "import": "./dist/uni-adapter.mjs",
+      "require": "./dist/uni-adapter.js"
+    },
+    "./expo-adapter": {
+      "types": "./dist/expo-adapter.d.ts",
+      "import": "./dist/expo-adapter.mjs",
+      "require": "./dist/expo-adapter.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/uni-adapter.ts src/expo-adapter.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts src/uni-adapter.ts src/expo-adapter.ts --format cjs,esm --dts --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lg/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

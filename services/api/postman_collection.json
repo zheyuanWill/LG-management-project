@@ -1,0 +1,2417 @@
+{
+  "info": {
+    "_postman_id": "lg-management-api",
+    "name": "LG Management API",
+    "description": "LG Management System - 完整API端点测试集合",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Ready Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ready",
+              "host": ["{{base_url}}"],
+              "path": ["ready"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "admin123",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"your_refresh_token_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"password\": \"password123\",\n  \"name\": \"New User\",\n  \"phone\": \"13800138000\",\n  \"role\": \"STAFF\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/:user_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":user_id"],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"13900139000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/:user_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":user_id"],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change User Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"MANAGER\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/:user_id/role",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":user_id", "role"],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reset User Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/:user_id/password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":user_id", "password"],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/:user_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":user_id"],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/:user_id/activate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":user_id", "activate"],
+              "variable": [
+                {
+                  "key": "user_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "List Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Customer\",\n  \"contact_person\": \"Contact Name\",\n  \"phone\": \"13800138000\",\n  \"email\": \"customer@example.com\",\n  \"address\": \"Customer Address\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers"]
+            }
+          }
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/:customer_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", ":customer_id"],
+              "variable": [
+                {
+                  "key": "customer_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Customer Name\",\n  \"contact_person\": \"Updated Contact\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers/:customer_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", ":customer_id"],
+              "variable": [
+                {
+                  "key": "customer_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/:customer_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", ":customer_id"],
+              "variable": [
+                {
+                  "key": "customer_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Customer Vessels",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/:customer_id/vessels",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", ":customer_id", "vessels"],
+              "variable": [
+                {
+                  "key": "customer_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Vessel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": 1,\n  \"name\": \"Vessel Name\",\n  \"imo\": \"IMO1234567\",\n  \"flag\": \"CN\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers/vessels",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", "vessels"]
+            }
+          }
+        },
+        {
+          "name": "Update Vessel",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Vessel Name\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers/vessels/:vessel_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", "vessels", ":vessel_id"],
+              "variable": [
+                {
+                  "key": "vessel_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Vessel",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/vessels/:vessel_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", "vessels", ":vessel_id"],
+              "variable": [
+                {
+                  "key": "vessel_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "List Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": 1,\n  \"vessel_id\": 1,\n  \"delivery_port\": \"Shanghai\",\n  \"delivery_date\": \"2026-02-01\",\n  \"currency\": \"USD\",\n  \"remark\": \"Test order\",\n  \"line_items\": [\n    {\n      \"product_id\": 1,\n      \"quantity\": 100,\n      \"unit_price\": 10.00\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/:order_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", ":order_id"],
+              "variable": [
+                {
+                  "key": "order_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"delivery_port\": \"Ningbo\",\n  \"remark\": \"Updated remark\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/:order_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", ":order_id"],
+              "variable": [
+                {
+                  "key": "order_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/:order_id/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", ":order_id", "status"],
+              "variable": [
+                {
+                  "key": "order_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Order Line Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 2,\n  \"quantity\": 50,\n  \"unit_price\": 15.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/:order_id/line-items",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", ":order_id", "line-items"],
+              "variable": [
+                {
+                  "key": "order_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Order Line Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/:order_id/line-items/:item_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", ":order_id", "line-items", ":item_id"],
+              "variable": [
+                {
+                  "key": "order_id",
+                  "value": "1"
+                },
+                {
+                  "key": "item_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quotes",
+      "item": [
+        {
+          "name": "List Quotes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/quotes?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "quotes"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Quote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": 1,\n  \"vessel_id\": 1,\n  \"delivery_port\": \"Shanghai\",\n  \"valid_until\": \"2026-02-28\",\n  \"currency\": \"USD\",\n  \"line_items\": [\n    {\n      \"product_id\": 1,\n      \"quantity\": 100,\n      \"unit_price\": 10.00\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/quotes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "quotes"]
+            }
+          }
+        },
+        {
+          "name": "Get Quote by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/quotes/:quote_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "quotes", ":quote_id"],
+              "variable": [
+                {
+                  "key": "quote_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Quote Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SENT\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/quotes/:quote_id/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "quotes", ":quote_id", "status"],
+              "variable": [
+                {
+                  "key": "quote_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Duplicate Quote",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/quotes/:quote_id/duplicate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "quotes", ":quote_id", "duplicate"],
+              "variable": [
+                {
+                  "key": "quote_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Product\",\n  \"sku\": \"SKU-001\",\n  \"category\": \"Category A\",\n  \"unit\": \"PCS\",\n  \"description\": \"Product description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"]
+            }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/:product_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", ":product_id"],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Product Name\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products/:product_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", ":product_id"],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/:product_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", ":product_id"],
+              "variable": [
+                {
+                  "key": "product_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Suppliers",
+      "item": [
+        {
+          "name": "List Suppliers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/suppliers?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "suppliers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Supplier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Supplier\",\n  \"contact_person\": \"Contact Name\",\n  \"phone\": \"13800138000\",\n  \"email\": \"supplier@example.com\",\n  \"address\": \"Supplier Address\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/suppliers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "suppliers"]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/suppliers/:supplier_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "suppliers", ":supplier_id"],
+              "variable": [
+                {
+                  "key": "supplier_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Supplier",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Supplier Name\",\n  \"contact_person\": \"Updated Contact\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/suppliers/:supplier_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "suppliers", ":supplier_id"],
+              "variable": [
+                {
+                  "key": "supplier_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Supplier",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/suppliers/:supplier_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "suppliers", ":supplier_id"],
+              "variable": [
+                {
+                  "key": "supplier_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Supplier Quote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplier_id\": 1,\n  \"product_id\": 1,\n  \"price\": 8.00,\n  \"currency\": \"USD\",\n  \"min_quantity\": 100,\n  \"lead_time_days\": 7\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/suppliers/quotes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "suppliers", "quotes"]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier Quotes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/suppliers/:supplier_id/quotes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "suppliers", ":supplier_id", "quotes"],
+              "variable": [
+                {
+                  "key": "supplier_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Supplier Quote",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 7.50,\n  \"min_quantity\": 200\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/suppliers/quotes/:quote_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "suppliers", "quotes", ":quote_id"],
+              "variable": [
+                {
+                  "key": "quote_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Supplier Quote",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/suppliers/quotes/:quote_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "suppliers", "quotes", ":quote_id"],
+              "variable": [
+                {
+                  "key": "quote_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contracts",
+      "item": [
+        {
+          "name": "List Contracts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/contracts?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contracts"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Contract",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": 1,\n  \"contract_no\": \"CON-2026-001\",\n  \"total_amount\": 10000.00,\n  \"currency\": \"USD\",\n  \"signed_date\": \"2026-01-15\",\n  \"payment_plans\": [\n    {\n      \"stage\": \"DEPOSIT\",\n      \"percentage\": 30,\n      \"amount\": 3000.00,\n      \"due_date\": \"2026-01-20\"\n    },\n    {\n      \"stage\": \"FINAL\",\n      \"percentage\": 70,\n      \"amount\": 7000.00,\n      \"due_date\": \"2026-02-15\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/contracts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contracts"]
+            }
+          }
+        },
+        {
+          "name": "Get Contract by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/contracts/:contract_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contracts", ":contract_id"],
+              "variable": [
+                {
+                  "key": "contract_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Contract",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contract_no\": \"CON-2026-001-REV\",\n  \"remark\": \"Updated contract\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/contracts/:contract_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contracts", ":contract_id"],
+              "variable": [
+                {
+                  "key": "contract_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Contract Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/contracts/:contract_id/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contracts", ":contract_id", "status"],
+              "variable": [
+                {
+                  "key": "contract_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Payment Plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"due_date\": \"2026-01-25\",\n  \"amount\": 3500.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/contracts/:contract_id/payment-plans/:plan_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contracts", ":contract_id", "payment-plans", ":plan_id"],
+              "variable": [
+                {
+                  "key": "contract_id",
+                  "value": "1"
+                },
+                {
+                  "key": "plan_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_plan_id\": 1,\n  \"amount\": 3000.00,\n  \"payment_date\": \"2026-01-18\",\n  \"payment_method\": \"WIRE_TRANSFER\",\n  \"reference_no\": \"PAY-2026-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/contracts/:contract_id/payments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contracts", ":contract_id", "payments"],
+              "variable": [
+                {
+                  "key": "contract_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Contract Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/contracts/:contract_id/payments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contracts", ":contract_id", "payments"],
+              "variable": [
+                {
+                  "key": "contract_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Procurements",
+      "item": [
+        {
+          "name": "List Procurements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/procurements?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "procurements"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Procurement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": 1,\n  \"supplier_id\": 1,\n  \"items\": [\n    {\n      \"product_id\": 1,\n      \"quantity\": 100,\n      \"unit_price\": 8.00\n    }\n  ],\n  \"currency\": \"USD\",\n  \"expected_delivery_date\": \"2026-01-25\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/procurements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "procurements"]
+            }
+          }
+        },
+        {
+          "name": "Get Procurement by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/procurements/:procurement_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "procurements", ":procurement_id"],
+              "variable": [
+                {
+                  "key": "procurement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Procurement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expected_delivery_date\": \"2026-01-28\",\n  \"remark\": \"Updated procurement\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/procurements/:procurement_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "procurements", ":procurement_id"],
+              "variable": [
+                {
+                  "key": "procurement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Procurement",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/procurements/:procurement_id/submit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "procurements", ":procurement_id", "submit"],
+              "variable": [
+                {
+                  "key": "procurement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Procurement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true,\n  \"comment\": \"Approved\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/procurements/:procurement_id/approve",
+              "host": ["{{base_url}}"],
+              "path": ["api", "procurements", ":procurement_id", "approve"],
+              "variable": [
+                {
+                  "key": "procurement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark as Ordered",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/procurements/:procurement_id/order",
+              "host": ["{{base_url}}"],
+              "path": ["api", "procurements", ":procurement_id", "order"],
+              "variable": [
+                {
+                  "key": "procurement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Receive Goods",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"received_items\": [\n    {\n      \"item_id\": 1,\n      \"received_quantity\": 100\n    }\n  ],\n  \"received_date\": \"2026-01-25\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/procurements/:procurement_id/receive",
+              "host": ["{{base_url}}"],
+              "path": ["api", "procurements", ":procurement_id", "receive"],
+              "variable": [
+                {
+                  "key": "procurement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record Disbursement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 800.00,\n  \"payment_date\": \"2026-01-26\",\n  \"payment_method\": \"WIRE_TRANSFER\",\n  \"reference_no\": \"DIS-2026-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/procurements/:procurement_id/disbursements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "procurements", ":procurement_id", "disbursements"],
+              "variable": [
+                {
+                  "key": "procurement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Disbursements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/procurements/:procurement_id/disbursements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "procurements", ":procurement_id", "disbursements"],
+              "variable": [
+                {
+                  "key": "procurement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        {
+          "name": "List Batches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/batches?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "batches"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 1,\n  \"batch_no\": \"BATCH-2026-001\",\n  \"quantity\": 100,\n  \"unit_cost\": 8.00,\n  \"procurement_id\": 1,\n  \"warehouse\": \"Main Warehouse\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inventory/batches",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "batches"]
+            }
+          }
+        },
+        {
+          "name": "Update Batch",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"warehouse\": \"Warehouse B\",\n  \"remark\": \"Moved to new location\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inventory/batches/:batch_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "batches", ":batch_id"],
+              "variable": [
+                {
+                  "key": "batch_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Movements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/movements?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "movements"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reserve Inventory",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batch_id\": 1,\n  \"order_id\": 1,\n  \"quantity\": 50\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inventory/reserve",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "reserve"]
+            }
+          }
+        },
+        {
+          "name": "Release Reservation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/release/:reservation_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "release", ":reservation_id"],
+              "variable": [
+                {
+                  "key": "reservation_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Outbound",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservation_id\": 1,\n  \"quantity\": 50\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inventory/outbound",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "outbound"]
+            }
+          }
+        },
+        {
+          "name": "Get Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "summary"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tracking",
+      "item": [
+        {
+          "name": "List Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tracking/templates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "templates"]
+            }
+          }
+        },
+        {
+          "name": "Create Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Standard Workflow\",\n  \"nodes\": [\n    {\n      \"name\": \"Order Confirmed\",\n      \"sequence\": 1\n    },\n    {\n      \"name\": \"Production Started\",\n      \"sequence\": 2\n    },\n    {\n      \"name\": \"Quality Check\",\n      \"sequence\": 3\n    },\n    {\n      \"name\": \"Shipped\",\n      \"sequence\": 4\n    },\n    {\n      \"name\": \"Delivered\",\n      \"sequence\": 5\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tracking/templates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "templates"]
+            }
+          }
+        },
+        {
+          "name": "Update Template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Workflow\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tracking/templates/:template_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "templates", ":template_id"],
+              "variable": [
+                {
+                  "key": "template_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Nodes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tracking/nodes?order_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "nodes"],
+              "query": [
+                {
+                  "key": "order_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Node",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": 1,\n  \"name\": \"Custom Node\",\n  \"sequence\": 6,\n  \"description\": \"Custom tracking node\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tracking/nodes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "nodes"]
+            }
+          }
+        },
+        {
+          "name": "Get Node by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tracking/nodes/:node_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "nodes", ":node_id"],
+              "variable": [
+                {
+                  "key": "node_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Node",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Node Name\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tracking/nodes/:node_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "nodes", ":node_id"],
+              "variable": [
+                {
+                  "key": "node_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Node Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"completed_at\": \"2026-01-15T10:00:00Z\",\n  \"remark\": \"Node completed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tracking/nodes/:node_id/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "nodes", ":node_id", "status"],
+              "variable": [
+                {
+                  "key": "node_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Init from Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": 1,\n  \"template_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tracking/init-from-template",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "init-from-template"]
+            }
+          }
+        },
+        {
+          "name": "Delete Node",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tracking/nodes/:node_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "nodes", ":node_id"],
+              "variable": [
+                {
+                  "key": "node_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Settlements",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/settlements/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Shipping Cost\",\n  \"type\": \"EXPENSE\",\n  \"description\": \"Shipping and logistics costs\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/settlements/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Cost Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": 1,\n  \"category_id\": 1,\n  \"amount\": 500.00,\n  \"currency\": \"USD\",\n  \"description\": \"Shipping cost for order\",\n  \"occurred_date\": \"2026-01-20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/settlements/costs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements", "costs"]
+            }
+          }
+        },
+        {
+          "name": "List Cost Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/settlements/costs?order_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements", "costs"],
+              "query": [
+                {
+                  "key": "order_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Exchange Rates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/settlements/exchange-rates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements", "exchange-rates"]
+            }
+          }
+        },
+        {
+          "name": "Create Exchange Rate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from_currency\": \"USD\",\n  \"to_currency\": \"CNY\",\n  \"rate\": 7.25,\n  \"effective_date\": \"2026-01-01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/settlements/exchange-rates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements", "exchange-rates"]
+            }
+          }
+        },
+        {
+          "name": "Get Order Cost Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/settlements/order-summary/:order_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements", "order-summary", ":order_id"],
+              "variable": [
+                {
+                  "key": "order_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Settlements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/settlements?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Settlement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": 1,\n  \"total_revenue\": 10000.00,\n  \"total_cost\": 8500.00,\n  \"profit\": 1500.00,\n  \"currency\": \"USD\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/settlements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements"]
+            }
+          }
+        },
+        {
+          "name": "Get Settlement by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/settlements/:settlement_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements", ":settlement_id"],
+              "variable": [
+                {
+                  "key": "settlement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Settlement",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/settlements/:settlement_id/submit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements", ":settlement_id", "submit"],
+              "variable": [
+                {
+                  "key": "settlement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Settlement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true,\n  \"comment\": \"Approved\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/settlements/:settlement_id/approve",
+              "host": ["{{base_url}}"],
+              "path": ["api", "settlements", ":settlement_id", "approve"],
+              "variable": [
+                {
+                  "key": "settlement_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files",
+      "item": [
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "entity_type",
+                  "value": "ORDER",
+                  "type": "text"
+                },
+                {
+                  "key": "entity_id",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/files/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "files", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Get Presigned URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"large-file.pdf\",\n  \"content_type\": \"application/pdf\",\n  \"entity_type\": \"ORDER\",\n  \"entity_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/files/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["api", "files", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "Confirm Upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"file_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/files/confirm-upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "files", "confirm-upload"]
+            }
+          }
+        },
+        {
+          "name": "List Files",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/files?entity_type=ORDER&entity_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "files"],
+              "query": [
+                {
+                  "key": "entity_type",
+                  "value": "ORDER"
+                },
+                {
+                  "key": "entity_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get File by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/files/:file_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "files", ":file_id"],
+              "variable": [
+                {
+                  "key": "file_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete File",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/files/:file_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "files", ":file_id"],
+              "variable": [
+                {
+                  "key": "file_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Offline Sync",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "metadata",
+                  "value": "[{\"filename\": \"file1.jpg\", \"entity_type\": \"ORDER\", \"entity_id\": 1}]",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/files/offline-sync",
+              "host": ["{{base_url}}"],
+              "path": ["api", "files", "offline-sync"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/notifications?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/unread-count",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "unread-count"]
+            }
+          }
+        },
+        {
+          "name": "Mark as Read",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/:notification_id/read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", ":notification_id", "read"],
+              "variable": [
+                {
+                  "key": "notification_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/read-all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "read-all"]
+            }
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/:notification_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", ":notification_id"],
+              "variable": [
+                {
+                  "key": "notification_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

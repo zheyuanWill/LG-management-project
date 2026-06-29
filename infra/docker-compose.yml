@@ -1,0 +1,175 @@
+# LG Management Backend Services
+# 项目名称: lg-management-backend
+name: lg-management-backend
+
+services:
+  # ============================================
+  # 基础设施
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: lgm-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_DB: ${POSTGRES_DB:-lg_management}
+    volumes:
+      - lgm_postgres_data:/var/lib/postgresql/data
+      - ./init/postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lgm-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: lgm-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - lgm_redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lgm-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: lgm-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin123}
+    volumes:
+      - lgm_minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - lgm-network
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: lgm-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set lgm-minio http://minio:9000 minioadmin minioadmin123;
+      mc mb lgm-minio/lg-management --ignore-existing;
+      mc anonymous set download lgm-minio/lg-management;
+      echo 'MinIO bucket initialized successfully';
+      exit 0;
+      "
+    networks:
+      - lgm-network
+
+  # ============================================
+  # 后端 API
+  # ============================================
+  api:
+    build:
+      context: ../services/api
+      dockerfile: Dockerfile
+    container_name: lgm-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres123@postgres:5432/lg_management
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MINIO_BUCKET: lg-management
+      MINIO_USE_SSL: "false"
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-your-super-secret-key-change-in-production}
+      DEBUG: "true"
+      KINGDEE_ENABLED: ${KINGDEE_ENABLED:-false}
+      KINGDEE_CLIENT_ID: ${KINGDEE_CLIENT_ID:-}
+      KINGDEE_CLIENT_SECRET: ${KINGDEE_CLIENT_SECRET:-}
+      KINGDEE_APP_KEY: ${KINGDEE_APP_KEY:-}
+      KINGDEE_APP_SECRET: ${KINGDEE_APP_SECRET:-}
+      KINGDEE_INSTANCE_ID: ${KINGDEE_INSTANCE_ID:-}
+      KINGDEE_BASE_URL: ${KINGDEE_BASE_URL:-https://api.kingdee.com}
+      KINGDEE_DOMAIN: ${KINGDEE_DOMAIN:-}
+      KINGDEE_SID: ${KINGDEE_SID:-}
+      KINGDEE_DB_ID: ${KINGDEE_DB_ID:-}
+      # AI Agent
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      DASHSCOPE_EMBEDDING_MODEL: ${DASHSCOPE_EMBEDDING_MODEL:-text-embedding-v3}
+      # Universal AI Config for repair plan breakdown
+      AI_PROVIDER: ${AI_PROVIDER:-DEEPSEEK}
+      AI_API_KEY: ${AI_API_KEY:-sk-e363836ef0604bc38d54044d903692bb}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com/v1}
+      AI_MODEL: ${AI_MODEL:-deepseek-chat}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - lgm-network
+
+  # ============================================
+  # Celery Worker (异步任务)
+  # ============================================
+  worker:
+    build:
+      context: ../services/api
+      dockerfile: Dockerfile
+    container_name: lgm-worker
+    restart: unless-stopped
+    command: celery -A app.core.celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres123@postgres:5432/lg_management
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MINIO_BUCKET: lg-management
+      MINIO_USE_SSL: "false"
+    depends_on:
+      - api
+      - redis
+    networks:
+      - lgm-network
+    profiles:
+      - worker  # 默认不启动，需要时用 --profile worker
+
+volumes:
+  lgm_postgres_data:
+  lgm_redis_data:
+  lgm_minio_data:
+
+networks:
+  lgm-network:
+    driver: bridge

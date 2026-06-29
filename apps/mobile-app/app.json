@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "LG Management",
+    "slug": "lg-management",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "lgm",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#1677ff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lgmarine.management"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#1677ff"
+      },
+      "package": "com.lgmarine.management"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

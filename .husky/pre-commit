@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Disabled for Windows compatibility
+# To re-enable: uncomment the following lines
+# . "$(dirname -- "$0")/_/husky.sh"
+# npx lint-staged
+exit 0

@@ -1,0 +1,55 @@
+{
+  "name": "lg-management",
+  "version": "1.0.0",
+  "private": true,
+  "description": "修船项目以销定采的一体化项目管理 & 供应链系统",
+  "scripts": {
+    "dev:web": "pnpm --filter web-admin dev",
+    "dev:app": "pnpm --filter mobile-app start",
+    "build:web": "pnpm --filter web-admin build",
+    "build:app": "pnpm --filter mobile-app web",
+    "build:core": "pnpm --filter @lg/core build",
+    "build:api-client": "pnpm --filter @lg/api-client build",
+    "build:react-hooks": "pnpm --filter @lg/react-hooks build",
+    "build:packages": "pnpm build:core && pnpm build:api-client && pnpm build:react-hooks",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "prepare": "husky install",
+    "docker:up": "docker-compose -f infra/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f infra/docker-compose.yml down",
+    "docker:logs": "docker-compose -f infra/docker-compose.yml logs -f",
+    "docker:seed": "docker exec lgm-api python -m app.db.seed"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "typescript": "~5.3.3",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.12.1",
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "pnpm": {}
+
+}

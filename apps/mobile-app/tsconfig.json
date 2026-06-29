@@ -1,0 +1,16 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@lg/core": ["../../packages/core/src"],
+      "@lg/core/*": ["../../packages/core/src/*"],
+      "@lg/api-client": ["../../packages/api-client/src"],
+      "@lg/api-client/*": ["../../packages/api-client/src/*"],
+      "@lg/react-hooks": ["../../packages/react-hooks/src"],
+      "@lg/react-hooks/*": ["../../packages/react-hooks/src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "src/**/*.ts", "src/**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+}

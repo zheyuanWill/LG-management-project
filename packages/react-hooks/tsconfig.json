@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@lg/core": ["../core/src"],
+      "@lg/core/*": ["../core/src/*"],
+      "@lg/api-client": ["../api-client/src"],
+      "@lg/api-client/*": ["../api-client/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
+}

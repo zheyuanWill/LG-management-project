@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "declaration": false,
+    "declarationMap": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@lg/core": ["../../packages/core/src"],
+      "@lg/core/*": ["../../packages/core/src/*"],
+      "@lg/api-client": ["../../packages/api-client/src"],
+      "@lg/api-client/*": ["../../packages/api-client/src/*"],
+      "@lg/react-hooks": ["../../packages/react-hooks/src"],
+      "@lg/react-hooks/*": ["../../packages/react-hooks/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
+}
