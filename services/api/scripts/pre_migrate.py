@@ -3,6 +3,7 @@ Pre-migration startup script.
 
 Completely bypasses Alembic migrations to avoid PostgreSQL enum-type
 conflicts.  Strategy:
+
   1. Create all enum types idempotently (DO $$ … EXCEPTION).
   2. Create all tables via Base.metadata.create_all (checkfirst=True).
      Models all use create_type=False, so no CREATE TYPE is emitted.
