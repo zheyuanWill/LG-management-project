@@ -8,7 +8,7 @@ from typing import Optional, List, TYPE_CHECKING
 from decimal import Decimal
 from datetime import date, datetime
 
-from sqlalchemy import String, Text, ForeignKey, Numeric, Date, Enum as SQLEnum, DateTime, Boolean
+from sqlalchemy import String, Text, ForeignKey, Numeric, Date, Enum as SQLEnum, DateTime, Boolean, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -56,9 +56,12 @@ class Procurement(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
     # 修船模块新增字段
+    # Keep these as plain integer references for now because the simplified
+    # ship-repair model set used in deployment does not register the original
+    # target tables (`spare_part_risks`, `repair_tasks`) in metadata.
     source_type: Mapped[ProcurementSource] = mapped_column(SQLEnum(ProcurementSource, create_type=False), default=ProcurementSource.NORMAL)
-    spare_part_risk_id: Mapped[Optional[int]] = mapped_column(ForeignKey("spare_part_risks.id"))
-    repair_task_id: Mapped[Optional[int]] = mapped_column(ForeignKey("repair_tasks.id"))
+    spare_part_risk_id: Mapped[Optional[int]] = mapped_column(Integer)
+    repair_task_id: Mapped[Optional[int]] = mapped_column(Integer)
     affects_schedule: Mapped[bool] = mapped_column(default=False)
     risk_resolved: Mapped[bool] = mapped_column(default=False)
     risk_resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
