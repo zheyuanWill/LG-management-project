@@ -17,7 +17,13 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 
 ENUM_TYPES = {
-    "userrole": ("OWNER", "PM", "PROC", "FIN", "OPS"),
+    "userrole": (
+        "GENERAL_MANAGER",
+        "SUPERVISOR",
+        "GENERAL_AFFAIRS",
+        "FINANCE",
+        "SOFTWARE_ENGINEER",
+    ),
     "suppliertype": ("GOODS", "SERVICE"),
     "currency": ("CNY", "USD", "EUR", "JPY", "HKD"),
     "projecttype": ("TECHNICAL_SERVICE", "SUPERVISION", "SPARE_PARTS",
@@ -67,6 +73,10 @@ async def ensure_enum_types(conn) -> None:
             f"EXCEPTION WHEN duplicate_object THEN NULL; "
             f"END $$;"
         ))
+        for value in values:
+            await conn.execute(text(
+                f"ALTER TYPE {name} ADD VALUE IF NOT EXISTS '{value}'"
+            ))
     print(f"pre_migrate: {len(ENUM_TYPES)} enum types ensured.")
 
 
