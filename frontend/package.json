@@ -1,0 +1,42 @@
+{
+  "name": "lg-management-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@tanstack/react-router": "^1.105.0",
+    "@tanstack/react-query": "^5.56.0",
+    "zustand": "^4.5.5",
+    "tailwindcss": "^3.4.10",
+    "postcss": "^8.4.47",
+    "autoprefixer": "^10.4.20",
+    "lucide-react": "^0.441.0",
+    "react-hook-form": "^7.53.0",
+    "zod": "^3.23.8",
+    "@hookform/resolvers": "^3.9.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.2",
+    "class-variance-authority": "^0.7.0",
+    "axios": "^1.7.7",
+    "dayjs": "^1.11.13",
+    "echarts": "^5.5.1",
+    "echarts-for-react": "^3.0.2",
+    "socket.io-client": "^4.8.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.8",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "@types/node": "^22.7.4"
+  }
+}

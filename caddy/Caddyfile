@@ -1,0 +1,9 @@
+{
+    # 后端 API 反向代理
+    reverse_proxy /api/* backend:8000
+
+    # 前端静态文件
+    root * /usr/share/caddy
+    try_files {path} {path}/ /index.html
+    file_server
+}

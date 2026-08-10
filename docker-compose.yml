@@ -1,0 +1,194 @@
+version: '3.9'
+
+x-common: &common
+  restart: unless-stopped
+  networks:
+    - lg-net
+
+services:
+  # ── 数据库 ──────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: lg-postgres
+    environment:
+      POSTGRES_USER: ${PG_USER:-lgadmin}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-lgdev2026}
+      POSTGRES_DB: ${PG_DATABASE:-lg_erp}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      - "5432:5432"
+    <<: *common
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lgadmin"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (缓存 + 队列) ──────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: lg-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    <<: *common
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── MinIO 对象存储 ────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: lg-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-minioadmin2026}
+    volumes:
+      - miniodata:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    <<: *common
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── 后端 API ─────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lg-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${PG_USER:-lgadmin}:${PG_PASSWORD:-lgdev2026}@postgres:5432/${PG_DATABASE:-lg_erp}
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_PASSWORD:-minioadmin2026}
+      - MINIO_BUCKET=lg-erp
+      - AI_SERVICE_URL=http://ai-service:8001
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-lg-jwt-secret-2026}
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRE_MINUTES=1440
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    <<: *common
+
+  # ── AI 推理服务 ───────────────────────────────────
+  ai-service:
+    build:
+      context: ./backend/ai_service
+      dockerfile: Dockerfile
+    container_name: lg-ai-service
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://host.docker.internal:11434}
+      - LLM_MODEL=${LLM_MODEL:-qwen2.5:7b}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-small-zh}
+    ports:
+      - "8001:8001"
+    volumes:
+      - ai-cache:/cache
+    <<: *common
+
+  # ── Celery Worker ──────────────────────────────────
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lg-celery
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${PG_USER:-lgadmin}:${PG_PASSWORD:-lgdev2026}@postgres:5432/${PG_DATABASE:-lg_erp}
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_PASSWORD:-minioadmin2026}
+      - MINIO_BUCKET=lg-erp
+      - AI_SERVICE_URL=http://ai-service:8001
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    <<: *common
+
+  # ── Celery Beat (定时任务) ─────────────────────────
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lg-celery-beat
+    command: celery -A app.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${PG_USER:-lgadmin}:${PG_PASSWORD:-lgdev2026}@postgres:5432/${PG_DATABASE:-lg_erp}
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+    <<: *common
+
+  # ── 前端 (静态构建 + Caddy 服务) ─────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lg-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    <<: *common
+
+  # ── Caddy 反向代理 ──────────────────────────────────
+  caddy:
+    image: caddy:2-alpine
+    container_name: lg-caddy
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+      - frontend
+    <<: *common
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  ai-cache:
+  caddy-data:
+  caddy-config:
+
+networks:
+  lg-net:
+    driver: bridge
