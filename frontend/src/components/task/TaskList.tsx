@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select'
 import type { Task, CreateTaskRequest } from '@/types'
 import { useApiPost } from '@/hooks/useApi'
 import { toast } from '@/components/ui/Toast'
-import { TaskItem } from './TaskItem'
+import TaskItem from './TaskItem'
 
 interface TaskListProps {
   projectId: string

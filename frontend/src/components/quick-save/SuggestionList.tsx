@@ -68,7 +68,7 @@ export default function SuggestionList({
                         <Ship className="h-4 w-4 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{project.name}</p>
+                        <p className="font-medium text-sm truncate">{project.ship_name}</p>
                         <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                           <Hash className="h-3 w-3" />
                           {project.project_no}

@@ -36,6 +36,7 @@ export interface Project {
   task_count?: number
   completed_task_count?: number
   risk_count?: number
+  progress?: number
 }
 
 export type TaskStatus = 'not_started' | 'in_progress' | 'completed' | 'paused'

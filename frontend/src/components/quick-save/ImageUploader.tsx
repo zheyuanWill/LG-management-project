@@ -46,6 +46,13 @@ export default function ImageUploader({ onRecognize }: ImageUploaderProps) {
 
   return (
     <div className="space-y-4">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
       <div
         className={cn(
           'relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors',
@@ -72,21 +79,14 @@ export default function ImageUploader({ onRecognize }: ImageUploaderProps) {
             <p className="text-sm text-muted-foreground mb-4">
               点击下方按钮上传微信截图
             </p>
-            <label className="cursor-pointer">
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-              <Button variant="outline" asChild>
-                <span className="flex items-center gap-2">
-                  <Upload className="h-4 w-4" />
-                  选择图片
-                </span>
-              </Button>
-            </label>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => inputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4" />
+              选择图片
+            </Button>
           </>
         )}
       </div>

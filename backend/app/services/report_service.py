@@ -20,7 +20,7 @@ async def generate_daily_report(
     if project is None:
         raise ValueError(f"Project not found: {project_id}")
 
-    completed_items = await _build_completed_items(db, project_id, report_date)
+    completed_items = await build_completed_items(db, project_id, report_date)
 
     updates_result = await db.execute(
         select(TaskDailyUpdate)
@@ -162,7 +162,7 @@ async def generate_weekly_report(
     }
 
 
-async def _build_completed_items(
+async def build_completed_items(
     db: AsyncSession, project_id: int, target_date: date
 ) -> list[dict]:
     completed_result = await db.execute(

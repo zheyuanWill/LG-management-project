@@ -1,13 +1,13 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, File as FastAPIFile, Form, HTTPException, Query, UploadFile, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_current_user, get_db
 from app.models.file import File
 from app.models.user import User
-from app.schemas.file import FileListResponse, FileResponse, FileUploadResponse
+from app.schemas.file import FileResponse, FileUploadResponse
 from app.services.file_service import (
     delete_from_minio,
     detect_file_type,
@@ -21,7 +21,7 @@ router = APIRouter()
 
 @router.post("/upload", response_model=FileUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_file(
-    file: UploadFile = File(...),
+    file: UploadFile = FastAPIFile(...),
     project_id: int | None = Form(default=None),
     file_type: str | None = Form(default=None),
     db: AsyncSession = Depends(get_db),
@@ -55,12 +55,10 @@ async def upload_file(
     )
 
 
-@router.get("", response_model=FileListResponse)
+@router.get("", response_model=list[FileResponse])
 async def list_files(
     project_id: int | None = Query(default=None),
     file_type: str | None = Query(default=None),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
@@ -70,19 +68,11 @@ async def list_files(
     if file_type:
         query = query.where(File.file_type == file_type)
 
-    count_query = select(func.count()).select_from(query.subquery())
-    total = await db.execute(count_query)
-    total = total.scalar() or 0
-
     query = query.order_by(File.created_at.desc())
-    query = query.offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(query)
     files = result.scalars().all()
 
-    return FileListResponse(
-        items=[FileResponse.model_validate(f) for f in files],
-        total=total,
-    )
+    return [FileResponse.model_validate(f) for f in files]
 
 
 @router.get("/{file_id}/download")

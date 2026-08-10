@@ -35,7 +35,7 @@ export default function SupervisionIndex() {
       const query = searchQuery.trim().toLowerCase()
       result = result.filter(
         (p) =>
-          (p.vessel_name || p.name).toLowerCase().includes(query) ||
+          (p.ship_name).toLowerCase().includes(query) ||
           p.project_no.toLowerCase().includes(query) ||
           (p.imo && p.imo.toLowerCase().includes(query))
       )

@@ -15,7 +15,25 @@ router = APIRouter()
 
 
 @router.get(
-    "/projects/{project_id}/risks",
+    "/summary",
+    response_model=list[RiskEventResponse],
+)
+async def list_risk_summary(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(RiskEvent)
+        .where(RiskEvent.resolved == False)
+        .order_by(RiskEvent.created_at.desc())
+        .limit(20)
+    )
+    risks = result.scalars().all()
+    return [RiskEventResponse.model_validate(r) for r in risks]
+
+
+@router.get(
+    "/{project_id}",
     response_model=list[RiskEventResponse],
 )
 async def list_risk_events(
@@ -40,7 +58,7 @@ async def list_risk_events(
 
 
 @router.post(
-    "/projects/{project_id}/risks/ai-detect",
+    "/{project_id}/ai-detect",
 )
 async def ai_detect_risks(
     project_id: int,

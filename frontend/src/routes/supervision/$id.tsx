@@ -22,7 +22,7 @@ export default function SupervisionDetail() {
   const { data: tasks } = useApiGet<any[]>(`/projects/${id}/tasks`)
   const { data: dailyReports } = useApiGet<any[]>(`/projects/${id}/daily-reports`)
   const { data: weeklyReports } = useApiGet<any[]>(`/projects/${id}/weekly-reports`)
-  const { data: risks } = useApiGet<any[]>(`/projects/${id}/risks`)
+  const { data: risks } = useApiGet<any[]>(`/risks/${id}`)
 
   const handleDataChange = () => {
     setDataVersion((v) => v + 1)
@@ -63,7 +63,7 @@ export default function SupervisionDetail() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">
-                {project.vessel_name || project.name}
+                {project.ship_name}
               </h1>
               <Badge
                 variant={
@@ -107,12 +107,12 @@ export default function SupervisionDetail() {
           <CardContent className="p-5 space-y-3">
             <div>
               <p className="text-xs text-muted-foreground">船东</p>
-              <p className="text-sm font-medium">{project.customer_name || '-'}</p>
+              <p className="text-sm font-medium">{project.owner_name || '-'}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">计划完工</p>
               <p className="text-sm font-medium">
-                {project.planned_end_date ? formatDate(project.planned_end_date) : '-'}
+                {project.planned_completion_date ? formatDate(project.planned_completion_date) : '-'}
               </p>
             </div>
             <div>

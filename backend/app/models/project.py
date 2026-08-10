@@ -53,7 +53,7 @@ class Project(Base):
     logistics_nodes: Mapped[list["LogisticsNode"]] = relationship(back_populates="project", cascade="all, delete-orphan")
     hk_signature: Mapped["HkSignature | None"] = relationship(back_populates="project", uselist=False)
     invoice: Mapped["Invoice | None"] = relationship(back_populates="project", uselist=False)
-    quick_saves: Mapped[list["QuickSave"]] = relationship(back_populates="project")
+    quick_saves: Mapped[list["QuickSave"]] = relationship(back_populates="project", foreign_keys="QuickSave.suggested_project_id")
     files: Mapped[list["File"]] = relationship(back_populates="project")
 
     __table_args__ = (

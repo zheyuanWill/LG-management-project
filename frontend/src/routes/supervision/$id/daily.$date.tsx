@@ -86,7 +86,7 @@ export default function DailyReportPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">
-                {(project?.vessel_name || project?.name) || '监修项目'}
+                {(project?.ship_name) || '监修项目'}
               </h1>
               <Badge variant="secondary">日报</Badge>
             </div>

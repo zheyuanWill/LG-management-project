@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils'
 const breadcrumbMap: Record<string, string> = {
   '/dashboard': '首页',
   '/supervision': '监修',
-  '/brokerage/sale': '买卖经纪',
-  '/brokerage/repair': '修船经纪',
+  '/brokerage-sale': '买卖经纪',
+  '/brokerage-repair': '修船经纪',
   '/spare-parts': '备件供应',
   '/quick-save': '随手存',
   '/knowledge': 'RAG 知识库',

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_current_user, get_db
@@ -9,7 +9,6 @@ from app.models.customer import Customer
 from app.models.user import User
 from app.schemas.customer import (
     CustomerCreate,
-    CustomerListResponse,
     CustomerResponse,
     CustomerUpdate,
 )
@@ -17,11 +16,9 @@ from app.schemas.customer import (
 router = APIRouter()
 
 
-@router.get("", response_model=CustomerListResponse)
+@router.get("", response_model=list[CustomerResponse])
 async def list_customers(
     name: str | None = Query(default=None),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
@@ -29,19 +26,11 @@ async def list_customers(
     if name:
         query = query.where(Customer.name.contains(name))
 
-    count_query = select(func.count()).select_from(query.subquery())
-    total = await db.execute(count_query)
-    total = total.scalar() or 0
-
     query = query.order_by(Customer.created_at.desc())
-    query = query.offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(query)
     customers = result.scalars().all()
 
-    return CustomerListResponse(
-        items=[CustomerResponse.model_validate(c) for c in customers],
-        total=total,
-    )
+    return [CustomerResponse.model_validate(c) for c in customers]
 
 
 @router.post("", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)

@@ -41,7 +41,7 @@ export default function SparePartsIndex() {
       const query = searchQuery.trim().toLowerCase()
       result = result.filter(
         (p) =>
-          (p.vessel_name || p.name).toLowerCase().includes(query) ||
+          (p.ship_name).toLowerCase().includes(query) ||
           p.project_no.toLowerCase().includes(query)
       )
     }
@@ -109,7 +109,7 @@ export default function SparePartsIndex() {
                       <Package className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold leading-tight">{project.name}</h3>
+                      <h3 className="font-semibold leading-tight">{project.ship_name}</h3>
                       <p className="text-xs text-muted-foreground">{project.project_no}</p>
                     </div>
                   </div>
@@ -120,11 +120,11 @@ export default function SparePartsIndex() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">船名</span>
-                    <span>{project.vessel_name || '-'}</span>
+                    <span>{project.ship_name || '-'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">船东</span>
-                    <span>{project.customer_name || '-'}</span>
+                    <span>{project.owner_name || '-'}</span>
                   </div>
                   <div className="flex items-center justify-end pt-2 text-primary text-sm font-medium">
                     查看详情 <ChevronRight className="h-4 w-4" />

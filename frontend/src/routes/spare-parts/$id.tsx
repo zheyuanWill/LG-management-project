@@ -77,7 +77,7 @@ export default function SparePartsDetail() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{project.name}</h1>
+          <h1 className="text-2xl font-bold">{project.ship_name}</h1>
           <p className="text-muted-foreground mt-1">
             项目编号: {project.project_no}
           </p>

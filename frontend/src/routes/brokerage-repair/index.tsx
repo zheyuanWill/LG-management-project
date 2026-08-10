@@ -45,7 +45,7 @@ export default function BrokerageRepairIndex() {
       const query = searchQuery.trim().toLowerCase()
       result = result.filter(
         (p) =>
-          (p.vessel_name || p.name).toLowerCase().includes(query) ||
+          (p.ship_name).toLowerCase().includes(query) ||
           p.project_no.toLowerCase().includes(query)
       )
     }
@@ -113,7 +113,7 @@ export default function BrokerageRepairIndex() {
                       <Ship className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold leading-tight">{project.vessel_name || project.name}</h3>
+                      <h3 className="font-semibold leading-tight">{project.ship_name}</h3>
                       <p className="text-xs text-muted-foreground">{project.project_no}</p>
                     </div>
                   </div>
@@ -124,7 +124,7 @@ export default function BrokerageRepairIndex() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">船东</span>
-                    <span>{project.customer_name || '-'}</span>
+                    <span>{project.owner_name || '-'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">修船金额</span>

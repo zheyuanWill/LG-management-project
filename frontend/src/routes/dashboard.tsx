@@ -69,14 +69,14 @@ export default function Dashboard() {
       name: '买卖经纪',
       description: '船舶买卖经纪业务',
       icon: FileText,
-      href: '/brokerage/sale',
+      href: '/brokerage-sale',
       color: 'from-emerald-500 to-emerald-600',
     },
     {
       name: '修船经纪',
       description: '修船项目经纪管理',
       icon: Wrench,
-      href: '/brokerage/repair',
+      href: '/brokerage-repair',
       color: 'from-amber-500 to-amber-600',
     },
     {
@@ -164,7 +164,7 @@ export default function Dashboard() {
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{project.name}</span>
+                        <span className="font-medium">{project.ship_name}</span>
                         <Badge variant="secondary">
                           {PROJECT_TYPE_LABELS[project.type]}
                         </Badge>

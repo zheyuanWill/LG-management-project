@@ -46,11 +46,11 @@ export default function BrokerageSaleDetail() {
               </div>
               <div>
                 <span className="text-muted-foreground">船名</span>
-                <p className="font-medium">{project.vessel_name || project.name}</p>
+                <p className="font-medium">{project.ship_name}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">船东</span>
-                <p className="font-medium">{project.customer_name || '-'}</p>
+                <p className="font-medium">{project.owner_name || '-'}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">状态</span>
@@ -62,10 +62,10 @@ export default function BrokerageSaleDetail() {
                 <span className="text-muted-foreground">创建时间</span>
                 <p className="font-medium">{new Date(project.created_at).toLocaleDateString()}</p>
               </div>
-              {project.description && (
+              {project.remarks && (
                 <div className="col-span-2">
                   <span className="text-muted-foreground">备注</span>
-                  <p className="font-medium">{project.description}</p>
+                  <p className="font-medium">{project.remarks}</p>
                 </div>
               )}
             </div>
@@ -104,7 +104,7 @@ export default function BrokerageSaleDetail() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{project.vessel_name || project.name}</h1>
+          <h1 className="text-2xl font-bold">{project.ship_name}</h1>
           <p className="text-muted-foreground mt-1">
             项目编号: {project.project_no}
           </p>

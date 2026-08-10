@@ -20,6 +20,7 @@ import QuickSavePage from '@/routes/quick-save'
 import KnowledgePage from '@/routes/knowledge'
 import CustomersPage from '@/routes/customers'
 import FilesPage from '@/routes/files'
+import NewProjectPage from '@/routes/new-project'
 
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -131,6 +132,15 @@ const filesRoute = createRoute({
   component: FilesPage,
 })
 
+const newProjectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/projects/new',
+  component: NewProjectPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    type: (search.type as string) || 'supervision',
+  }),
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -143,6 +153,7 @@ const routeTree = rootRoute.addChildren([
   knowledgeRoute,
   customersRoute,
   filesRoute,
+  newProjectRoute,
 ])
 
 export const router = createRouter({

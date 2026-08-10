@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_current_user, get_db
@@ -9,7 +9,6 @@ from app.models.project import Project, ProjectStatus, ProjectType
 from app.models.user import User
 from app.schemas.project import (
     ProjectCreate,
-    ProjectListResponse,
     ProjectResponse,
     ProjectUpdate,
 )
@@ -18,13 +17,59 @@ from app.services.project_service import generate_project_number, get_project_st
 router = APIRouter()
 
 
-@router.get("", response_model=ProjectListResponse)
+async def _enrich_project(project: Project, db: AsyncSession) -> dict:
+    """为项目添加计算字段: progress 和 owner_name"""
+    data = {
+        "id": project.id,
+        "project_no": project.project_no,
+        "type": project.type,
+        "status": project.status,
+        "ship_name": project.ship_name,
+        "imo": project.imo,
+        "owner_id": project.owner_id,
+        "owner_name": None,
+        "planned_completion_date": project.planned_completion_date,
+        "actual_completion_date": project.actual_completion_date,
+        "remarks": project.remarks,
+        "progress": 0,
+        "created_at": project.created_at,
+        "updated_at": project.updated_at,
+    }
+
+    # 获取 owner_name
+    if project.owner_id:
+        from app.models.customer import Customer
+        owner_result = await db.execute(
+            select(Customer.name).where(Customer.id == project.owner_id)
+        )
+        owner_name = owner_result.scalar_one_or_none()
+        data["owner_name"] = owner_name
+
+    # 计算 progress: 已完成任务数 / 总任务数
+    from app.models.task import Task
+    task_result = await db.execute(
+        select(func.count(Task.id)).where(Task.project_id == project.id)
+    )
+    total_tasks = task_result.scalar() or 0
+
+    if total_tasks > 0:
+        completed_result = await db.execute(
+            select(func.count(Task.id)).where(
+                Task.project_id == project.id,
+                Task.status == "completed",
+            )
+        )
+        completed = completed_result.scalar() or 0
+        data["progress"] = int((completed / total_tasks) * 100)
+
+    return data
+
+
+@router.get("", response_model=list[ProjectResponse])
 async def list_projects(
     type: str | None = Query(default=None),
     status: str | None = Query(default=None),
     ship_name: str | None = Query(default=None),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
@@ -37,19 +82,11 @@ async def list_projects(
     if ship_name:
         query = query.where(Project.ship_name.contains(ship_name))
 
-    count_query = select(func.count()).select_from(query.subquery())
-    total = await db.execute(count_query)
-    total = total.scalar() or 0
-
     query = query.order_by(Project.created_at.desc())
-    query = query.offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(query)
     items = result.scalars().all()
 
-    return ProjectListResponse(
-        items=[ProjectResponse.model_validate(p) for p in items],
-        total=total,
-    )
+    return [ProjectResponse(**await _enrich_project(p, db)) for p in items]
 
 
 @router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
@@ -73,7 +110,7 @@ async def create_project(
     db.add(project)
     await db.flush()
 
-    return ProjectResponse.model_validate(project)
+    return ProjectResponse(**await _enrich_project(project, db))
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
@@ -89,8 +126,7 @@ async def get_project(
     if project is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
 
-    response = ProjectResponse.model_validate(project)
-    return response
+    return ProjectResponse(**await _enrich_project(project, db))
 
 
 @router.get("/{project_id}/stats")
@@ -106,10 +142,10 @@ async def get_project_detail(
     if project is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
 
-    base = ProjectResponse.model_validate(project)
+    base = await _enrich_project(project, db)
     stats = await get_project_stats(db, project_id)
     return {
-        **base.model_dump(),
+        **base,
         "stats": stats,
     }
 
@@ -135,7 +171,7 @@ async def update_project(
     project.updated_at = datetime.utcnow()
     await db.flush()
 
-    return ProjectResponse.model_validate(project)
+    return ProjectResponse(**await _enrich_project(project, db))
 
 
 @router.delete("/{project_id}", response_model=ProjectResponse)
@@ -155,7 +191,7 @@ async def delete_project(
     project.updated_at = datetime.utcnow()
     await db.flush()
 
-    return ProjectResponse.model_validate(project)
+    return ProjectResponse(**await _enrich_project(project, db))
 
 
 @router.post("/{project_id}/handover-to-supervision", response_model=ProjectResponse)
@@ -218,4 +254,4 @@ async def handover_to_supervision(
     db.add_all(default_tasks)
     await db.flush()
 
-    return ProjectResponse.model_validate(project)
+    return ProjectResponse(**await _enrich_project(project, db))

@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, Link } from '@tanstack/react-router'
 import { Ship, Calendar, Hash, ChevronRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -10,6 +10,7 @@ import { formatDate } from '@/lib/utils'
 
 interface ProjectCardProps {
   project: Project
+  routePath?: string
 }
 
 const STATUS_BADGE_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive'> = {
@@ -18,28 +19,24 @@ const STATUS_BADGE_VARIANTS: Record<string, 'default' | 'secondary' | 'destructi
   cancelled: 'destructive',
 }
 
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, routePath = '/supervision/$id' }: ProjectCardProps) {
   const navigate = useNavigate()
-
-  const handleClick = () => {
-    navigate({ to: '/supervision/$id', params: { id: project.id } })
-  }
+  const detailUrl = routePath.replace('$id', String(project.id))
 
   const progressVariant =
-    project.progress >= 100
+    (project.progress ?? 0) >= 100
       ? 'success'
-      : project.progress >= 50
+      : (project.progress ?? 0) >= 50
         ? 'default'
-        : project.progress > 0
+        : (project.progress ?? 0) > 0
           ? 'warning'
           : 'default'
 
   return (
-    <Card
-      onClick={handleClick}
+    <Link
+      to={detailUrl as any}
       className={cn(
-        'cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5',
-        'border-border hover:border-primary/50'
+        'block cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 rounded-lg border border-border bg-card text-card-foreground shadow-sm hover:border-primary/50'
       )}
     >
       <CardContent className="p-5 space-y-4">
@@ -50,7 +47,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             </div>
             <div>
               <h3 className="font-semibold text-lg leading-tight">
-                {project.vessel_name || project.name}
+                {project.ship_name}
               </h3>
               {project.imo && (
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -72,19 +69,19 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">进度</span>
-            <span className="font-medium">{project.progress}%</span>
+            <span className="font-medium">{project.progress ?? 0}%</span>
           </div>
-          <Progress value={project.progress} variant={progressVariant} />
+          <Progress value={project.progress ?? 0} variant={progressVariant} />
         </div>
 
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/50">
           <div className="flex items-center gap-1">
             <Calendar className="h-3.5 w-3.5" />
-            <span>计划完工: {project.planned_end_date ? formatDate(project.planned_end_date) : '-'}</span>
+            <span>计划完工: {project.planned_completion_date ? formatDate(project.planned_completion_date) : '-'}</span>
           </div>
           <ChevronRight className="h-4 w-4" />
         </div>
       </CardContent>
-    </Card>
+    </Link>
   )
 }
