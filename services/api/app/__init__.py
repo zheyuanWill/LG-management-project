@@ -1,2 +1,0 @@
-"""LG Management API"""
-
