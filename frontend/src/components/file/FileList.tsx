@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Eye, Download, Trash2, FileText } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table'
@@ -22,7 +21,6 @@ export default function FileList({
   onPreview,
 }: FileListProps) {
   const deleteMutation = useApiDelete<void>('/files')
-  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const handleDelete = (id: string) => {
     if (confirm('确定删除该文件?')) {

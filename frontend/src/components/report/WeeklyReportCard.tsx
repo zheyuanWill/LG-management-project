@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Calendar, Sparkles, ChevronRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import type { WeeklyReport } from '@/types'
 import { formatDate } from '@/lib/utils'
 

@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,26 +15,33 @@ from app.schemas.report import RiskEventCreate, RiskEventResponse
 router = APIRouter()
 
 
+class RiskResolveRequest(BaseModel):
+    detail: str | None = None
+    risk_level: str | None = None
+
+
 @router.get(
     "/summary",
     response_model=list[RiskEventResponse],
 )
-async def list_risk_summary(
+async def risk_summary(
+    limit: int = Query(default=10, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
-    result = await db.execute(
+    query = (
         select(RiskEvent)
-        .where(RiskEvent.resolved == False)
+        .where(RiskEvent.resolved.is_(False))
         .order_by(RiskEvent.created_at.desc())
-        .limit(20)
+        .limit(limit)
     )
+    result = await db.execute(query)
     risks = result.scalars().all()
     return [RiskEventResponse.model_validate(r) for r in risks]
 
 
 @router.get(
-    "/{project_id}",
+    "/projects/{project_id}/risks",
     response_model=list[RiskEventResponse],
 )
 async def list_risk_events(
@@ -58,7 +66,7 @@ async def list_risk_events(
 
 
 @router.post(
-    "/{project_id}/ai-detect",
+    "/projects/{project_id}/risks/ai-detect",
 )
 async def ai_detect_risks(
     project_id: int,
@@ -89,7 +97,7 @@ async def ai_detect_risks(
 )
 async def resolve_risk(
     risk_id: int,
-    payload: RiskEventCreate,
+    payload: RiskResolveRequest,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
@@ -101,8 +109,10 @@ async def resolve_risk(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="风险事件不存在")
 
     risk.resolved = True
-    risk.detail = payload.detail or risk.detail
-    risk.risk_level = payload.risk_level or risk.risk_level
+    if payload.detail is not None:
+        risk.detail = payload.detail
+    if payload.risk_level is not None:
+        risk.risk_level = payload.risk_level
     risk.updated_at = datetime.utcnow() if hasattr(risk, "updated_at") else datetime.utcnow()
 
     await db.flush()

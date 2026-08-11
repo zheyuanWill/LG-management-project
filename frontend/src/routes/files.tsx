@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { FolderOpen, Upload, Search } from 'lucide-react'
+import { FolderOpen, Upload } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'

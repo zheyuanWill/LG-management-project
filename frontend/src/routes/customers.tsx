@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Plus, Search, Edit2, Trash2, Building2, Phone, FileSearch } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Building2, Phone } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -9,12 +9,6 @@ import { Dialog } from '@/components/ui/Dialog'
 import { useApiGet, useApiDelete } from '@/hooks/useApi'
 import type { Customer } from '@/types'
 import CustomerForm from '@/components/customer/CustomerForm'
-
-const conclusionBadgeMap: Record<string, 'default' | 'secondary' | 'destructive'> = {
-  可承接: 'secondary',
-  谨慎承接: 'warning',
-  暂不承接: 'destructive',
-}
 
 export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState('')

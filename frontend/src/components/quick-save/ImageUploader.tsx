@@ -33,7 +33,6 @@ export default function ImageUploader({ onRecognize }: ImageUploaderProps) {
 
   const handleRecognize = async () => {
     if (!previewUrl) {
-      alert('请先上传截图')
       return
     }
     setIsRecognizing(true)
@@ -44,21 +43,26 @@ export default function ImageUploader({ onRecognize }: ImageUploaderProps) {
     }
   }
 
+  const triggerFileSelect = () => {
+    inputRef.current?.click()
+  }
+
   return (
     <div className="space-y-4">
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileSelect}
-      />
       <div
         className={cn(
-          'relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors',
+          'relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors cursor-pointer',
           previewUrl ? 'border-solid' : 'border-border hover:border-primary/50'
         )}
+        onClick={!previewUrl ? triggerFileSelect : undefined}
       >
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileSelect}
+        />
         {previewUrl ? (
           <div className="relative">
             <img
@@ -68,7 +72,7 @@ export default function ImageUploader({ onRecognize }: ImageUploaderProps) {
             />
             <button
               className="absolute -top-2 -right-2 p-1 rounded-full bg-destructive text-white"
-              onClick={handleClear}
+              onClick={(e) => { e.stopPropagation(); handleClear() }}
             >
               <X className="h-4 w-4" />
             </button>
@@ -77,14 +81,10 @@ export default function ImageUploader({ onRecognize }: ImageUploaderProps) {
           <>
             <ImageIcon className="h-10 w-10 text-muted-foreground opacity-50 mb-2" />
             <p className="text-sm text-muted-foreground mb-4">
-              点击下方按钮上传微信截图
+              点击此处选择微信截图
             </p>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => inputRef.current?.click()}
-            >
-              <Upload className="h-4 w-4" />
+            <Button type="button" onClick={(e) => { e.stopPropagation(); triggerFileSelect() }}>
+              <Upload className="h-4 w-4 mr-2" />
               选择图片
             </Button>
           </>

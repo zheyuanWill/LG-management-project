@@ -18,4 +18,15 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    minify: 'esbuild',
+    sourcemap: false,
+    rollupOptions: {
+      onwarn(warning, warn) {
+        if (warning.message.includes('is not exported')) return
+        warn(warning)
+      },
+    },
+    chunkSizeWarningLimit: 5000,
+  },
 })

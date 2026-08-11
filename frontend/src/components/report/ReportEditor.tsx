@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Save, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 
 interface ReportEditorProps {
   title?: string

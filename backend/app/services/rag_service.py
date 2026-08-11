@@ -123,7 +123,7 @@ async def query(
     if category:
         doc_filter = doc_filter.where(KnowledgeDocument.category == category)
     doc_ids_result = await db.execute(doc_filter)
-    doc_ids = [row[0] for row in doc_ids_result.scalars().all()]
+    doc_ids = list(doc_ids_result.scalars().all())
 
     if not doc_ids:
         return {"answer": "知识库为空，请先上传相关文档。", "citations": []}
@@ -163,7 +163,7 @@ async def query(
     messages = [
         {
             "role": "system",
-            "content": "你是一个专业的知识问答助手。请基于提供的上下文信息准确回答问题。如果上下文中没有相关信息，请说“抱歉，我没有找到相关信息”。",
+            "content": "你是一个专业的知识问答助手。请基于提供的上下文信息准确回答问题。如果上下文中没有相关信息，请说'抱歉，我没有找到相关信息'。",
         },
         {
             "role": "user",

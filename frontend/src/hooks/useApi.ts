@@ -7,6 +7,19 @@ import {
 } from '@tanstack/react-query'
 import apiClient from '@/lib/api'
 
+function maybeUnwrap<T>(data: T): T {
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const d = data as Record<string, unknown>
+    if (Array.isArray(d.items)) {
+      return d.items as unknown as T
+    }
+    if (Array.isArray(d.value)) {
+      return d.value as unknown as T
+    }
+  }
+  return data
+}
+
 export function useApiGet<T>(
   url: string,
   options?: Omit<UseQueryOptions<T>, 'queryKey' | 'queryFn'> & {
@@ -18,7 +31,7 @@ export function useApiGet<T>(
     queryKey: [url, params],
     queryFn: async () => {
       const response = await apiClient.get<T>(url, { params })
-      return response.data
+      return maybeUnwrap(response.data)
     },
     ...queryOptions,
   })

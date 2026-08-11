@@ -3,21 +3,11 @@ import { ListTodo, FileText, Calendar, AlertTriangle, CheckCircle, Loader2 } fro
 import { Tabs } from '@/components/ui/Tabs'
 import type { Project } from '@/types'
 
-const TaskList = lazy(() =>
-  import('@/components/task/TaskList').then((m) => ({ default: m.TaskList }))
-)
-const DailyReportList = lazy(() =>
-  import('@/components/report/DailyReportList').then((m) => ({ default: m.DailyReportList }))
-)
-const WeeklyReportCard = lazy(() =>
-  import('@/components/report/WeeklyReportCard').then((m) => ({ default: m.WeeklyReportCard }))
-)
-const RiskList = lazy(() =>
-  import('@/components/risk/RiskList').then((m) => ({ default: m.RiskList }))
-)
-const ProjectCompletion = lazy(() =>
-  import('@/components/project/ProjectCompletion').then((m) => ({ default: m.ProjectCompletion }))
-)
+const TaskList = lazy(() => import('@/components/task/TaskList'))
+const DailyReportList = lazy(() => import('@/components/report/DailyReportList'))
+const WeeklyReportCard = lazy(() => import('@/components/report/WeeklyReportCard'))
+const RiskList = lazy(() => import('@/components/risk/RiskList'))
+const ProjectCompletion = lazy(() => import('@/components/project/ProjectCompletion'))
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center py-12">

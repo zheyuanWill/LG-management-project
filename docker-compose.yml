@@ -21,7 +21,7 @@ services:
       - "5432:5432"
     <<: *common
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lgadmin"]
+      test: ["CMD-SHELL", "pg_isready -U lgadmin -d lg_erp"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -67,6 +67,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.tuna.tsinghua.edu.cn}
     container_name: lg-backend
     environment:
       - DATABASE_URL=postgresql+asyncpg://${PG_USER:-lgadmin}:${PG_PASSWORD:-lgdev2026}@postgres:5432/${PG_DATABASE:-lg_erp}
@@ -98,12 +101,19 @@ services:
     build:
       context: ./backend/ai_service
       dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.tuna.tsinghua.edu.cn}
     container_name: lg-ai-service
     environment:
       - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
       - LLM_BASE_URL=${LLM_BASE_URL:-http://host.docker.internal:11434}
       - LLM_MODEL=${LLM_MODEL:-qwen2.5:7b}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-small-zh}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-small-zh-v1.5}
+      - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
+      - HF_HUB_CACHE=/cache/models
+      - OCR_ENABLED=${OCR_ENABLED:-false}
     ports:
       - "8001:8001"
     volumes:
@@ -115,6 +125,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.tuna.tsinghua.edu.cn}
     container_name: lg-celery
     command: celery -A app.celery_app worker --loglevel=info --concurrency=4
     environment:
@@ -141,6 +154,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.tuna.tsinghua.edu.cn}
     container_name: lg-celery-beat
     command: celery -A app.celery_app beat --loglevel=info
     environment:
@@ -158,6 +174,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
     container_name: lg-frontend
     ports:
       - "3000:80"

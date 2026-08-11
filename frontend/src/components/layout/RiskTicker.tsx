@@ -10,7 +10,7 @@ interface RiskTickerProps {
   projectId?: string
 }
 
-export default function RiskTicker({ risks = [], projectId }: RiskTickerProps) {
+export default function RiskTicker({ risks = [] }: RiskTickerProps) {
   const [expanded, setExpanded] = useState(false)
 
   const criticalCount = risks.filter((r) => r.level === 'critical' && !r.resolved).length

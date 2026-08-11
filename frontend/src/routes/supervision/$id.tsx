@@ -4,7 +4,6 @@ import { ArrowLeft, Edit3, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Progress } from '@/components/ui/Progress'
 import RiskTicker from '@/components/layout/RiskTicker'
 import ProjectTabs from '@/components/project/ProjectTabs'
 import ProjectForm from '@/components/project/ProjectForm'
@@ -16,13 +15,13 @@ export default function SupervisionDetail() {
   const { id } = useParams({ strict: false }) as { id: string }
   const navigate = useNavigate()
   const [showEditForm, setShowEditForm] = useState(false)
-  const [dataVersion, setDataVersion] = useState(0)
+  const [, setDataVersion] = useState(0)
 
   const { data: project, isLoading } = useApiGet<any>(`/projects/${id}`)
   const { data: tasks } = useApiGet<any[]>(`/projects/${id}/tasks`)
   const { data: dailyReports } = useApiGet<any[]>(`/projects/${id}/daily-reports`)
   const { data: weeklyReports } = useApiGet<any[]>(`/projects/${id}/weekly-reports`)
-  const { data: risks } = useApiGet<any[]>(`/risks/${id}`)
+  const { data: risks } = useApiGet<any[]>(`/projects/${id}/risks`)
 
   const handleDataChange = () => {
     setDataVersion((v) => v + 1)
@@ -93,16 +92,7 @@ export default function SupervisionDetail() {
         <RiskTicker risks={risks} projectId={id} />
       )}
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="md:col-span-3">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-muted-foreground">项目进度</span>
-              <span className="text-lg font-bold">{project.progress}%</span>
-            </div>
-            <Progress value={project.progress} />
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="p-5 space-y-3">
             <div>
@@ -118,6 +108,34 @@ export default function SupervisionDetail() {
             <div>
               <p className="text-xs text-muted-foreground">创建时间</p>
               <p className="text-sm font-medium">{formatDate(project.created_at)}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5 space-y-3">
+            <div>
+              <p className="text-xs text-muted-foreground">备注</p>
+              <p className="text-sm font-medium">{project.remarks || '-'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">任务数</p>
+              <p className="text-sm font-medium">{tasks?.length || 0}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">风险数</p>
+              <p className="text-sm font-medium">{risks?.length || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5 space-y-3">
+            <div>
+              <p className="text-xs text-muted-foreground">状态</p>
+              <p className="text-sm font-medium">{PROJECT_STATUS_LABELS[project.status]}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">更新时间</p>
+              <p className="text-sm font-medium">{formatDate(project.updated_at)}</p>
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Dialog, DialogFooter } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -15,7 +15,6 @@ interface ProjectFormProps {
   onOpenChange: (open: boolean) => void
   project?: Project | null
   onSaved?: () => void
-  defaultType?: string
 }
 
 export default function ProjectForm({
@@ -23,92 +22,46 @@ export default function ProjectForm({
   onOpenChange,
   project,
   onSaved,
-  defaultType = 'supervision',
 }: ProjectFormProps) {
   const isEdit = !!project
 
-  const [shipName, setShipName] = useState('')
+  const [name, setName] = useState('')
   const [imo, setImo] = useState('')
-  const [ownerId, setOwnerId] = useState('')
-  const [plannedDate, setPlannedDate] = useState('')
-  const [remarks, setRemarks] = useState('')
+  const [customerId, setCustomerId] = useState('')
+  const [plannedEndDate, setPlannedEndDate] = useState('')
+  const [description, setDescription] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Inline customer creation
-  const [showNewCustomer, setShowNewCustomer] = useState(false)
-  const [newCustomerName, setNewCustomerName] = useState('')
-  const [creatingCustomer, setCreatingCustomer] = useState(false)
-
-  const { data: customers, refetch: refetchCustomers } = useApiGet<Customer[]>('/customers')
-  const { data: allProjects } = useApiGet<Project[]>('/projects')
-
-  // Extract unique ship names from existing projects
-  const shipNameOptions = useMemo(() => {
-    const names = new Set<string>()
-    allProjects?.forEach((p) => {
-      if (p.ship_name) names.add(p.ship_name)
-    })
-    return Array.from(names).sort()
-  }, [allProjects])
-
-  // Find IMO for selected ship name
-  const selectedShipImo = useMemo(() => {
-    if (!shipName) return ''
-    const found = allProjects?.find((p) => p.ship_name === shipName)
-    return found?.imo || ''
-  }, [shipName, allProjects])
+  const { data: customers } = useApiGet<Customer[]>('/customers')
 
   const createMutation = useApiPost<Project>('/projects')
   const updateMutation = useApiPatch<Project>(
     project ? `/projects/${project.id}` : '/projects'
   )
-  const createCustomerMutation = useApiPost<Customer>('/customers')
 
   useEffect(() => {
     if (open) {
-      setShipName(project?.ship_name || '')
+      setName(project?.ship_name || '')
       setImo(project?.imo || '')
-      setOwnerId(project?.owner_id ? String(project.owner_id) : '')
-      setPlannedDate(project?.planned_completion_date || '')
-      setRemarks(project?.remarks || '')
+      setCustomerId(project?.owner_id ? String(project.owner_id) : '')
+      setPlannedEndDate(project?.planned_completion_date || '')
+      setDescription(project?.remarks || '')
       setErrors({})
-      setShowNewCustomer(false)
-      setNewCustomerName('')
     }
   }, [open, project])
 
   const customerOptions = [
     { value: '', label: '选择船东...' },
-    ...(customers?.map((c) => ({ value: String(c.id), label: c.name })) || []),
-    { value: '__new__', label: '+ 新增船东...' },
+    ...(customers?.map((c) => ({ value: c.id, label: c.name })) || []),
   ]
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
-    if (!shipName.trim()) {
-      newErrors.shipName = '请输入船名'
+    if (!name.trim()) {
+      newErrors.name = '请输入船名'
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
-  }
-
-  const handleAddCustomer = async () => {
-    if (!newCustomerName.trim()) {
-      toast.error({ title: '请输入船东名称' })
-      return
-    }
-    setCreatingCustomer(true)
-    try {
-      await createCustomerMutation.mutateAsync({ name: newCustomerName.trim() })
-      toast.success({ title: '船东添加成功' })
-      setNewCustomerName('')
-      setShowNewCustomer(false)
-      refetchCustomers()
-    } catch {
-      toast.error({ title: '添加船东失败' })
-    } finally {
-      setCreatingCustomer(false)
-    }
   }
 
   const onSubmit = async () => {
@@ -116,11 +69,11 @@ export default function ProjectForm({
 
     try {
       const payload = {
-        ship_name: shipName.trim(),
+        ship_name: name.trim(),
         imo: imo || undefined,
-        owner_id: ownerId && ownerId !== '__new__' ? Number(ownerId) : undefined,
-        planned_completion_date: plannedDate || undefined,
-        remarks: remarks || undefined,
+        owner_id: customerId ? parseInt(customerId) : undefined,
+        planned_completion_date: plannedEndDate || undefined,
+        remarks: description || undefined,
       }
 
       if (isEdit && project) {
@@ -129,7 +82,7 @@ export default function ProjectForm({
       } else {
         await createMutation.mutateAsync({
           ...payload,
-          type: defaultType,
+          type: 'supervision',
         })
         toast.success({ title: '项目创建成功' })
       }
@@ -149,34 +102,19 @@ export default function ProjectForm({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title={isEdit ? '编辑项目' : '新建项目'}
+      title={isEdit ? '编辑监修项目' : '新建监修项目'}
       className="max-w-xl"
     >
       <form onSubmit={(e) => { e.preventDefault(); onSubmit() }} className="space-y-4">
         <div className="space-y-2">
           <label className="text-sm font-medium">船名 *</label>
-          <div className="relative">
-            <Input
-              value={shipName}
-              onChange={(e) => {
-                setShipName(e.target.value)
-                // Auto-fill IMO when selecting from history
-                if (!imo && e.target.value) {
-                  const found = allProjects?.find((p) => p.ship_name === e.target.value)
-                  if (found?.imo) setImo(found.imo)
-                }
-              }}
-              placeholder="输入或选择船名"
-              list="ship-name-list"
-            />
-            <datalist id="ship-name-list">
-              {shipNameOptions.map((name) => (
-                <option key={name} value={name} />
-              ))}
-            </datalist>
-          </div>
-          {errors.shipName && (
-            <p className="text-sm text-destructive">{errors.shipName}</p>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="输入船名"
+          />
+          {errors.name && (
+            <p className="text-sm text-destructive">{errors.name}</p>
           )}
         </div>
 
@@ -185,66 +123,32 @@ export default function ProjectForm({
           <Input
             value={imo}
             onChange={(e) => setImo(e.target.value)}
-            placeholder="输入 IMO 编号（可选）"
+            placeholder="输入 IMO 编号"
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">船东</label>
           <Select
-            value={ownerId}
-            onChange={(e) => {
-              const val = e.target.value
-              if (val === '__new__') {
-                setShowNewCustomer(true)
-              } else {
-                setOwnerId(val)
-                setShowNewCustomer(false)
-              }
-            }}
+            value={customerId}
+            onChange={(e) => setCustomerId(e.target.value)}
             options={customerOptions}
           />
-          {showNewCustomer && (
-            <div className="flex gap-2 mt-2">
-              <Input
-                value={newCustomerName}
-                onChange={(e) => setNewCustomerName(e.target.value)}
-                placeholder="输入船东名称"
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleAddCustomer}
-                disabled={creatingCustomer || !newCustomerName.trim()}
-              >
-                {creatingCustomer ? '添加中...' : '添加'}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => { setShowNewCustomer(false); setNewCustomerName('') }}
-              >
-                取消
-              </Button>
-            </div>
-          )}
         </div>
 
         <div className="space-y-2">
           <DatePicker
-            label="计划完成日期"
-            value={plannedDate}
-            onChange={(e) => setPlannedDate(e.target.value)}
+            label="计划出厂日期"
+            value={plannedEndDate}
+            onChange={(e) => setPlannedEndDate(e.target.value)}
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">备注</label>
           <textarea
-            value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             rows={3}
             placeholder="项目备注信息"
             className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"

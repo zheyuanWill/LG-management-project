@@ -1,7 +1,6 @@
 import { useParams } from '@tanstack/react-router'
 import { ArrowLeft, Package, Camera, Clock, FileSignature, Receipt } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Tabs } from '@/components/ui/Tabs'
 import { useApiGet } from '@/hooks/useApi'

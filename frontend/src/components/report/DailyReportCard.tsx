@@ -20,7 +20,7 @@ export default function DailyReportCard({ report, onUpdate }: DailyReportCardPro
 
   const confirmMutation = useApiPatch<void>(`/daily-reports/${report.id}`)
 
-  const handleSave = (values: Record<string, string>) => {
+  const handleSave = (_values: Record<string, string>) => {
     toast.success({ title: '保存成功' })
     onUpdate?.()
   }

@@ -46,11 +46,9 @@ class ProjectResponse(BaseModel):
     ship_name: str
     imo: str | None = None
     owner_id: int | None = None
-    owner_name: str | None = None
     planned_completion_date: date | None = None
     actual_completion_date: date | None = None
     remarks: str | None = None
-    progress: int = 0
     created_at: datetime
     updated_at: datetime
 

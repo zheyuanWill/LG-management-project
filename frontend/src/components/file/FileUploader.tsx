@@ -1,11 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Upload, X, FileText, Loader2, CheckCircle } from 'lucide-react'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
-import { useApiGet } from '@/hooks/useApi'
-import apiClient from '@/lib/api'
-import { toast } from '@/components/ui/Toast'
+import { useApiGet, useApiPost } from '@/hooks/useApi'
 
 interface FileUploaderProps {
   onClose: () => void
@@ -22,12 +20,12 @@ const typeLabels: Record<string, string> = {
 
 export default function FileUploader({ onClose }: FileUploaderProps) {
   const { data: projects } = useApiGet<{ id: string; project_no: string }[]>('/projects')
+  const uploadMutation = useApiPost<{ id: string }>('/files')
 
   const [selectedProject, setSelectedProject] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({})
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const projectOptions = [
     { value: '', label: '请选择项目...' },
@@ -44,29 +42,13 @@ export default function FileUploader({ onClose }: FileUploaderProps) {
     if (name.match(/wechat|微信|screenshot|截图/)) return 'wechat_screenshot'
     if (name.match(/survey|调研|investigation/)) return 'survey'
     if (name.match(/certificate|cert|证书|资质/)) return 'certificate'
-    if (name.match(/\.(png|jpg|jpeg|gif|bmp|webp|svg)$/)) return 'photo'
-    if (name.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx)$/)) return 'other'
     return 'other'
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files
     if (!selected) return
-    setFiles((prev) => [...prev, ...Array.from(selected)])
-    // Reset input so same file can be selected again
-    if (fileInputRef.current) fileInputRef.current.value = ''
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    const dropped = e.dataTransfer.files
-    if (dropped.length > 0) {
-      setFiles((prev) => [...prev, ...Array.from(dropped)])
-    }
-  }
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
+    setFiles(Array.from(selected))
   }
 
   const handleRemove = (index: number) => {
@@ -83,28 +65,20 @@ export default function FileUploader({ onClose }: FileUploaderProps) {
     })
     setUploadProgress(newProgress)
 
-    try {
-      for (const file of files) {
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('project_id', selectedProject)
-        formData.append('type', detectFileType(file))
+    for (const file of files) {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('project_id', selectedProject)
+      formData.append('type', detectFileType(file))
 
-        setUploadProgress((prev) => ({ ...prev, [file.name]: 50 }))
-        await apiClient.post('/files', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-        setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }))
-      }
-      toast.success({ title: `成功上传 ${files.length} 个文件` })
-      setFiles([])
-      setUploadProgress({})
-      onClose()
-    } catch {
-      toast.error({ title: '上传失败', description: '请稍后重试' })
-    } finally {
-      setUploading(false)
+      setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }))
+      await uploadMutation.mutateAsync(formData as unknown as Record<string, unknown>)
     }
+
+    setUploading(false)
+    setFiles([])
+    setUploadProgress({})
+    onClose()
   }
 
   return (
@@ -119,28 +93,19 @@ export default function FileUploader({ onClose }: FileUploaderProps) {
           />
         </div>
 
-        <div
-          className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-primary/50 cursor-pointer"
-          onClick={() => fileInputRef.current?.click()}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={handleFileSelect}
-          />
+        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-primary/50 cursor-pointer">
           <Upload className="h-10 w-10 text-muted-foreground opacity-50 mb-3" />
-          <p className="font-medium mb-1">点击选择或拖拽文件到此处</p>
+          <p className="font-medium mb-1">选择文件</p>
           <p className="text-sm text-muted-foreground mb-4">支持多文件上传,自动识别类型</p>
-          <Button variant="outline" type="button">
-            <span className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              选择文件
-            </span>
-          </Button>
+          <label className="cursor-pointer">
+            <input type="file" multiple className="hidden" onChange={handleFileSelect} />
+            <Button variant="outline" asChild>
+              <span className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                选择文件
+              </span>
+            </Button>
+          </label>
         </div>
 
         {files.length > 0 && (

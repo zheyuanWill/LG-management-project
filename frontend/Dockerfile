@@ -1,6 +1,9 @@
 # ── 前端 (React + Vite) ──────────────────────────────
 FROM node:20-alpine AS build
 
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+RUN npm config set registry ${NPM_REGISTRY}
+
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml* ./

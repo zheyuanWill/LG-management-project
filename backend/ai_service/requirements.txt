@@ -1,12 +1,15 @@
 # ── AI 服务 Python 依赖 ──────────────────────────────
+# 核心（轻量，必须）
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
 httpx==0.27.2
 pydantic==2.9.2
 loguru==0.7.2
-sentence-transformers==3.0.1
-paddleocr==2.8.1
-paddlepaddle==2.6.1
 python-docx==1.1.0
 PyPDF2==3.0.1
 tenacity==9.0.0
+
+# 向量化（Embedding / RAG 用）
+# fastembed 基于 ONNX + onnxruntime，无需 torch / sentence-transformers，
+# 体积小、CPU 推理快。模型首次 /v1/embed 时按 HF_ENDPOINT 下载并缓存到 /cache/models。
+fastembed>=0.3.0

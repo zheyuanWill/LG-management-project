@@ -13,8 +13,6 @@ interface PhotoUploaderProps {
 }
 
 export default function PhotoUploader({
-  taskId,
-  date,
   photos,
   maxPhotos = 2,
   onUpload,

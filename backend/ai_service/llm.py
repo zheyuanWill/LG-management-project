@@ -9,9 +9,19 @@ from config import settings
 class LLMClient:
     def __init__(self):
         self.provider = settings.LLM_PROVIDER
-        self.base_url = settings.LLM_BASE_URL
+        self.base_url = settings.LLM_BASE_URL.rstrip("/")
         self.model = settings.LLM_MODEL
+        self.api_key = settings.LLM_API_KEY
         self._client: httpx.Client | None = None
+
+    @property
+    def _chat_url(self) -> str:
+        if self.provider == "cloud":
+            base = self.base_url
+            if base.endswith("/v1"):
+                return f"{base}/chat/completions"
+            return f"{base}/v1/chat/completions"
+        return f"{self.base_url}/api/chat"
 
     @property
     def client(self) -> httpx.Client:
@@ -54,7 +64,6 @@ class LLMClient:
         reraise=True,
     )
     def _ollama_chat(self, messages: list[dict], temperature: float, model: str) -> str:
-        url = f"{self.base_url}/api/chat"
         payload = {
             "model": model,
             "messages": messages,
@@ -64,8 +73,8 @@ class LLMClient:
             },
         }
 
-        logger.debug(f"Ollama 请求: url={url}, model={model}")
-        response = self.client.post(url, json=payload)
+        logger.debug(f"Ollama 请求: url={self._chat_url}, model={model}")
+        response = self.client.post(self._chat_url, json=payload)
         response.raise_for_status()
 
         data = response.json()
@@ -80,7 +89,6 @@ class LLMClient:
         reraise=True,
     )
     def _cloud_chat(self, messages: list[dict], temperature: float, model: str) -> str:
-        url = f"{self.base_url}/v1/chat/completions"
         payload = {
             "model": model,
             "messages": messages,
@@ -89,9 +97,11 @@ class LLMClient:
         headers = {
             "Content-Type": "application/json",
         }
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
 
-        logger.debug(f"Cloud LLM 请求: url={url}, model={model}")
-        response = self.client.post(url, json=payload, headers=headers)
+        logger.debug(f"Cloud LLM 请求: url={self._chat_url}, model={model}")
+        response = self.client.post(self._chat_url, json=payload, headers=headers)
         response.raise_for_status()
 
         data = response.json()

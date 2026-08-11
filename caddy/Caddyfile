@@ -1,9 +1,13 @@
-{
-    # 后端 API 反向代理
-    reverse_proxy /api/* backend:8000
+:80 {
+    # 后端 API 反向代理 (handle 块互斥，确保 /api/* 优先匹配，不被 try_files 改写)
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
 
     # 前端静态文件
-    root * /usr/share/caddy
-    try_files {path} {path}/ /index.html
-    file_server
+    handle {
+        root * /usr/share/caddy
+        try_files {path} /index.html
+        file_server
+    }
 }

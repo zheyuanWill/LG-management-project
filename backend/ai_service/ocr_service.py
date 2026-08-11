@@ -1,13 +1,12 @@
 import io
 from loguru import logger
-from paddleocr import PaddleOCR
 import numpy as np
 from PIL import Image
 
 
 class OCRService:
     _instance: "OCRService | None" = None
-    _ocr: PaddleOCR | None = None
+    _ocr = None
 
     def __new__(cls) -> "OCRService":
         if cls._instance is None:
@@ -17,6 +16,13 @@ class OCRService:
     def __init__(self):
         if self._ocr is not None:
             return
+        # paddleocr 为可选依赖（OCR 默认禁用），仅在实际使用时按需导入
+        try:
+            from paddleocr import PaddleOCR
+        except ImportError as e:
+            raise RuntimeError(
+                "PaddleOCR 未安装，OCR 功能不可用（OCR_ENABLED=false 时属正常情况）"
+            ) from e
         logger.info("初始化 PaddleOCR 引擎")
         self._ocr = PaddleOCR(use_angle_cls=True, lang="ch", show_log=False)
         logger.info("PaddleOCR 引擎初始化完成")

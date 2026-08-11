@@ -3,7 +3,7 @@ from app.services.photo_service import check_daily_photo_limit, upload_photo
 from app.services.report_service import (
     generate_daily_report,
     generate_weekly_report,
-    build_completed_items,
+    _build_completed_items,
 )
 from app.services.risk_service import detect_risks, build_risk_summary
 from app.services.ai_client import AIClient, get_ai_client
@@ -26,7 +26,7 @@ __all__ = [
     "upload_photo",
     "generate_daily_report",
     "generate_weekly_report",
-    "build_completed_items",
+    "_build_completed_items",
     "detect_risks",
     "build_risk_summary",
     "AIClient",

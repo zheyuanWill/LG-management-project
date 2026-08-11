@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Upload, FileText, CheckCircle, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { useApiPost, useApiPatch } from '@/hooks/useApi'
+import { useApiPatch } from '@/hooks/useApi'
 import { toast } from '@/components/ui/Toast'
 import type { Project, ProjectCompletionFile } from '@/types'
 

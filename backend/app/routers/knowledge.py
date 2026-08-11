@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.celery_app import celery_app
@@ -11,6 +11,7 @@ from app.models.user import User
 from app.schemas.knowledge import (
     CitationItem,
     DocumentUploadResponse,
+    KnowledgeDocumentListResponse,
     QueryRequest,
     QueryResponse,
 )
@@ -70,7 +71,7 @@ async def upload_document(
     )
 
 
-@router.get("/documents", response_model=list[DocumentUploadResponse])
+@router.get("/documents", response_model=KnowledgeDocumentListResponse)
 async def list_documents(
     category: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
@@ -80,10 +81,17 @@ async def list_documents(
     if category:
         query = query.where(KnowledgeDocument.category == category)
 
+    count_query = select(func.count()).select_from(query.subquery())
+    total = await db.execute(count_query)
+    total = total.scalar() or 0
+
     result = await db.execute(query.order_by(KnowledgeDocument.created_at.desc()))
     docs = result.scalars().all()
 
-    return [DocumentUploadResponse.model_validate(d) for d in docs]
+    return KnowledgeDocumentListResponse(
+        items=[DocumentUploadResponse.model_validate(d) for d in docs],
+        total=total,
+    )
 
 
 @router.get("/documents/{doc_id}", response_model=DocumentUploadResponse)

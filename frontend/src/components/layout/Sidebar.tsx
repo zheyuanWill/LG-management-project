@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import {
   LayoutDashboard,
   Ship,
@@ -49,7 +49,7 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        'flex h-screen flex-col shrink-0 border-r border-border bg-surface transition-all duration-300',
+        'flex h-screen flex-col border-r border-border bg-surface transition-all duration-300 shrink-0',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
@@ -77,39 +77,43 @@ export default function Sidebar() {
                     {item.name}
                   </p>
                 )}
-                {item.children.map((child) => (
-                  <Link
+                {item.children?.map((child) => (
+                  <a
                     key={child.href}
-                    to={child.href}
+                    href={child.href}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      navigate({ to: child.href })
+                    }}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-foreground hover:bg-surface-muted',
                       collapsed && 'justify-center px-2'
                     )}
-                    activeProps={{ className: 'bg-primary text-primary-foreground' }}
-                    inactiveProps={{ className: 'text-foreground hover:bg-surface-muted' }}
                   >
                     <child.icon className="h-5 w-5 shrink-0" />
                     {!collapsed && <span>{child.name}</span>}
-                  </Link>
+                  </a>
                 ))}
               </div>
             )
           }
 
           return (
-            <Link
+            <a
               key={item.href}
-              to={item.href}
+              href={item.href}
+              onClick={(e) => {
+                e.preventDefault()
+                navigate({ to: item.href })
+              }}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-foreground hover:bg-surface-muted',
                 collapsed && 'justify-center px-2'
               )}
-              activeProps={{ className: 'bg-primary text-primary-foreground' }}
-              inactiveProps={{ className: 'text-foreground hover:bg-surface-muted' }}
             >
               <item.icon className="h-5 w-5 shrink-0" />
               {!collapsed && <span>{item.name}</span>}
-            </Link>
+            </a>
           )
         })}
       </nav>

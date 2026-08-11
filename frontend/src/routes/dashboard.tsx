@@ -69,14 +69,14 @@ export default function Dashboard() {
       name: '买卖经纪',
       description: '船舶买卖经纪业务',
       icon: FileText,
-      href: '/brokerage-sale',
+      href: '/brokerage/sale',
       color: 'from-emerald-500 to-emerald-600',
     },
     {
       name: '修船经纪',
       description: '修船项目经纪管理',
       icon: Wrench,
-      href: '/brokerage-repair',
+      href: '/brokerage/repair',
       color: 'from-amber-500 to-amber-600',
     },
     {
@@ -170,7 +170,7 @@ export default function Dashboard() {
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        创建于 {formatDate(project.created_at)}
+                        编号 {project.project_no} · 创建于 {formatDate(project.created_at)}
                       </p>
                     </div>
                     <Badge
@@ -210,20 +210,20 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between">
                       <Badge
                         variant={
-                          risk.level === 'critical'
+                          risk.risk_level === 'critical'
                             ? 'destructive'
-                            : risk.level === 'warning'
+                            : risk.risk_level === 'warning'
                               ? 'accent'
                               : 'secondary'
                         }
                       >
-                        {RISK_LEVEL_LABELS[risk.level]}
+                        {RISK_LEVEL_LABELS[risk.risk_level] || risk.risk_level}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         {formatDate(risk.created_at)}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm">{risk.message}</p>
+                    <p className="mt-2 text-sm">{risk.title}</p>
                   </div>
                 ))}
               </div>

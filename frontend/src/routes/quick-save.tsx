@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Save, Sparkles, FileText } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 import TextPaster from '@/components/quick-save/TextPaster'
 import ImageUploader from '@/components/quick-save/ImageUploader'
 import SuggestionList from '@/components/quick-save/SuggestionList'
@@ -23,7 +22,7 @@ export default function QuickSavePage() {
   const [suggestion, setSuggestion] = useState<AISuggestion | null>(null)
   const [isRecognizing, setIsRecognizing] = useState(false)
 
-  const handleRecognize = async (content: string, type: 'text' | 'image') => {
+  const handleRecognize = async (_content: string, type: 'text' | 'image') => {
     setIsRecognizing(true)
     setSuggestion(null)
     try {

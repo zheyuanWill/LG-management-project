@@ -1,4 +1,4 @@
-import { X, Download, ExternalLink, FileText } from 'lucide-react'
+import { Download, ExternalLink, FileText } from 'lucide-react'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import type { FileItem } from '@/types'

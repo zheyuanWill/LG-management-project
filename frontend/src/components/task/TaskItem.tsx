@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Pencil, Trash2, Calendar, MoreVertical } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Pencil, Trash2, Calendar } from 'lucide-react'
 import type { Task, TaskStatus } from '@/types'
 import { TASK_STATUS_LABELS } from '@/lib/constants'
 import { Badge } from '@/components/ui/Badge'

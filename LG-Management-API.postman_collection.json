@@ -1,0 +1,1508 @@
+{
+  "info": {
+    "name": "LG Management API",
+    "description": "船舶管理系统后端 API 完整端点集合。\n\n## 使用说明\n1. 修改集合变量 `base_url` 为后端地址（默认 http://localhost:8000）\n2. 先执行「认证 > 登录」请求，会自动保存 token 到变量\n3. 后续所有需认证的请求会自动携带 Bearer token\n4. 创建项目/客户/任务等请求会自动保存返回的 ID 到对应变量，便于链式测试\n5. 默认管理员账号：admin / admin123\n\n## 默认变量\n- base_url: http://localhost:8000\n- token: (登录后自动填充)\n- project_id: (创建项目后自动填充)\n- customer_id: (创建客户后自动填充)\n- task_id: (创建任务后自动填充)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "project_id", "value": "1", "type": "string" },
+    { "key": "customer_id", "value": "1", "type": "string" },
+    { "key": "task_id", "value": "1", "type": "string" },
+    { "key": "report_id", "value": "1", "type": "string" },
+    { "key": "save_id", "value": "1", "type": "string" },
+    { "key": "doc_id", "value": "1", "type": "string" },
+    { "key": "file_id", "value": "1", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "系统",
+      "description": "系统健康检查端点",
+      "item": [
+        {
+          "name": "健康检查（根）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "健康检查（API）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "认证",
+      "description": "用户登录、注册、当前用户信息",
+      "item": [
+        {
+          "name": "登录（获取 token）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('token', data.access_token);",
+                  "    console.log('Token 已保存:', data.access_token.substring(0, 20) + '...');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "注册新用户（需 admin）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"newuser\",\n    \"password\": \"newpass123\",\n    \"display_name\": \"测试用户\",\n    \"role\": \"user\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "获取当前用户信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "用户管理",
+      "item": [
+        {
+          "name": "用户列表（占位实现）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users"]
+            }
+          }
+        },
+        {
+          "name": "创建用户（占位实现）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "项目管理",
+      "description": "项目 CRUD、统计、移交。type 取值: supervision | brokerage_sale | brokerage_repair | spare_parts。status 取值: active | completed | cancelled。",
+      "item": [
+        {
+          "name": "项目列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects?type=supervision&status=active&page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects"],
+              "query": [
+                { "key": "type", "value": "supervision", "description": "supervision | brokerage_sale | brokerage_repair | spare_parts" },
+                { "key": "status", "value": "active", "description": "active | completed | cancelled" },
+                { "key": "ship_name", "value": null, "description": "船名模糊搜索" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "创建监修项目",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('project_id', data.id);",
+                  "    console.log('project_id 已保存:', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"supervision\",\n    \"ship_name\": \"MV TEST SHIP\",\n    \"imo\": \"9876543\",\n    \"owner_id\": null,\n    \"planned_completion_date\": \"2026-12-31\",\n    \"remarks\": \"测试项目\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects"]
+            }
+          }
+        },
+        {
+          "name": "创建买卖经纪项目",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('project_id', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"brokerage_sale\",\n    \"ship_name\": \"MV SALE TEST\",\n    \"imo\": \"1111111\",\n    \"remarks\": \"买卖经纪测试\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects"]
+            }
+          }
+        },
+        {
+          "name": "创建修船经纪项目",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('project_id', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"brokerage_repair\",\n    \"ship_name\": \"MV REPAIR TEST\",\n    \"imo\": \"2222222\",\n    \"remarks\": \"修船经纪测试\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects"]
+            }
+          }
+        },
+        {
+          "name": "创建备件供应项目",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set('project_id', data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"spare_parts\",\n    \"ship_name\": \"MV SPARE TEST\",\n    \"imo\": \"3333333\",\n    \"remarks\": \"备件供应测试\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects"]
+            }
+          }
+        },
+        {
+          "name": "获取项目详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "{{project_id}}"]
+            }
+          }
+        },
+        {
+          "name": "获取项目统计",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "{{project_id}}", "stats"]
+            }
+          }
+        },
+        {
+          "name": "更新项目",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"completed\",\n    \"remarks\": \"更新后的备注\",\n    \"planned_completion_date\": \"2026-12-31\",\n    \"actual_completion_date\": \"2026-12-20\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "{{project_id}}"]
+            }
+          }
+        },
+        {
+          "name": "删除项目（软删除，状态置为 cancelled）",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "{{project_id}}"]
+            }
+          }
+        },
+        {
+          "name": "移交监修（仅修船经纪项目可用）",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/handover-to-supervision",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "projects", "{{project_id}}", "handover-to-supervision"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "任务管理",
+      "description": "任务 CRUD、每日进度更新、进度照片上传。status 取值: not_started | in_progress | completed | paused。",
+      "item": [
+        {
+          "name": "任务列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tasks/projects/{{project_id}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tasks", "projects", "{{project_id}}", "tasks"]
+            }
+          }
+        },
+        {
+          "name": "创建任务",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('task_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"进厂检验\",\n    \"planned_end_date\": \"2026-12-15\",\n    \"status\": \"not_started\",\n    \"sort_order\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tasks/projects/{{project_id}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tasks", "projects", "{{project_id}}", "tasks"]
+            }
+          }
+        },
+        {
+          "name": "更新任务",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"in_progress\",\n    \"name\": \"进厂检验（更新）\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tasks/tasks/{{task_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tasks", "tasks", "{{task_id}}"]
+            }
+          }
+        },
+        {
+          "name": "删除任务",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tasks/tasks/{{task_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tasks", "tasks", "{{task_id}}"]
+            }
+          }
+        },
+        {
+          "name": "任务每日更新列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tasks/tasks/{{task_id}}/daily-updates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tasks", "tasks", "{{task_id}}", "daily-updates"]
+            }
+          }
+        },
+        {
+          "name": "创建任务每日更新",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"update_date\": \"2026-08-11\",\n    \"status\": \"in_progress\",\n    \"remark\": \"今日完成进厂检验\",\n    \"audio_duration\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tasks/tasks/{{task_id}}/daily-updates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tasks", "tasks", "{{task_id}}", "daily-updates"]
+            }
+          }
+        },
+        {
+          "name": "上传进度照片",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "图片文件" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tasks/daily-updates/1/photos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tasks", "daily-updates", "1", "photos"]
+            }
+          }
+        },
+        {
+          "name": "删除进度照片",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tasks/task-photos/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tasks", "task-photos", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "报告管理",
+      "description": "日报、周报生成与确认。生成走 Celery 异步任务，返回 task_id。",
+      "item": [
+        {
+          "name": "日报列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/projects/{{project_id}}/daily-reports?start_date=2026-08-01&end_date=2026-08-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "projects", "{{project_id}}", "daily-reports"],
+              "query": [
+                { "key": "start_date", "value": "2026-08-01", "description": "YYYY-MM-DD" },
+                { "key": "end_date", "value": "2026-08-31", "description": "YYYY-MM-DD" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "获取日报详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/daily-reports/{{report_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "daily-reports", "{{report_id}}"]
+            }
+          }
+        },
+        {
+          "name": "生成日报（异步）",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/projects/{{project_id}}/daily-reports/generate?report_date=2026-08-11",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "projects", "{{project_id}}", "daily-reports", "generate"],
+              "query": [
+                { "key": "report_date", "value": "2026-08-11", "description": "可选，默认今天" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "更新日报",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"report_date\": \"2026-08-11\",\n    \"completed_items\": {\"task1\": \"完成\"},\n    \"tomorrow_plan\": \"明天计划\",\n    \"risk_alert\": \"暂无风险\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/daily-reports/{{report_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "daily-reports", "{{report_id}}"]
+            }
+          }
+        },
+        {
+          "name": "确认日报",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"confirmed\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/daily-reports/{{report_id}}/confirm",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "daily-reports", "{{report_id}}", "confirm"]
+            }
+          }
+        },
+        {
+          "name": "周报列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/projects/{{project_id}}/weekly-reports",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "projects", "{{project_id}}", "weekly-reports"]
+            }
+          }
+        },
+        {
+          "name": "生成周报（异步）",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/projects/{{project_id}}/weekly-reports/generate?week_start_date=2026-08-11",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "projects", "{{project_id}}", "weekly-reports", "generate"],
+              "query": [
+                { "key": "week_start_date", "value": "2026-08-11", "description": "可选，默认本周一" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "更新周报",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"week_start_date\": \"2026-08-11\",\n    \"week_end_date\": \"2026-08-17\",\n    \"summary\": \"本周工作总结\",\n    \"next_week_plan\": \"下周计划\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/weekly-reports/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "weekly-reports", "1"]
+            }
+          }
+        },
+        {
+          "name": "确认周报",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/weekly-reports/1/confirm",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "weekly-reports", "1", "confirm"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "风险管理",
+      "description": "风险事件查询、AI 检测、解决。risk_level 取值: info | warning | critical。",
+      "item": [
+        {
+          "name": "风险汇总（未解决）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/risks/summary?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "risks", "summary"],
+              "query": [
+                { "key": "limit", "value": "10", "description": "1-50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "项目风险列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/risks/projects/{{project_id}}/risks?resolved=false",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "risks", "projects", "{{project_id}}", "risks"],
+              "query": [
+                { "key": "resolved", "value": "false", "description": "true | false | 不传=全部" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "AI 检测风险（异步）",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/risks/projects/{{project_id}}/risks/ai-detect",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "risks", "projects", "{{project_id}}", "risks", "ai-detect"]
+            }
+          }
+        },
+        {
+          "name": "解决风险",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"detail\": \"已处理\",\n    \"risk_level\": \"info\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/risks/risks/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "risks", "risks", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "经纪业务",
+      "description": "买卖经纪（调研/商务/合同）、修船经纪（报价/合同/移交）。",
+      "item": [
+        {
+          "name": "获取调研信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/surveys",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "surveys"]
+            }
+          }
+        },
+        {
+          "name": "创建调研信息",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"conclusion\": \"recommend\",\n    \"survey_detail\": \"船况良好，推荐购买\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/surveys",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "surveys"]
+            }
+          }
+        },
+        {
+          "name": "更新调研信息",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"conclusion\": \"pending\",\n    \"survey_detail\": \"更新后的调研\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/surveys",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "surveys"]
+            }
+          }
+        },
+        {
+          "name": "删除调研信息",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/surveys",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "surveys"]
+            }
+          }
+        },
+        {
+          "name": "获取商务信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/commercials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "commercials"]
+            }
+          }
+        },
+        {
+          "name": "创建商务信息",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"quote_amount\": 5000000,\n    \"commission_amount\": 50000,\n    \"payment_status\": \"unpaid\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/commercials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "commercials"]
+            }
+          }
+        },
+        {
+          "name": "更新商务信息",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"quote_amount\": 4800000,\n    \"commission_amount\": 48000,\n    \"payment_status\": \"paid\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/commercials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "commercials"]
+            }
+          }
+        },
+        {
+          "name": "获取合同信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/contracts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "contracts"]
+            }
+          }
+        },
+        {
+          "name": "上传 MOA 合同",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "合同 PDF 文件" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/contracts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "contracts"]
+            }
+          }
+        },
+        {
+          "name": "获取修船经纪信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/repair-brokerage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "repair-brokerage"]
+            }
+          }
+        },
+        {
+          "name": "创建修船经纪信息",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"shipyard_quote\": 2000000,\n    \"contract_file_key\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/repair-brokerage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "repair-brokerage"]
+            }
+          }
+        },
+        {
+          "name": "更新修船经纪信息",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"shipyard_quote\": 1800000,\n    \"contract_file_key\": \"contracts/repair.pdf\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/repair-brokerage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "repair-brokerage"]
+            }
+          }
+        },
+        {
+          "name": "修船经纪移交监修",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/brokerage/projects/{{project_id}}/repair-brokerage/1/handover",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "brokerage", "projects", "{{project_id}}", "repair-brokerage", "1", "handover"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "备件供应",
+      "description": "备件详情、照片、物流节点、HK 签收单、发票。node_type 取值: ordered | supplier_shipped | in_transit | arrived | warehoused | sent_to_owner | hk_signed | settled。",
+      "item": [
+        {
+          "name": "获取备件详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/spare-parts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "spare-parts"]
+            }
+          }
+        },
+        {
+          "name": "创建备件详情",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"item_name\": \"主机活塞环\",\n    \"model_or_drawing\": \"MD-100\",\n    \"quantity\": \"10\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/spare-parts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "spare-parts"]
+            }
+          }
+        },
+        {
+          "name": "更新备件详情",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"item_name\": \"主机活塞环（更新）\",\n    \"model_or_drawing\": \"MD-100A\",\n    \"quantity\": \"12\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/spare-parts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "spare-parts"]
+            }
+          }
+        },
+        {
+          "name": "删除备件详情",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/spare-parts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "spare-parts"]
+            }
+          }
+        },
+        {
+          "name": "上传备件照片",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "图片文件" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/spare-photos?photo_type=logo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "spare-photos"],
+              "query": [
+                { "key": "photo_type", "value": "logo", "description": "logo | loading" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "物流节点列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/logistics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "logistics"]
+            }
+          }
+        },
+        {
+          "name": "创建物流节点",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"node_type\": \"ordered\",\n    \"node_date\": \"2026-08-11\",\n    \"tracking_no\": \"SF1234567890\",\n    \"remark\": \"已下单\",\n    \"attachment_key\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/logistics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "logistics"]
+            }
+          }
+        },
+        {
+          "name": "更新物流节点",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"node_type\": \"arrived\",\n    \"node_date\": \"2026-08-15\",\n    \"tracking_no\": \"SF1234567890\",\n    \"remark\": \"已到达\",\n    \"attachment_key\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/logistics/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "logistics", "1"]
+            }
+          }
+        },
+        {
+          "name": "获取 HK 签收单",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/hk-signatures",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "hk-signatures"]
+            }
+          }
+        },
+        {
+          "name": "创建 HK 签收单",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"signature_file_key\": \"signatures/hk_001.pdf\",\n    \"signed_at\": \"2026-08-20\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/hk-signatures",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "hk-signatures"]
+            }
+          }
+        },
+        {
+          "name": "更新 HK 签收单",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"signature_file_key\": \"signatures/hk_002.pdf\",\n    \"signed_at\": \"2026-08-21\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/hk-signatures",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "hk-signatures"]
+            }
+          }
+        },
+        {
+          "name": "获取发票",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/invoices",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "invoices"]
+            }
+          }
+        },
+        {
+          "name": "创建发票",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"备件发票\",\n    \"tax_number\": \"SH12345678\",\n    \"amount\": 100000,\n    \"purpose\": \"用于出口退税\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/invoices",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "invoices"]
+            }
+          }
+        },
+        {
+          "name": "更新发票",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"备件发票（更新）\",\n    \"amount\": 120000,\n    \"purpose\": \"用于出口退税\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/spare-parts/projects/{{project_id}}/invoices",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "spare-parts", "projects", "{{project_id}}", "invoices"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "随手存",
+      "description": "快速记录文字/图片，AI 识别内容并推荐关联项目。",
+      "item": [
+        {
+          "name": "保存文字",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    if (data.save) pm.collectionVariables.set('save_id', data.save.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/quick-saves/text?text=今天在码头看到MV TEST船需要进坞检修",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "quick-saves", "text"],
+              "query": [
+                { "key": "text", "value": "今天在码头看到MV TEST船需要进坞检修" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "保存图片",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "图片文件" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/quick-saves/image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "quick-saves", "image"]
+            }
+          }
+        },
+        {
+          "name": "随手存列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/quick-saves?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "quick-saves"],
+              "query": [
+                { "key": "status", "value": "pending", "description": "pending | confirmed | deleted" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "更新随手存（确认关联项目）",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"confirmed_project_id\": 1,\n    \"status\": \"confirmed\",\n    \"recognized_text\": \"手动修正的识别文本\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/quick-saves/{{save_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "quick-saves", "{{save_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RAG 知识库",
+      "description": "文档上传（触发异步 ingest）、列表、查询。支持的文件类型: pdf | doc | docx | txt | md。",
+      "item": [
+        {
+          "name": "上传文档",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('doc_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "title", "value": "测试文档", "type": "text" },
+                { "key": "category", "value": "规则", "type": "text" },
+                { "key": "file", "type": "file", "src": [], "description": "pdf/doc/docx/txt/md" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/knowledge/documents",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "knowledge", "documents"]
+            }
+          }
+        },
+        {
+          "name": "文档列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/knowledge/documents?category=规则",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "knowledge", "documents"],
+              "query": [
+                { "key": "category", "value": "规则", "description": "可选分类筛选" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "获取文档详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/knowledge/documents/{{doc_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "knowledge", "documents", "{{doc_id}}"]
+            }
+          }
+        },
+        {
+          "name": "删除文档",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/knowledge/documents/{{doc_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "knowledge", "documents", "{{doc_id}}"]
+            }
+          }
+        },
+        {
+          "name": "知识库问答",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"进坞检修的标准流程是什么？\",\n    \"top_k\": 5,\n    \"category\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/knowledge/query",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "knowledge", "query"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "客户管理",
+      "description": "客户 CRUD。survey_conclusion 取值: recommend | pending | not_recommend。",
+      "item": [
+        {
+          "name": "客户列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers?name=&page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "customers"],
+              "query": [
+                { "key": "name", "value": null, "description": "名称模糊搜索" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "创建客户",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('customer_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"测试船务有限公司\",\n    \"contact_person\": \"张三\",\n    \"phone\": \"13800138000\",\n    \"survey_conclusion\": \"recommend\",\n    \"remarks\": \"优质客户\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "customers"]
+            }
+          }
+        },
+        {
+          "name": "获取客户详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers/{{customer_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "customers", "{{customer_id}}"]
+            }
+          }
+        },
+        {
+          "name": "更新客户",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"测试船务有限公司（更新）\",\n    \"contact_person\": \"李四\",\n    \"phone\": \"13900139000\",\n    \"survey_conclusion\": \"pending\",\n    \"remarks\": \"更新备注\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers/{{customer_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "customers", "{{customer_id}}"]
+            }
+          }
+        },
+        {
+          "name": "删除客户",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers/{{customer_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "customers", "{{customer_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "文件中心",
+      "description": "通用文件上传/下载/预览/删除。文件类型由文件名自动推断。",
+      "item": [
+        {
+          "name": "上传文件",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('文件上传成功:', pm.response.json().file_name);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "文件" },
+                { "key": "project_id", "value": "1", "type": "text", "description": "可选，关联项目" },
+                { "key": "file_type", "value": "document", "type": "text", "description": "可选，不传则自动推断" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/files/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "files", "upload"]
+            }
+          }
+        },
+        {
+          "name": "文件列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/files?project_id=1&file_type=document&page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "files"],
+              "query": [
+                { "key": "project_id", "value": "1", "description": "可选" },
+                { "key": "file_type", "value": "document", "description": "可选" },
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "下载文件",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/files/{{file_id}}/download",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "files", "{{file_id}}", "download"]
+            }
+          }
+        },
+        {
+          "name": "预览文件",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/files/{{file_id}}/preview",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "files", "{{file_id}}", "preview"]
+            }
+          }
+        },
+        {
+          "name": "删除文件",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/files/{{file_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "files", "{{file_id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

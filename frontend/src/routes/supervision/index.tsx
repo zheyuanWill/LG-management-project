@@ -1,15 +1,12 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from '@tanstack/react-router'
 import { Plus, Search, Ship, Calendar } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import ProjectCard from '@/components/project/ProjectCard'
 import ProjectForm from '@/components/project/ProjectForm'
 import { useApiGet } from '@/hooks/useApi'
 import type { Project } from '@/types'
-import { formatDate } from '@/lib/utils'
 
 const statusFilters = [
   { value: 'all', label: '全部' },

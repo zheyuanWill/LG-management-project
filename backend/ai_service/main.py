@@ -21,7 +21,6 @@ from schemas import (
 )
 from llm import LLMClient
 from embedding import EmbeddingService
-from ocr_service import OCRService
 from prompts import RAG_QA_PROMPT
 
 
@@ -30,7 +29,12 @@ async def lifespan(app: FastAPI):
     settings.validate()
     llm_client = LLMClient()
     embedding_svc = EmbeddingService()
-    ocr_svc = OCRService()
+    ocr_svc = None
+    if settings.OCR_ENABLED:
+        from ocr_service import OCRService
+        ocr_svc = OCRService()
+    else:
+        logger.info("OCR 已禁用 (OCR_ENABLED=false)，跳过 PaddleOCR 初始化")
 
     app.state.llm = llm_client
     app.state.embedding = embedding_svc
@@ -110,8 +114,10 @@ async def chat(request: ChatRequest):
 
 @app.post("/v1/embed", response_model=EmbedResponse)
 async def embed(request: EmbedRequest):
+    embedding_svc: EmbeddingService = app.state.embedding
+    if embedding_svc.disabled:
+        raise HTTPException(status_code=503, detail="向量化服务未启用（embedding 依赖未安装）")
     try:
-        embedding_svc: EmbeddingService = app.state.embedding
         embeddings = embedding_svc.embed_batch(request.texts)
         return EmbedResponse(
             embeddings=embeddings,
@@ -124,8 +130,10 @@ async def embed(request: EmbedRequest):
 
 @app.post("/v1/ocr", response_model=OCRResponse)
 async def ocr(request: OCRRequest):
+    if not settings.OCR_ENABLED or app.state.ocr is None:
+        raise HTTPException(status_code=503, detail="OCR 服务未启用 (OCR_ENABLED=false)")
     try:
-        ocr_svc: OCRService = app.state.ocr
+        ocr_svc = app.state.ocr
         image_bytes = base64.b64decode(request.image_base64)
         text = ocr_svc.recognize_image(image_bytes)
         return OCRResponse(text=text)

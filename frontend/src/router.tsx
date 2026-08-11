@@ -20,7 +20,6 @@ import QuickSavePage from '@/routes/quick-save'
 import KnowledgePage from '@/routes/knowledge'
 import CustomersPage from '@/routes/customers'
 import FilesPage from '@/routes/files'
-import NewProjectPage from '@/routes/new-project'
 
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -51,20 +50,16 @@ const supervisionRoute = createRoute({
 })
 
 const supervisionDetailRoute = createRoute({
-  getParentRoute: () => supervisionRoute,
-  path: '$id',
+  getParentRoute: () => rootRoute,
+  path: '/supervision/$id',
   component: SupervisionDetail,
 })
 
 const dailyReportRoute = createRoute({
-  getParentRoute: () => supervisionDetailRoute,
-  path: 'daily/$date',
+  getParentRoute: () => rootRoute,
+  path: '/supervision/$id/daily/$date',
   component: DailyReportPage,
 })
-
-supervisionRoute.addChildren([
-  supervisionDetailRoute.addChildren([dailyReportRoute]),
-])
 
 const brokerageSaleRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -73,12 +68,10 @@ const brokerageSaleRoute = createRoute({
 })
 
 const brokerageSaleDetailRoute = createRoute({
-  getParentRoute: () => brokerageSaleRoute,
-  path: '$id',
+  getParentRoute: () => rootRoute,
+  path: '/brokerage-sale/$id',
   component: BrokerageSaleDetail,
 })
-
-brokerageSaleRoute.addChildren([brokerageSaleDetailRoute])
 
 const brokerageRepairRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -87,12 +80,10 @@ const brokerageRepairRoute = createRoute({
 })
 
 const brokerageRepairDetailRoute = createRoute({
-  getParentRoute: () => brokerageRepairRoute,
-  path: '$id',
+  getParentRoute: () => rootRoute,
+  path: '/brokerage-repair/$id',
   component: BrokerageRepairDetail,
 })
-
-brokerageRepairRoute.addChildren([brokerageRepairDetailRoute])
 
 const sparePartsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -101,12 +92,10 @@ const sparePartsRoute = createRoute({
 })
 
 const sparePartsDetailRoute = createRoute({
-  getParentRoute: () => sparePartsRoute,
-  path: '$id',
+  getParentRoute: () => rootRoute,
+  path: '/spare-parts/$id',
   component: SparePartsDetail,
 })
-
-sparePartsRoute.addChildren([sparePartsDetailRoute])
 
 const quickSaveRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -132,28 +121,23 @@ const filesRoute = createRoute({
   component: FilesPage,
 })
 
-const newProjectRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/projects/new',
-  component: NewProjectPage,
-  validateSearch: (search: Record<string, unknown>) => ({
-    type: (search.type as string) || 'supervision',
-  }),
-})
-
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   dashboardRoute,
   supervisionRoute,
+  supervisionDetailRoute,
+  dailyReportRoute,
   brokerageSaleRoute,
+  brokerageSaleDetailRoute,
   brokerageRepairRoute,
+  brokerageRepairDetailRoute,
   sparePartsRoute,
+  sparePartsDetailRoute,
   quickSaveRoute,
   knowledgeRoute,
   customersRoute,
   filesRoute,
-  newProjectRoute,
 ])
 
 export const router = createRouter({
