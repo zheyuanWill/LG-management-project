@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { ClipboardPaste, Wand2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { toast } from '@/components/ui/Toast'
 
 interface TextPasterProps {
-  onRecognize: (text: string) => void
+  onRecognize: (text: string) => Promise<void>
 }
 
 export default function TextPaster({ onRecognize }: TextPasterProps) {
@@ -17,18 +18,20 @@ export default function TextPaster({ onRecognize }: TextPasterProps) {
         setText(clipboardText)
       }
     } catch {
-      alert('无法访问剪贴板,请手动粘贴')
+      toast.warning({ title: '无法访问剪贴板', description: '请手动粘贴内容', duration: 4000 })
     }
   }
 
   const handleRecognize = async () => {
     if (!text.trim()) {
-      alert('请输入或粘贴内容')
+      toast.warning({ title: '请输入或粘贴内容', duration: 4000 })
       return
     }
     setIsRecognizing(true)
     try {
       await onRecognize(text)
+    } catch {
+      // error toast is handled by the parent; keep state consistent
     } finally {
       setIsRecognizing(false)
     }

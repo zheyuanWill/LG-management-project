@@ -4,18 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select, type SelectOption } from '@/components/ui/Select'
-import { useApiGet, useApiPatch } from '@/hooks/useApi'
+import { useApiGet, useApiPost, useApiPatch } from '@/hooks/useApi'
 import { formatCurrency } from '@/lib/utils'
 
 const paymentStatusOptions: SelectOption[] = [
-  { value: 'pending', label: '未到账' },
-  { value: 'received', label: '已到账' },
+  { value: 'unpaid', label: '未到账' },
+  { value: 'paid', label: '已到账' },
 ]
 
 interface CommercialData {
+  id?: number
   quote_amount: number | null
   commission_amount: number | null
   payment_status: string
+  created_at?: string
 }
 
 interface CommercialFormProps {
@@ -24,31 +26,39 @@ interface CommercialFormProps {
 
 export default function CommercialForm({ projectId }: CommercialFormProps) {
   const { data: commercial, isLoading } = useApiGet<CommercialData>(
-    `/projects/${projectId}/commercial`
+    `/projects/${projectId}/commercials`,
+    { retry: false }
   )
-  const patchCommercial = useApiPatch<CommercialData>(`/projects/${projectId}/commercial`)
+  const exists = !!commercial
+  const postCommercial = useApiPost<CommercialData>(`/projects/${projectId}/commercials`)
+  const patchCommercial = useApiPatch<CommercialData>(`/projects/${projectId}/commercials`)
 
   const [quoteAmount, setQuoteAmount] = useState('')
   const [commissionAmount, setCommissionAmount] = useState('')
-  const [paymentStatus, setPaymentStatus] = useState('pending')
+  const [paymentStatus, setPaymentStatus] = useState('unpaid')
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     if (commercial) {
       setQuoteAmount(commercial.quote_amount?.toString() || '')
       setCommissionAmount(commercial.commission_amount?.toString() || '')
-      setPaymentStatus(commercial.payment_status || 'pending')
+      setPaymentStatus(commercial.payment_status || 'unpaid')
     }
   }, [commercial])
 
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await patchCommercial.mutateAsync({
+      const payload = {
         quote_amount: quoteAmount ? parseFloat(quoteAmount) : null,
         commission_amount: commissionAmount ? parseFloat(commissionAmount) : null,
         payment_status: paymentStatus,
-      })
+      }
+      if (exists) {
+        await patchCommercial.mutateAsync(payload)
+      } else {
+        await postCommercial.mutateAsync(payload)
+      }
     } finally {
       setIsSaving(false)
     }
@@ -102,10 +112,15 @@ export default function CommercialForm({ projectId }: CommercialFormProps) {
                 options={paymentStatusOptions}
               />
             </div>
+            {exists && commercial?.created_at && (
+              <p className="text-xs text-muted-foreground">
+                已保存 · 创建时间: {new Date(commercial.created_at).toLocaleString()}
+              </p>
+            )}
             <div className="flex justify-end">
               <Button onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                保存
+                {exists ? '更新' : '创建'}
               </Button>
             </div>
           </>

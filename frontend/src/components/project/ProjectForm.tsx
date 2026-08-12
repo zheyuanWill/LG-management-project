@@ -9,6 +9,7 @@ import { useApiPost, useApiPatch } from '@/hooks/useApi'
 import { useApiGet } from '@/hooks/useApi'
 import { toast } from '@/components/ui/Toast'
 import type { Project, Customer } from '@/types'
+import CustomerForm from '@/components/customer/CustomerForm'
 
 interface ProjectFormProps {
   open: boolean
@@ -31,8 +32,10 @@ export default function ProjectForm({
   const [plannedEndDate, setPlannedEndDate] = useState('')
   const [description, setDescription] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showOwnerDialog, setShowOwnerDialog] = useState(false)
 
   const { data: customers } = useApiGet<Customer[]>('/customers')
+  const { data: shipNames } = useApiGet<string[]>('/projects/ship-names')
 
   const createMutation = useApiPost<Project>('/projects')
   const updateMutation = useApiPatch<Project>(
@@ -53,7 +56,17 @@ export default function ProjectForm({
   const customerOptions = [
     { value: '', label: '选择船东...' },
     ...(customers?.map((c) => ({ value: c.id, label: c.name })) || []),
+    { value: '__new_owner__', label: '＋ 新增船东' },
   ]
+
+  const handleOwnerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const v = e.target.value
+    if (v === '__new_owner__') {
+      setShowOwnerDialog(true)
+      return
+    }
+    setCustomerId(v)
+  }
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -111,8 +124,14 @@ export default function ProjectForm({
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="输入船名"
+            placeholder="输入或选择船名"
+            list="project-ship-name-list"
           />
+          <datalist id="project-ship-name-list">
+            {shipNames?.map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
           {errors.name && (
             <p className="text-sm text-destructive">{errors.name}</p>
           )}
@@ -131,7 +150,7 @@ export default function ProjectForm({
           <label className="text-sm font-medium">船东</label>
           <Select
             value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
+            onChange={handleOwnerChange}
             options={customerOptions}
           />
         </div>
@@ -175,6 +194,16 @@ export default function ProjectForm({
           </Button>
         </DialogFooter>
       </form>
+
+      {showOwnerDialog && (
+        <CustomerForm
+          customer={null}
+          onClose={(c) => {
+            if (c) setCustomerId(String(c.id))
+            setShowOwnerDialog(false)
+          }}
+        />
+      )}
     </Dialog>
   )
 }

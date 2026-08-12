@@ -23,7 +23,7 @@ export default function DailyReportList({
   const [showFilters, setShowFilters] = useState(false)
 
   const generateMutation = useApiPost<DailyReport>(
-    `/projects/${projectId}/daily-reports/generate`
+    `/reports/projects/${projectId}/daily-reports/generate`
   )
 
   const sortedReports = useMemo(() => {

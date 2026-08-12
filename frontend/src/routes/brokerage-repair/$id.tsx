@@ -50,7 +50,7 @@ export default function BrokerageRepairDetail() {
               </div>
               <div>
                 <span className="text-muted-foreground">船东</span>
-                <p className="font-medium">{project.owner_name || '-'}</p>
+                <p className="font-medium">{project.owner_name || '未设置'}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">状态</span>

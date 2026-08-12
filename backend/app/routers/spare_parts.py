@@ -260,6 +260,32 @@ async def update_logistics_node(
     return LogisticsNodeResponse.model_validate(node)
 
 
+@router.delete(
+    "/projects/{project_id}/logistics/{node_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_logistics_node(
+    project_id: int,
+    node_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(LogisticsNode).where(
+            LogisticsNode.id == node_id,
+            LogisticsNode.project_id == project_id,
+        )
+    )
+    node = result.scalar_one_or_none()
+    if node is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="物流节点不存在"
+        )
+
+    await db.delete(node)
+    await db.flush()
+
+
 @router.get(
     "/projects/{project_id}/hk-signatures",
     response_model=HkSignatureResponse,

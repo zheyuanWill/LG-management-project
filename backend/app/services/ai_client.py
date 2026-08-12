@@ -41,19 +41,6 @@ class AIClient:
             logger.error(f"AI embed request failed: {e}")
             return []
 
-    async def ocr(self, image_bytes: bytes) -> str:
-        url = f"{self.base_url}/v1/ocr"
-        try:
-            files = {"image": ("image.jpg", image_bytes, "image/jpeg")}
-            response = await self._client.post(url, files=files)
-            response.raise_for_status()
-            data = response.json()
-            logger.info("OCR request completed")
-            return data.get("text", "")
-        except httpx.HTTPError as e:
-            logger.error(f"AI OCR request failed: {e}")
-            return ""
-
     async def qa(self, question: str, context_chunks: list[str]) -> dict[str, Any]:
         url = f"{self.base_url}/v1/qa"
         payload = {

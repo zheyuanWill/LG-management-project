@@ -14,7 +14,7 @@ const conclusionOptions: SelectOption[] = [
 
 interface SurveyData {
   conclusion: string
-  details: string
+  survey_detail: string
 }
 
 interface SurveyFormProps {
@@ -23,9 +23,9 @@ interface SurveyFormProps {
 
 export default function SurveyForm({ projectId }: SurveyFormProps) {
   const { data: survey, isLoading } = useApiGet<SurveyData>(
-    `/projects/${projectId}/survey`
+    `/projects/${projectId}/surveys`
   )
-  const patchSurvey = useApiPatch<SurveyData>(`/projects/${projectId}/survey`)
+  const patchSurvey = useApiPatch<SurveyData>(`/projects/${projectId}/surveys`)
 
   const [conclusion, setConclusion] = useState('')
   const [details, setDetails] = useState('')
@@ -34,14 +34,14 @@ export default function SurveyForm({ projectId }: SurveyFormProps) {
   useEffect(() => {
     if (survey) {
       setConclusion(survey.conclusion || '')
-      setDetails(survey.details || '')
+      setDetails(survey.survey_detail || '')
     }
   }, [survey])
 
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await patchSurvey.mutateAsync({ conclusion, details })
+      await patchSurvey.mutateAsync({ conclusion, survey_detail: details })
     } finally {
       setIsSaving(false)
     }

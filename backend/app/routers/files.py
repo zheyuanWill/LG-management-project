@@ -47,6 +47,7 @@ async def upload_file(
     )
 
     return FileUploadResponse(
+        id=file_record.id,
         file_name=file_record.file_name,
         file_type=file_record.file_type,
         storage_key=file_record.storage_key,

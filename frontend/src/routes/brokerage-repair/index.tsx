@@ -124,7 +124,7 @@ export default function BrokerageRepairIndex() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">船东</span>
-                    <span>{project.owner_name || '-'}</span>
+                    <span className={project.owner_name ? '' : 'text-muted-foreground/50'}>{project.owner_name || '未设置'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">修船金额</span>

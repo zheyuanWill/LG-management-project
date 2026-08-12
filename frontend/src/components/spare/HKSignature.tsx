@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
-import { Upload, Calendar, Save, Loader2, FileText, Trash2, ExternalLink } from 'lucide-react'
+import { Upload, Calendar, Save, Loader2, FileText, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { useApiGet, useApiPost, useApiPatch, useApiDelete } from '@/hooks/useApi'
+import { useApiGet, useApiPost, useApiPatch } from '@/hooks/useApi'
 import { formatDate } from '@/lib/utils'
+import apiClient from '@/lib/api'
 
 interface SignatureData {
-  id?: string
-  file_url?: string
-  file_name?: string
-  sign_date?: string
+  id: number
+  project_id: number
+  signature_file_key: string | null
+  signed_at: string | null
+  created_at: string
 }
 
 interface HKSignatureProps {
@@ -19,19 +21,22 @@ interface HKSignatureProps {
 
 export default function HKSignature({ projectId }: HKSignatureProps) {
   const { data: signature, isLoading } = useApiGet<SignatureData>(
-    `/projects/${projectId}/hk-signature`
+    `/projects/${projectId}/hk-signatures`,
+    { retry: false }
   )
-  const uploadMutation = useApiPost<SignatureData>(`/projects/${projectId}/hk-signature`)
-  const patchMutation = useApiPatch<SignatureData>(`/projects/${projectId}/hk-signature`)
-  const deleteMutation = useApiDelete<void>(`/projects/${projectId}/hk-signature`)
+  const exists = !!signature
+  const postMutation = useApiPost<SignatureData>(`/projects/${projectId}/hk-signatures`)
+  const patchMutation = useApiPatch<SignatureData>(`/projects/${projectId}/hk-signatures`)
 
   const [signDate, setSignDate] = useState('')
+  const [fileKey, setFileKey] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     if (signature) {
-      setSignDate(signature.sign_date || '')
+      setSignDate(signature.signed_at || '')
+      setFileKey(signature.signature_file_key || null)
     }
   }, [signature])
 
@@ -44,8 +49,9 @@ export default function HKSignature({ projectId }: HKSignatureProps) {
       const file = files[0]
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('sign_date', signDate || new Date().toISOString().split('T')[0])
-      await uploadMutation.mutateAsync(formData as unknown as Record<string, unknown>)
+      formData.append('project_id', projectId)
+      const res = await apiClient.post<{ storage_key: string }>('/files/upload', formData)
+      setFileKey(res.data.storage_key)
     } finally {
       setIsUploading(false)
       e.target.value = ''
@@ -55,16 +61,16 @@ export default function HKSignature({ projectId }: HKSignatureProps) {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await patchMutation.mutateAsync({ sign_date: signDate })
+      const payload: { signature_file_key?: string; signed_at?: string } = {}
+      if (fileKey) payload.signature_file_key = fileKey
+      payload.signed_at = signDate || new Date().toISOString().split('T')[0]
+      if (exists) {
+        await patchMutation.mutateAsync(payload)
+      } else {
+        await postMutation.mutateAsync(payload)
+      }
     } finally {
       setIsSaving(false)
-    }
-  }
-
-  const handleDelete = () => {
-    if (confirm('确定删除签收单?')) {
-      deleteMutation.mutate('')
-      setSignDate('')
     }
   }
 
@@ -93,34 +99,28 @@ export default function HKSignature({ projectId }: HKSignatureProps) {
                     onChange={handleFileSelect}
                     disabled={isUploading}
                   />
-                  <Button variant="outline" asChild>
-                    <span className="flex items-center gap-2">
-                      <Upload className="h-4 w-4" />
-                      {isUploading ? '上传中...' : '上传签收单'}
-                    </span>
+                  <Button variant="outline">
+                    <Upload className="h-4 w-4" />
+                    {isUploading ? '上传中...' : '上传签收单'}
                   </Button>
                 </label>
+                {fileKey && (
+                  <p className="text-xs text-muted-foreground break-all font-mono">
+                    已选择文件: {fileKey}
+                  </p>
+                )}
               </div>
             </div>
 
-            {signature?.file_url && (
-              <div className="rounded-lg border p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-sm">{signature.file_name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={signature.file_url} target="_blank" rel="noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={handleDelete} disabled={deleteMutation.isPending}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
+            {signature?.signature_file_key && (
+              <div className="rounded-lg border p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <span className="font-medium text-sm">签收单已上传</span>
                 </div>
+                <p className="text-xs text-muted-foreground break-all font-mono">
+                  存储键: {signature.signature_file_key}
+                </p>
               </div>
             )}
 
@@ -144,7 +144,7 @@ export default function HKSignature({ projectId }: HKSignatureProps) {
             <div className="flex justify-end">
               <Button onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                保存签收日期
+                {exists ? '更新' : '保存'}
               </Button>
             </div>
           </>

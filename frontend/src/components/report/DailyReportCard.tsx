@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import type { DailyReport, DailyReportItem } from '@/types'
 import { formatDate } from '@/lib/utils'
 import ReportEditor from './ReportEditor'
-import { useApiPatch } from '@/hooks/useApi'
+import { useApiPost } from '@/hooks/useApi'
 import { toast } from '@/components/ui/Toast'
 
 interface DailyReportCardProps {
@@ -18,7 +18,7 @@ interface DailyReportCardProps {
 export default function DailyReportCard({ report, onUpdate }: DailyReportCardProps) {
   const [showEditor, setShowEditor] = useState(false)
 
-  const confirmMutation = useApiPatch<void>(`/daily-reports/${report.id}`)
+  const confirmMutation = useApiPost<void>(`/daily-reports/${report.id}/confirm`)
 
   const handleSave = (_values: Record<string, string>) => {
     toast.success({ title: '保存成功' })
@@ -46,9 +46,9 @@ export default function DailyReportCard({ report, onUpdate }: DailyReportCardPro
             <Calendar className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <h3 className="font-semibold">{formatDate(report.date)}</h3>
+            <h3 className="font-semibold">{formatDate(report.report_date)}</h3>
             <p className="text-xs text-muted-foreground">
-              完成 {report.completed_tasks} 项任务 · 进度 {report.progress_total}%
+              完成 {completedItems.length} 项任务
             </p>
           </div>
         </div>
@@ -108,14 +108,14 @@ export default function DailyReportCard({ report, onUpdate }: DailyReportCardPro
               </div>
             )}
 
-            {report.risk_reminders && (
+            {report.risk_alert && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <AlertTriangle className="h-4 w-4 text-accent" />
                   风险提醒
                 </div>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {report.risk_reminders}
+                  {report.risk_alert}
                 </p>
               </div>
             )}
@@ -155,9 +155,9 @@ export default function DailyReportCard({ report, onUpdate }: DailyReportCardPro
                 placeholder: '输入明日计划...',
               },
               {
-                name: 'risk_reminders',
+                name: 'risk_alert',
                 label: '风险提醒',
-                value: report.risk_reminders || '',
+                value: report.risk_alert || '',
                 placeholder: '输入风险提醒...',
               },
             ]}

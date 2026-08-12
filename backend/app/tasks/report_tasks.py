@@ -1,8 +1,8 @@
-import asyncio
 from datetime import date
 
 from loguru import logger
 
+from app.async_utils import run_async
 from app.celery_app import celery_app
 
 
@@ -60,14 +60,7 @@ def generate_daily_report_task(project_id: int, report_date_str: str) -> dict:
                 raise
 
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                future = pool.submit(asyncio.run, _run())
-                return future.result()
-        else:
-            return asyncio.run(_run())
+        return run_async(_run())
     except Exception as e:
         logger.error(f"Daily report generation failed: {e}")
         return {"status": "failed", "error": str(e)}
@@ -128,14 +121,7 @@ def generate_weekly_report_task(project_id: int, week_start_str: str) -> dict:
                 raise
 
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                future = pool.submit(asyncio.run, _run())
-                return future.result()
-        else:
-            return asyncio.run(_run())
+        return run_async(_run())
     except Exception as e:
         logger.error(f"Weekly report generation failed: {e}")
         return {"status": "failed", "error": str(e)}

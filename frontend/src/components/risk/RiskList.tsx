@@ -17,20 +17,20 @@ export default function RiskList({ risks, projectId }: RiskListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [analyzingAll, setAnalyzingAll] = useState(false)
 
-  const batchAnalyze = useApiPost<{ results: Record<string, string> }>(
-    `/projects/${projectId}/risks/batch-analyze`
+  const batchAnalyze = useApiPost<{ task_id: string; project_id: number; status: string }>(
+    `/risks/projects/${projectId}/risks/ai-detect`
   )
 
   const handleBatchAnalyze = async () => {
     setAnalyzingAll(true)
     try {
-      const result = await batchAnalyze.mutateAsync({})
+      await batchAnalyze.mutateAsync({})
       toast.success({
-        title: '批量分析完成',
-        description: `已分析 ${Object.keys(result.results).length} 个风险项`,
+        title: '已提交风险检测',
+        description: '规则引擎正在分析项目数据,请稍后刷新查看结果',
       })
     } catch {
-      toast.error({ title: '批量分析失败', description: '请稍后重试' })
+      toast.error({ title: '提交失败', description: '请稍后重试' })
     } finally {
       setAnalyzingAll(false)
     }
@@ -65,7 +65,7 @@ export default function RiskList({ risks, projectId }: RiskListProps) {
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              AI 检测
+              自动检测风险
             </>
           )}
         </button>
@@ -106,21 +106,21 @@ export default function RiskList({ risks, projectId }: RiskListProps) {
                   <td className="p-4">
                     <div className="font-medium">{risk.title}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
-                      {risk.message}
+                      {risk.detail}
                     </div>
                   </td>
                   <td className="p-4">
                     <span
                       className={cn(
                         'inline-flex h-5 items-center rounded px-2 text-xs font-medium',
-                        risk.level === 'critical'
+                        risk.risk_level === 'critical'
                           ? 'bg-destructive text-destructive-foreground'
-                          : risk.level === 'warning'
+                          : risk.risk_level === 'warning'
                             ? 'bg-accent text-accent-foreground'
                             : 'bg-surface text-foreground'
                       )}
                     >
-                      {RISK_LEVEL_LABELS[risk.level]}
+                      {RISK_LEVEL_LABELS[risk.risk_level]}
                     </span>
                   </td>
                   <td className="p-4 text-muted-foreground">

@@ -120,11 +120,11 @@ export default function SparePartsIndex() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">船名</span>
-                    <span>{project.ship_name || '-'}</span>
+                    <span className={project.ship_name ? '' : 'text-muted-foreground/50'}>{project.ship_name || '未设置'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">船东</span>
-                    <span>{project.owner_name || '-'}</span>
+                    <span className={project.owner_name ? '' : 'text-muted-foreground/50'}>{project.owner_name || '未设置'}</span>
                   </div>
                   <div className="flex items-center justify-end pt-2 text-primary text-sm font-medium">
                     查看详情 <ChevronRight className="h-4 w-4" />

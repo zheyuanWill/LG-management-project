@@ -18,10 +18,10 @@ export default function SupervisionDetail() {
   const [, setDataVersion] = useState(0)
 
   const { data: project, isLoading } = useApiGet<any>(`/projects/${id}`)
-  const { data: tasks } = useApiGet<any[]>(`/projects/${id}/tasks`)
-  const { data: dailyReports } = useApiGet<any[]>(`/projects/${id}/daily-reports`)
-  const { data: weeklyReports } = useApiGet<any[]>(`/projects/${id}/weekly-reports`)
-  const { data: risks } = useApiGet<any[]>(`/projects/${id}/risks`)
+  const { data: tasks } = useApiGet<any[]>(`/tasks/projects/${id}/tasks`)
+  const { data: dailyReports } = useApiGet<any[]>(`/reports/projects/${id}/daily-reports`)
+  const { data: weeklyReports } = useApiGet<any[]>(`/reports/projects/${id}/weekly-reports`)
+  const { data: risks } = useApiGet<any[]>(`/risks/projects/${id}/risks`)
 
   const handleDataChange = () => {
     setDataVersion((v) => v + 1)
@@ -97,12 +97,12 @@ export default function SupervisionDetail() {
           <CardContent className="p-5 space-y-3">
             <div>
               <p className="text-xs text-muted-foreground">船东</p>
-              <p className="text-sm font-medium">{project.owner_name || '-'}</p>
+              <p className="text-sm font-medium">{project.owner_name || '未设置'}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">计划完工</p>
               <p className="text-sm font-medium">
-                {project.planned_completion_date ? formatDate(project.planned_completion_date) : '-'}
+                {project.planned_completion_date ? formatDate(project.planned_completion_date) : '未设置'}
               </p>
             </div>
             <div>
@@ -115,7 +115,7 @@ export default function SupervisionDetail() {
           <CardContent className="p-5 space-y-3">
             <div>
               <p className="text-xs text-muted-foreground">备注</p>
-              <p className="text-sm font-medium">{project.remarks || '-'}</p>
+              <p className="text-sm font-medium">{project.remarks || '无'}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">任务数</p>

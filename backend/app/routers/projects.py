@@ -3,12 +3,14 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.dependencies import get_current_user, get_db
 from app.models.project import Project, ProjectStatus, ProjectType
 from app.models.user import User
 from app.schemas.project import (
     ProjectCreate,
+    ProjectDetailResponse,
     ProjectListResponse,
     ProjectResponse,
     ProjectUpdate,
@@ -16,6 +18,32 @@ from app.schemas.project import (
 from app.services.project_service import generate_project_number, get_project_stats
 
 router = APIRouter()
+
+_RISK_LEVEL_LABEL = {"critical": "高", "warning": "中", "info": "低"}
+
+
+def _enrich_project(project: Project) -> ProjectDetailResponse:
+    resp = ProjectDetailResponse.model_validate(project)
+    owner = project.owner
+    resp.customer_name = owner.name if owner else None
+    resp.customer_phone = owner.phone if owner else None
+
+    open_risks = [r for r in project.risk_events if not r.resolved]
+    if open_risks:
+        counts = {}
+        for r in open_risks:
+            label = _RISK_LEVEL_LABEL.get(r.risk_level, r.risk_level)
+            counts[label] = counts.get(label, 0) + 1
+        summary = "风险 %d 项" % len(open_risks)
+        parts = ["%s%d" % (lv, n) for lv, n in counts.items()]
+        if parts:
+            summary += "（" + "·".join(parts) + "）"
+        resp.risk_summary = summary
+    else:
+        resp.risk_summary = "暂无风险提醒"
+
+    resp.has_unconfirmed_report = any(not d.confirmed for d in project.daily_reports)
+    return resp
 
 
 @router.get("", response_model=ProjectListResponse)
@@ -28,7 +56,11 @@ async def list_projects(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
-    query = select(Project)
+    query = select(Project).options(
+        selectinload(Project.owner),
+        selectinload(Project.risk_events),
+        selectinload(Project.daily_reports),
+    )
 
     if type:
         query = query.where(Project.type == type)
@@ -47,7 +79,7 @@ async def list_projects(
     items = result.scalars().all()
 
     return ProjectListResponse(
-        items=[ProjectResponse.model_validate(p) for p in items],
+        items=[_enrich_project(p) for p in items],
         total=total,
     )
 
@@ -76,21 +108,41 @@ async def create_project(
     return ProjectResponse.model_validate(project)
 
 
-@router.get("/{project_id}", response_model=ProjectResponse)
+@router.get("/ship-names", response_model=list[str])
+async def list_ship_names(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    """返回所有已使用过的去重船名, 供前端船名下拉/自动补全使用。"""
+    result = await db.execute(
+        select(Project.ship_name)
+        .where(Project.ship_name.isnot(None), Project.ship_name != "")
+        .distinct()
+        .order_by(Project.ship_name)
+    )
+    return [row[0] for row in result.all() if row[0]]
+
+
+@router.get("/{project_id}", response_model=ProjectDetailResponse)
 async def get_project(
     project_id: int,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(Project).where(Project.id == project_id)
+        select(Project)
+        .options(
+            selectinload(Project.owner),
+            selectinload(Project.risk_events),
+            selectinload(Project.daily_reports),
+        )
+        .where(Project.id == project_id)
     )
     project = result.scalar_one_or_none()
     if project is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
 
-    response = ProjectResponse.model_validate(project)
-    return response
+    return _enrich_project(project)
 
 
 @router.get("/{project_id}/stats")
@@ -100,13 +152,19 @@ async def get_project_detail(
     _: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(Project).where(Project.id == project_id)
+        select(Project)
+        .options(
+            selectinload(Project.owner),
+            selectinload(Project.risk_events),
+            selectinload(Project.daily_reports),
+        )
+        .where(Project.id == project_id)
     )
     project = result.scalar_one_or_none()
     if project is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
 
-    base = ProjectResponse.model_validate(project)
+    base = _enrich_project(project)
     stats = await get_project_stats(db, project_id)
     return {
         **base.model_dump(),

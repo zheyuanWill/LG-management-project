@@ -1,4 +1,3 @@
-import base64
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -12,8 +11,6 @@ from schemas import (
     ChatResponse,
     EmbedRequest,
     EmbedResponse,
-    OCRRequest,
-    OCRResponse,
     QARequest,
     QAResponse,
     Citation,
@@ -29,16 +26,9 @@ async def lifespan(app: FastAPI):
     settings.validate()
     llm_client = LLMClient()
     embedding_svc = EmbeddingService()
-    ocr_svc = None
-    if settings.OCR_ENABLED:
-        from ocr_service import OCRService
-        ocr_svc = OCRService()
-    else:
-        logger.info("OCR 已禁用 (OCR_ENABLED=false)，跳过 PaddleOCR 初始化")
 
     app.state.llm = llm_client
     app.state.embedding = embedding_svc
-    app.state.ocr = ocr_svc
 
     logger.info(f"AI 推理服务已启动: http://{settings.API_HOST}:{settings.API_PORT}")
     try:
@@ -50,7 +40,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="AI 推理服务",
-    description="独立的 AI 推理服务，提供对话、向量化、OCR 和 RAG 问答能力",
+    description="独立的 AI 推理服务，提供对话、向量化和 RAG 问答能力",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -126,20 +116,6 @@ async def embed(request: EmbedRequest):
     except Exception as e:
         logger.error(f"Embed 接口调用失败: {e}")
         raise HTTPException(status_code=500, detail=f"向量化失败: {str(e)}")
-
-
-@app.post("/v1/ocr", response_model=OCRResponse)
-async def ocr(request: OCRRequest):
-    if not settings.OCR_ENABLED or app.state.ocr is None:
-        raise HTTPException(status_code=503, detail="OCR 服务未启用 (OCR_ENABLED=false)")
-    try:
-        ocr_svc = app.state.ocr
-        image_bytes = base64.b64decode(request.image_base64)
-        text = ocr_svc.recognize_image(image_bytes)
-        return OCRResponse(text=text)
-    except Exception as e:
-        logger.error(f"OCR 接口调用失败: {e}")
-        raise HTTPException(status_code=500, detail=f"OCR 识别失败: {str(e)}")
 
 
 @app.post("/v1/qa", response_model=QAResponse)

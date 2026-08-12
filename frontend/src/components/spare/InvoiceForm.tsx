@@ -7,7 +7,7 @@ import { useApiGet, useApiPatch } from '@/hooks/useApi'
 
 interface InvoiceData {
   title: string
-  tax_no: string
+  tax_number: string
   amount: number | null
   purpose: string
 }
@@ -24,9 +24,9 @@ const purposeOptions = [
 
 export default function InvoiceForm({ projectId }: InvoiceFormProps) {
   const { data: invoice, isLoading } = useApiGet<InvoiceData>(
-    `/projects/${projectId}/invoice`
+    `/projects/${projectId}/invoices`
   )
-  const patchInvoice = useApiPatch<InvoiceData>(`/projects/${projectId}/invoice`)
+  const patchInvoice = useApiPatch<InvoiceData>(`/projects/${projectId}/invoices`)
 
   const [title, setTitle] = useState('')
   const [taxNo, setTaxNo] = useState('')
@@ -37,7 +37,7 @@ export default function InvoiceForm({ projectId }: InvoiceFormProps) {
   useEffect(() => {
     if (invoice) {
       setTitle(invoice.title || '')
-      setTaxNo(invoice.tax_no || '')
+      setTaxNo(invoice.tax_number || '')
       setAmount(invoice.amount?.toString() || '')
       setPurpose(invoice.purpose || 'export_tax_refund')
     }
@@ -48,7 +48,7 @@ export default function InvoiceForm({ projectId }: InvoiceFormProps) {
     try {
       await patchInvoice.mutateAsync({
         title,
-        tax_no: taxNo,
+        tax_number: taxNo,
         amount: amount ? parseFloat(amount) : null,
         purpose,
       })

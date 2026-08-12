@@ -27,8 +27,8 @@ export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
   const [updateOpen, setUpdateOpen] = useState(false)
   const [status, setStatus] = useState<TaskStatus>(task.status)
 
-  const deleteMutation = useApiDelete<void>(`/tasks`)
-  const statusMutation = useApiPatch<void>(`/tasks/${task.id}`)
+  const deleteMutation = useApiDelete<void>(`/tasks/tasks`)
+  const statusMutation = useApiPatch<void>(`/tasks/tasks/${task.id}`)
 
   const handleStatusChange = async (newStatus: TaskStatus) => {
     setStatus(newStatus)
@@ -43,7 +43,7 @@ export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
   }
 
   const handleDelete = async () => {
-    if (!confirm(`确定删除任务 "${task.title}" 吗？`)) return
+    if (!confirm(`确定删除任务 "${task.name || task.title}" 吗？`)) return
     try {
       await deleteMutation.mutateAsync(task.id)
       toast.success({ title: '任务已删除' })
@@ -59,7 +59,7 @@ export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
     <>
       <tr className="border-b border-border transition-colors hover:bg-muted/30">
         <td className="p-4">
-          <div className="font-medium text-sm">{task.title}</div>
+          <div className="font-medium text-sm">{task.name || task.title}</div>
           {task.description && (
             <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
               {task.description}
@@ -67,7 +67,7 @@ export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
           )}
         </td>
         <td className="p-4 text-sm text-muted-foreground">
-          {task.due_date ? formatDate(task.due_date) : '-'}
+          {task.due_date ? formatDate(task.due_date) : '未设置'}
         </td>
         <td className="p-4">
           <div className="flex items-center gap-2">

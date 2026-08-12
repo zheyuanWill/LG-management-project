@@ -49,6 +49,33 @@ async def list_daily_reports(
 
 
 @router.get(
+    "/projects/{project_id}/daily-reports/latest",
+    response_model=DailyReportResponse | None,
+)
+async def latest_daily_report(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    """Most recent daily report for a project (or null). Lets the frontend poll
+    async generation without loading the full history."""
+    project_result = await db.execute(
+        select(Project).where(Project.id == project_id)
+    )
+    if not project_result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
+
+    result = await db.execute(
+        select(DailyReport)
+        .where(DailyReport.project_id == project_id)
+        .order_by(DailyReport.report_date.desc())
+        .limit(1)
+    )
+    report = result.scalar_one_or_none()
+    return DailyReportResponse.model_validate(report) if report else None
+
+
+@router.get(
     "/daily-reports/{report_id}",
     response_model=DailyReportResponse,
 )
@@ -168,6 +195,32 @@ async def list_weekly_reports(
     )
     reports = result.scalars().all()
     return [WeeklyReportResponse.model_validate(r) for r in reports]
+
+
+@router.get(
+    "/projects/{project_id}/weekly-reports/latest",
+    response_model=WeeklyReportResponse | None,
+)
+async def latest_weekly_report(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    """Most recent weekly report for a project (or null)."""
+    project_result = await db.execute(
+        select(Project).where(Project.id == project_id)
+    )
+    if not project_result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
+
+    result = await db.execute(
+        select(WeeklyReport)
+        .where(WeeklyReport.project_id == project_id)
+        .order_by(WeeklyReport.week_start_date.desc())
+        .limit(1)
+    )
+    report = result.scalar_one_or_none()
+    return WeeklyReportResponse.model_validate(report) if report else None
 
 
 @router.post(

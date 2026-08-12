@@ -23,6 +23,7 @@ class UserResponse(BaseModel):
     username: str
     display_name: str
     role: str
+    phone: str | None = None
     created_at: datetime
 
 

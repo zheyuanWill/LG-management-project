@@ -122,6 +122,9 @@ async def delete_document(
     if doc is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="文档不存在")
 
+    # Delete via the ORM instance so the embeddings relationship cascade
+    # ("all, delete-orphan") fires and removes child knowledge_embeddings rows
+    # first, avoiding a foreign-key violation.
     await db.delete(doc)
 
 

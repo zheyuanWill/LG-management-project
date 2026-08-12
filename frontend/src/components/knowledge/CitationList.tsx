@@ -5,7 +5,8 @@ import { cn } from '@/lib/utils'
 interface Citation {
   document_id: string
   document_title: string
-  snippet: string
+  chunk_index: number
+  chunk_text: string
   score?: number
 }
 
@@ -18,8 +19,8 @@ export default function CitationList({ citations }: CitationListProps) {
 
   const handleCopy = async (citation: Citation) => {
     try {
-      await navigator.clipboard.writeText(citation.snippet)
-      setCopiedId(citation.document_id)
+      await navigator.clipboard.writeText(citation.chunk_text)
+      setCopiedId(`${citation.document_id}:${citation.chunk_index}`)
       setTimeout(() => setCopiedId(null), 2000)
     } catch {
       // ignore
@@ -34,7 +35,7 @@ export default function CitationList({ citations }: CitationListProps) {
     <div className="space-y-2">
       {citations.map((citation) => (
         <div
-          key={citation.document_id}
+          key={`${citation.document_id}:${citation.chunk_index}`}
           className="rounded-md border bg-muted/30 p-3 text-sm"
         >
           <div className="flex items-center justify-between gap-2 mb-2">
@@ -64,7 +65,7 @@ export default function CitationList({ citations }: CitationListProps) {
             </div>
           </div>
           <p className={cn('text-muted-foreground text-xs leading-relaxed')}>
-            {citation.snippet}
+            {citation.chunk_text}
           </p>
           {citation.score !== undefined && (
             <div className="flex items-center gap-1 mt-2">

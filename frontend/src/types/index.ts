@@ -4,6 +4,7 @@ export interface User {
   display_name: string
   full_name?: string
   email?: string
+  phone?: string | null
   role: 'admin' | 'manager' | 'user'
   created_at: string
 }
@@ -38,6 +39,10 @@ export interface Project {
   task_count?: number
   completed_task_count?: number
   risk_count?: number
+  customer_name?: string | null
+  customer_phone?: string | null
+  risk_summary?: string | null
+  has_unconfirmed_report?: boolean
 }
 
 export type TaskStatus = 'not_started' | 'in_progress' | 'completed' | 'paused'
@@ -102,7 +107,6 @@ export interface DailyReport {
   progress_total?: number
   tomorrow_plan?: string
   risk_alert?: string
-  risk_reminders?: string
   confirmed: boolean
   created_at: string
 }

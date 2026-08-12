@@ -34,14 +34,6 @@ class EmbedResponse(BaseModel):
     dim: int = Field(512, description="向量维度")
 
 
-class OCRRequest(BaseModel):
-    image_base64: str = Field(..., description="图片的 Base64 编码")
-
-
-class OCRResponse(BaseModel):
-    text: str = Field(..., description="识别出的完整文本")
-
-
 class ContextChunk(BaseModel):
     text: str = Field(..., description="上下文片段文本")
     doc_title: str = Field(..., description="文档标题")

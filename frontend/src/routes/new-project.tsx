@@ -23,14 +23,26 @@ export default function NewProjectPage() {
   const [imo, setImo] = useState('')
   const [ownerId, setOwnerId] = useState('')
   const [plannedDate, setPlannedDate] = useState('')
+  const [showOwnerDialog, setShowOwnerDialog] = useState(false)
 
   const { data: customers } = useApiGet<Customer[]>('/customers')
+  const { data: shipNames } = useApiGet<string[]>('/projects/ship-names')
   const createMutation = useApiPost('/projects')
 
   const customerOptions = [
     { value: '', label: '选择船东...' },
     ...(customers?.map((c) => ({ value: String(c.id), label: c.name })) || []),
+    { value: '__new_owner__', label: '＋ 新增船东' },
   ]
+
+  const handleOwnerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const v = e.target.value
+    if (v === '__new_owner__') {
+      setShowOwnerDialog(true)
+      return
+    }
+    setOwnerId(v)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,9 +84,15 @@ export default function NewProjectPage() {
           <Input
             value={shipName}
             onChange={(e) => setShipName(e.target.value)}
-            placeholder="输入船名"
+            placeholder="输入或选择船名"
+            list="new-project-ship-name-list"
             required
           />
+          <datalist id="new-project-ship-name-list">
+            {shipNames?.map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
         </div>
 
         <div className="space-y-2">
@@ -90,7 +108,7 @@ export default function NewProjectPage() {
           <label className="text-sm font-medium">船东</label>
           <Select
             value={ownerId}
-            onChange={(e) => setOwnerId(e.target.value)}
+            onChange={handleOwnerChange}
             options={customerOptions}
           />
         </div>
@@ -113,6 +131,16 @@ export default function NewProjectPage() {
           </Button>
         </div>
       </form>
+
+      {showOwnerDialog && (
+        <CustomerForm
+          customer={null}
+          onClose={(c) => {
+            if (c) setOwnerId(String(c.id))
+            setShowOwnerDialog(false)
+          }}
+        />
+      )}
     </div>
   )
 }

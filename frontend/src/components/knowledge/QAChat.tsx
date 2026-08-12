@@ -3,12 +3,14 @@ import { Send, Sparkles, User, Bot, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useApiPost } from '@/hooks/useApi'
+import { stripMarkdown } from '@/lib/utils'
 import CitationList from './CitationList'
 
 interface Citation {
   document_id: string
   document_title: string
-  snippet: string
+  chunk_index: number
+  chunk_text: string
   score?: number
 }
 
@@ -32,19 +34,34 @@ const sampleQuestions = [
   '如何判断船东的资质?',
 ]
 
+const STORAGE_KEY = 'lg-qa-chat-history'
+
 export default function QAChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) return JSON.parse(saved)
+    } catch { /* ignore */ }
+    return []
+  })
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [expandedCitations, setExpandedCitations] = useState<Record<string, boolean>>({})
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const qaMutation = useApiPost<QAResponse>('/knowledge/ask')
+  const qaMutation = useApiPost<QAResponse>('/knowledge/query')
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
+  }, [messages])
+
+  // Persist chat history to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+    } catch { /* ignore quota errors */ }
   }, [messages])
 
   const handleSend = async (text?: string) => {
@@ -63,7 +80,7 @@ export default function QAChat() {
     setIsLoading(true)
 
     try {
-      const response = await qaMutation.mutateAsync({ question })
+      const response = await qaMutation.mutateAsync({ query: question, top_k: 5 })
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -142,7 +159,7 @@ export default function QAChat() {
                       : 'bg-muted'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  <p className="whitespace-pre-wrap">{stripMarkdown(message.content)}</p>
                 </div>
 
                 {message.role === 'assistant' && message.citations && message.citations.length > 0 && (

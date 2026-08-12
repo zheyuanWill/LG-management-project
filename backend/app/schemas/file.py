@@ -23,6 +23,7 @@ class FileListResponse(BaseModel):
 
 
 class FileUploadResponse(BaseModel):
+    id: int
     file_name: str
     file_type: str
     storage_key: str

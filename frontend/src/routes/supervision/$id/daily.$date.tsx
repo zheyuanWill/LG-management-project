@@ -19,16 +19,15 @@ export default function DailyReportPage() {
 
   const { data: project, isLoading: projectLoading } = useApiGet<any>(`/projects/${id}`)
   const { data: dailyReport } = useApiGet<DailyReport>(
-    `/projects/${id}/daily-reports/${date}`
+    `/reports/daily-reports/${date}`
   )
-  const { data: tasks } = useApiGet<any[]>(`/projects/${id}/tasks`)
+  const { data: tasks } = useApiGet<any[]>(`/tasks/projects/${id}/tasks`)
 
   const generateMutation = useApiPost<DailyReport>(
-    `/projects/${id}/daily-reports/generate`
+    `/reports/projects/${id}/daily-reports/generate`
   )
-  const confirmMutation = useApiPatch<void>(
-    `/projects/${id}/daily-reports/${date}`
-  )
+  const saveMutation = useApiPatch<void>(`/reports/daily-reports/${date}`)
+  const confirmMutation = useApiPost<void>(`/reports/daily-reports/${date}/confirm`)
 
   const completedTasks = useMemo(() => {
     if (!tasks) return []
@@ -39,7 +38,7 @@ export default function DailyReportPage() {
     try {
       const result = await generateMutation.mutateAsync({ date })
       if (result.tomorrow_plan) setTomorrowPlan(result.tomorrow_plan)
-      if (result.risk_reminders) setRiskReminders(result.risk_reminders)
+      if (result.risk_alert) setRiskReminders(result.risk_alert)
       toast.success({ title: 'AI 日报生成成功' })
     } catch {
       toast.error({ title: '生成失败', description: '请稍后重试' })
@@ -49,11 +48,13 @@ export default function DailyReportPage() {
   const handleSubmit = async () => {
     setSubmitting(true)
     try {
-      await confirmMutation.mutateAsync({
-        tomorrow_plan: tomorrowPlan,
-        risk_reminders: riskReminders,
-        confirmed: true,
-      })
+      if (!dailyReport?.confirmed) {
+        await saveMutation.mutateAsync({
+          tomorrow_plan: tomorrowPlan,
+          risk_alert: riskReminders,
+        })
+      }
+      await confirmMutation.mutateAsync({ confirmed: true })
       toast.success({ title: '日报已确认提交' })
       navigate({ to: '/supervision/$id', params: { id } })
     } catch {
@@ -92,7 +93,7 @@ export default function DailyReportPage() {
             </div>
             <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>{formatDate(date)}</span>
+              <span>{formatDate(dailyReport?.report_date || date)}</span>
             </div>
           </div>
         </div>

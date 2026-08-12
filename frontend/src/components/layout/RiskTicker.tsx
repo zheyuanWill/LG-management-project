@@ -13,9 +13,9 @@ interface RiskTickerProps {
 export default function RiskTicker({ risks = [] }: RiskTickerProps) {
   const [expanded, setExpanded] = useState(false)
 
-  const criticalCount = risks.filter((r) => r.level === 'critical' && !r.resolved).length
-  const warningCount = risks.filter((r) => r.level === 'warning' && !r.resolved).length
-  const infoCount = risks.filter((r) => r.level === 'info' && !r.resolved).length
+  const criticalCount = risks.filter((r) => r.risk_level === 'critical' && !r.resolved).length
+  const warningCount = risks.filter((r) => r.risk_level === 'warning' && !r.resolved).length
+  const infoCount = risks.filter((r) => r.risk_level === 'info' && !r.resolved).length
 
   const hasRisks = criticalCount > 0 || warningCount > 0 || infoCount > 0
 
@@ -82,9 +82,9 @@ export default function RiskTicker({ risks = [] }: RiskTickerProps) {
                 key={risk.id}
                 className={cn(
                   'flex items-start gap-3 rounded-md p-3 text-sm',
-                  risk.level === 'critical'
+                  risk.risk_level === 'critical'
                     ? 'bg-destructive/10 text-destructive'
-                    : risk.level === 'warning'
+                    : risk.risk_level === 'warning'
                       ? 'bg-accent/10 text-accent'
                       : 'bg-surface-muted text-muted-foreground'
                 )}
@@ -92,18 +92,18 @@ export default function RiskTicker({ risks = [] }: RiskTickerProps) {
                 <span
                   className={cn(
                     'mt-0.5 inline-flex h-5 items-center rounded px-1.5 text-xs font-medium',
-                    risk.level === 'critical'
+                    risk.risk_level === 'critical'
                       ? 'bg-destructive text-destructive-foreground'
-                      : risk.level === 'warning'
+                      : risk.risk_level === 'warning'
                         ? 'bg-accent text-accent-foreground'
                         : 'bg-surface text-foreground'
                   )}
                 >
-                  {RISK_LEVEL_LABELS[risk.level]}
+                  {RISK_LEVEL_LABELS[risk.risk_level]}
                 </span>
                 <div className="flex-1">
                   <p className="font-medium">{risk.title}</p>
-                  <p className="mt-1 text-sm opacity-80">{risk.message}</p>
+                  <p className="mt-1 text-sm opacity-80">{risk.detail}</p>
                   <p className="mt-1 text-xs opacity-60">
                     {formatDate(risk.created_at)}
                   </p>

@@ -30,29 +30,8 @@ async def recognize_content(content_type: str, content: str) -> dict:
         }
 
     elif content_type == "image":
-        if isinstance(content, bytes):
-            ocr_text = await ai_client.ocr(content)
-        else:
-            ocr_text = str(content)
-
-        if ocr_text:
-            messages = [
-                {
-                    "role": "system",
-                    "content": "你是一个船舶工程项目管理助手。请分析OCR识别出的文本，提取关键信息。",
-                },
-                {
-                    "role": "user",
-                    "content": f"OCR识别结果：\n\n{ocr_text}\n\n请提取关键词和可能关联的项目信息。",
-                },
-            ]
-            recognized = await ai_client.chat(messages, temperature=0.3)
-            return {
-                "recognized_text": recognized,
-                "keywords": _extract_keywords(recognized),
-                "ocr_text": ocr_text,
-            }
-
+        # OCR 已移除（依赖较重，按需再启用）。图片暂不提取文字，
+        # 后端直接返回空识别结果，前端会提示「图片暂不支持 AI 文字识别，已保存原图」。
         return {"recognized_text": "", "keywords": [], "ocr_text": ""}
 
     return {"recognized_text": "", "keywords": []}

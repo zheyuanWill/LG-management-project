@@ -9,8 +9,6 @@ class Settings:
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5")
     EMBEDDING_DIM: int = int(os.getenv("EMBEDDING_DIM", "512"))
-    OCR_MODEL: str = os.getenv("OCR_MODEL", "models")
-    OCR_ENABLED: bool = os.getenv("OCR_ENABLED", "true").lower() in ("1", "true", "yes", "on")
     API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
     API_PORT: int = int(os.getenv("API_PORT", "8001"))
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

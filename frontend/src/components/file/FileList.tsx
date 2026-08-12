@@ -6,6 +6,7 @@ import { useApiDelete } from '@/hooks/useApi'
 import type { FileItem } from '@/types'
 import FileTypeBadge from './FileTypeBadge'
 import { formatDateTime } from '@/lib/utils'
+import apiClient from '@/lib/api'
 
 interface FileListProps {
   files: FileItem[]
@@ -25,6 +26,23 @@ export default function FileList({
   const handleDelete = (id: string) => {
     if (confirm('确定删除该文件?')) {
       deleteMutation.mutate(id)
+    }
+  }
+
+  const handleDownload = async (file: FileItem) => {
+    try {
+      const res = await apiClient.get(`/files/${file.id}/download`)
+      const { download_url, file_name } = res.data
+      const link = document.createElement('a')
+      link.href = download_url
+      link.download = file_name || 'download'
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch {
+      // fallback: try preview URL
+      window.open(file.url || '', '_blank')
     }
   }
 
@@ -81,10 +99,8 @@ export default function FileList({
                   <Button variant="ghost" size="sm" onClick={() => onPreview(file)}>
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={file.url} download>
-                      <Download className="h-4 w-4" />
-                    </a>
+                  <Button variant="ghost" size="sm" onClick={() => handleDownload(file)}>
+                    <Download className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"

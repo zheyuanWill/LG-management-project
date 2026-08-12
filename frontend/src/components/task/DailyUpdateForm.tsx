@@ -41,7 +41,7 @@ export default function DailyUpdateForm({
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [audioPlaying, setAudioPlaying] = useState(false)
 
-  const submitMutation = useApiPost<void>(`/tasks/${task.id}/daily-updates`)
+  const submitMutation = useApiPost<void>(`/tasks/tasks/${task.id}/daily-updates`)
 
   useEffect(() => {
     if (open) {
@@ -122,7 +122,7 @@ export default function DailyUpdateForm({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title={`填写今日更新 - ${task.title}`}>
+    <Dialog open={open} onOpenChange={onOpenChange} title={`填写今日更新 - ${task.name || task.title}`}>
       <div className="space-y-5">
         <div className="text-sm text-muted-foreground">
           日期: {today}

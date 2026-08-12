@@ -57,3 +57,20 @@ export function formatNumber(
     maximumFractionDigits: decimals,
   }).format(value)
 }
+
+/**
+ * Strip markdown formatting and render as plain text.
+ * Removes headers (#, ##, ###), bold (**), list markers (-, *, ---),
+ * and converts to readable plain text.
+ */
+export function stripMarkdown(text: string): string {
+  if (!text) return ''
+  return text
+    .replace(/^#{1,6}\s+/gm, '')        // remove headers
+    .replace(/\*\*(.+?)\*\*/g, '$1')     // remove bold **text** → text
+    .replace(/\*(.+?)\*/g, '$1')         // remove italic *text* → text
+    .replace(/^-+\s*/gm, '')             // remove list markers at start of line
+    .replace(/^\s*---+\s*$/gm, '')       // remove horizontal rules
+    .replace(/\n{3,}/g, '\n\n')          // collapse multiple blank lines
+    .trim()
+}

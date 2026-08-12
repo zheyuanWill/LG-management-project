@@ -1,0 +1,1824 @@
+{
+  "generated_at": "2026-08-12 09:37:42",
+  "collection": "LG Management API",
+  "base_url": "http://localhost:8000",
+  "total_requests": 84,
+  "final_variables": {
+    "base_url": "http://localhost:8000",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8",
+    "project_id": "36",
+    "customer_id": "6",
+    "task_id": "9",
+    "report_id": "1",
+    "save_id": "12",
+    "doc_id": "8",
+    "file_id": "1"
+  },
+  "results": [
+    {
+      "name": "健康检查（根）",
+      "method": "GET",
+      "url": "http://localhost:8000/health",
+      "request_headers": {},
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "38",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"status\":\"ok\",\"database\":\"connected\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "系统"
+    },
+    {
+      "name": "健康检查（API）",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/health",
+      "request_headers": {},
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "33",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"status\":\"ok\",\"version\":\"1.0.0\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "系统"
+    },
+    {
+      "name": "登录（获取 token）",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/auth/login",
+      "request_headers": {
+        "Content-Type": "application/json"
+      },
+      "request_body": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "180",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"access_token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8\",\"token_type\":\"bearer\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "认证"
+    },
+    {
+      "name": "注册新用户（需 admin）",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/auth/register",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"username\": \"newuser\",\n    \"password\": \"newpass123\",\n    \"display_name\": \"测试用户\",\n    \"role\": \"user\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "115",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"username\":\"newuser\",\"display_name\":\"测试用户\",\"role\":\"user\",\"created_at\":\"2026-08-12T01:37:35.347390\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "认证"
+    },
+    {
+      "name": "获取当前用户信息",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/auth/me",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "117",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":1,\"username\":\"admin\",\"display_name\":\"系统管理员\",\"role\":\"admin\",\"created_at\":\"2026-08-11T02:04:53.466992\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "认证"
+    },
+    {
+      "name": "用户列表（占位实现）",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/users",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "22",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"items\":[],\"total\":0}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "用户管理"
+    },
+    {
+      "name": "创建用户（占位实现）",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/users",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "34",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"message\":\"Create user endpoint\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "用户管理"
+    },
+    {
+      "name": "项目列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/projects?type=supervision&status=active&page=1&page_size=20",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "2809",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"items\":[{\"id\":29,\"project_no\":\"LG-SV-2026-011\",\"type\":\"supervision\",\"status\":\"active\",\"ship_name\":\"MV TEST SHIP\",\"imo\":\"9876543\",\"owner_id\":null,\"planned_completion_date\":\"2026-12-31\",\"actual_completion_date\":null,\"remarks\":\"测试项目\",\"created_at\":\"2026-08-12T01:35:11.119906\",\"updated_at\":\"2026-08-12T01:35:11.119914\"},{\"id\":25,\"project_no\":\"LG-SV-2026-010\",\"type\":\"supervision\",\"status\":\"active\",\"ship_name\":\"MV TEST SHIP\",\"imo\":\"9876543\",\"owner_id\":null,\"planned_completion_date\":\"2026-12-31\",\"actual_completion_date\":null,\"remarks\":\"测试项目\",\"created_at\":\"2026-08-12T01:32:06.493502\",\"updated_at\":\"2026-08-12T01:32:06.493506\"},{\"id\":20,\"project_no\":\"LG-SV-2026-008\",\"type\":\"supervision\",\"status\":\"active\",\"ship_name\":\"MV TEST SHIP\",\"imo\":\"9876543\",\"owner_id\":null,\"planned_completion_date\":\"2026-12-31\",\"actual_completion_date\":null,\"remarks\":\"测试项目\",\"created_at\":\"2026-08-12T01:25:50.875748\",\"updated_at\":\"2026-08-12T01:25:50.875752\"},{\"id\":15,\"project_no\":\"LG-SV-2026-006\",\"type\":\"supervision\",\"status\":\"active\",\"ship_name\":\"MV TEST SHIP\",\"imo\":\"9876543\",\"owner_id\":null,\"planned_completion_date\":\"2026-12-31\",\"actual_completion_date\":null,\"remarks\":\"测试项目\",\"created_at\":\"2026-08-12T01:09:10.091786\",\"updated_at\":\"2026-08-12T01:09:10.091800\"},{\"id\":14,\"project_no\":\"LG-SV-2026-005\",\"type\":\"supervision\",\"status\":\"active\",\"ship_name\":\"PROBE\",\"imo\":\"999\",\"owner_id\":null,\"planned_completion_date\":null,\"actual_completion_date\":null,\"remarks\":null,\"created_at\":\"2026-08-12T01:06:12.489320\",\"updated_at\":\"2026-08-12T01:06:12.489327\"},{\"id\":10,\"project_no\":\"LG-SV-2026-004\",\"type\":\"supervision\",\"status\":\"active\",\"ship_name\":\"MV TEST SHIP\",\"imo\":\"9876543\",\"owner_id\":null,\"planned_completion_date\":\"2026-12-31\",\"actual_completion_date\":null,\"remarks\":\"测试项目\",\"created_at\":\"2026-08-12T01:00:06.929888\",\"updated_at\":\"2026-08-12T01:00:06.929901\"},{\"id\":6,\"project_no\":\"LG-SV-2026-003\",\"type\":\"supervision\",\"status\":\"active\",\"ship_name\":\"MV TEST SHIP\",\"imo\":\"9876543\",\"owner_id\":null,\"planned_completion_date\":\"2026-12-31\",\"actual_completion_date\":null,\"remarks\":\"测试项目\",\"created_at\":\"2026-08-12T00:59:26.453260\",\"updated_at\":\"2026-08-12T00:59:26.453265\"},{\"id\":2,\"project_no\":\"LG-SV-2026-002\",\"type\":\"supervision\",\"status\":\"active\",\"ship_name\":\"MV PACIFIC STAR\",\"imo\":\"123455679876543\",\"owner_id\":null,\"planned_completion_date\":null,\"actual_completion_date\":null,\"remarks\":null,\"created_at\":\"2026-08-11T07:26:44.748022\",\"updated_at\":\"2026-08-11T07:26:44.748056\"},{\"id\":1,\"project_no\":\"LG-SV-2026-001\",\"type\":\"supervision\",\"status\":\"active\",\"ship_name\":\"NACC PROCIDA\",\"imo\":\"123455\",\"owner_id\":null,\"planned_completion_date\":null,\"actual_completion_date\":null,\"remarks\":\"????\",\"created_at\":\"2026-08-11T07:19:05.378049\",\"updated_at\":\"2026-08-11T07:19:05.378060\"}],\"total\":9}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "项目管理"
+    },
+    {
+      "name": "创建监修项目",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/projects",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"type\": \"supervision\",\n    \"ship_name\": \"MV TEST SHIP\",\n    \"imo\": \"9876543\",\n    \"owner_id\": null,\n    \"planned_completion_date\": \"2026-12-31\",\n    \"remarks\": \"测试项目\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "315",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":33,\"project_no\":\"LG-SV-2026-012\",\"type\":\"supervision\",\"status\":\"active\",\"ship_name\":\"MV TEST SHIP\",\"imo\":\"9876543\",\"owner_id\":null,\"planned_completion_date\":\"2026-12-31\",\"actual_completion_date\":null,\"remarks\":\"测试项目\",\"created_at\":\"2026-08-12T01:37:35.407451\",\"updated_at\":\"2026-08-12T01:37:35.407509\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "项目管理"
+    },
+    {
+      "name": "创建买卖经纪项目",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/projects",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"type\": \"brokerage_sale\",\n    \"ship_name\": \"MV SALE TEST\",\n    \"imo\": \"1111111\",\n    \"remarks\": \"买卖经纪测试\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "316",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":34,\"project_no\":\"LG-BS-2026-008\",\"type\":\"brokerage_sale\",\"status\":\"active\",\"ship_name\":\"MV SALE TEST\",\"imo\":\"1111111\",\"owner_id\":null,\"planned_completion_date\":null,\"actual_completion_date\":null,\"remarks\":\"买卖经纪测试\",\"created_at\":\"2026-08-12T01:37:35.424440\",\"updated_at\":\"2026-08-12T01:37:35.424444\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "项目管理"
+    },
+    {
+      "name": "创建修船经纪项目",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/projects",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"type\": \"brokerage_repair\",\n    \"ship_name\": \"MV REPAIR TEST\",\n    \"imo\": \"2222222\",\n    \"remarks\": \"修船经纪测试\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:33 GMT",
+        "server": "uvicorn",
+        "content-length": "320",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":35,\"project_no\":\"LG-BR-2026-008\",\"type\":\"brokerage_repair\",\"status\":\"active\",\"ship_name\":\"MV REPAIR TEST\",\"imo\":\"2222222\",\"owner_id\":null,\"planned_completion_date\":null,\"actual_completion_date\":null,\"remarks\":\"修船经纪测试\",\"created_at\":\"2026-08-12T01:37:35.454101\",\"updated_at\":\"2026-08-12T01:37:35.454104\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "项目管理"
+    },
+    {
+      "name": "创建备件供应项目",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/projects",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"type\": \"spare_parts\",\n    \"ship_name\": \"MV SPARE TEST\",\n    \"imo\": \"3333333\",\n    \"remarks\": \"备件供应测试\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "314",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":36,\"project_no\":\"LG-SP-2026-008\",\"type\":\"spare_parts\",\"status\":\"active\",\"ship_name\":\"MV SPARE TEST\",\"imo\":\"3333333\",\"owner_id\":null,\"planned_completion_date\":null,\"actual_completion_date\":null,\"remarks\":\"备件供应测试\",\"created_at\":\"2026-08-12T01:37:35.470991\",\"updated_at\":\"2026-08-12T01:37:35.471150\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "项目管理"
+    },
+    {
+      "name": "获取项目详情",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/projects/36",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "28",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"项目不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "项目管理"
+    },
+    {
+      "name": "获取项目统计",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/projects/36/stats",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "399",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":36,\"project_no\":\"LG-SP-2026-008\",\"type\":\"spare_parts\",\"status\":\"active\",\"ship_name\":\"MV SPARE TEST\",\"imo\":\"3333333\",\"owner_id\":null,\"planned_completion_date\":null,\"actual_completion_date\":null,\"remarks\":\"备件供应测试\",\"created_at\":\"2026-08-12T01:37:35.470991\",\"updated_at\":\"2026-08-12T01:37:35.471150\",\"stats\":{\"total_tasks\":0,\"completed_tasks\":0,\"completion_rate\":0.0,\"active_risks\":0}}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "项目管理"
+    },
+    {
+      "name": "更新项目",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/projects/36",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"status\": \"completed\",\n    \"remarks\": \"更新后的备注\",\n    \"planned_completion_date\": \"2026-12-31\",\n    \"actual_completion_date\": \"2026-12-20\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "333",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":36,\"project_no\":\"LG-SP-2026-008\",\"type\":\"spare_parts\",\"status\":\"completed\",\"ship_name\":\"MV SPARE TEST\",\"imo\":\"3333333\",\"owner_id\":null,\"planned_completion_date\":\"2026-12-31\",\"actual_completion_date\":\"2026-12-20\",\"remarks\":\"更新后的备注\",\"created_at\":\"2026-08-12T01:37:35.470991\",\"updated_at\":\"2026-08-12T01:37:35.536263\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "项目管理"
+    },
+    {
+      "name": "删除项目（软删除，状态置为 cancelled）",
+      "method": "DELETE",
+      "url": "http://localhost:8000/api/v1/projects/36",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "333",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":36,\"project_no\":\"LG-SP-2026-008\",\"type\":\"spare_parts\",\"status\":\"cancelled\",\"ship_name\":\"MV SPARE TEST\",\"imo\":\"3333333\",\"owner_id\":null,\"planned_completion_date\":\"2026-12-31\",\"actual_completion_date\":\"2026-12-20\",\"remarks\":\"更新后的备注\",\"created_at\":\"2026-08-12T01:37:35.470991\",\"updated_at\":\"2026-08-12T01:37:35.553563\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "项目管理"
+    },
+    {
+      "name": "移交监修（仅修船经纪项目可用）",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/projects/36/handover-to-supervision",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 400,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "55",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"只有修船经纪项目可以移交监修\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "项目管理"
+    },
+    {
+      "name": "任务列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/tasks/projects/36/tasks",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "2",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "[]",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "任务管理"
+    },
+    {
+      "name": "创建任务",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/tasks/projects/36/tasks",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"name\": \"进厂检验\",\n    \"planned_end_date\": \"2026-12-15\",\n    \"status\": \"not_started\",\n    \"sort_order\": 1\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "200",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":9,\"project_id\":36,\"name\":\"进厂检验\",\"planned_end_date\":\"2026-12-15\",\"status\":\"not_started\",\"sort_order\":1,\"created_at\":\"2026-08-12T01:37:35.626194\",\"updated_at\":\"2026-08-12T01:37:35.626201\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "任务管理"
+    },
+    {
+      "name": "更新任务",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/tasks/tasks/9",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"status\": \"in_progress\",\n    \"name\": \"进厂检验（更新）\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "212",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":9,\"project_id\":36,\"name\":\"进厂检验（更新）\",\"planned_end_date\":\"2026-12-15\",\"status\":\"in_progress\",\"sort_order\":1,\"created_at\":\"2026-08-12T01:37:35.626194\",\"updated_at\":\"2026-08-12T01:37:35.671987\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "任务管理"
+    },
+    {
+      "name": "删除任务",
+      "method": "DELETE",
+      "url": "http://localhost:8000/api/v1/tasks/tasks/9",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 204,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "任务管理"
+    },
+    {
+      "name": "任务每日更新列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/tasks/tasks/9/daily-updates",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "2",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "[]",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "任务管理"
+    },
+    {
+      "name": "创建任务每日更新",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/tasks/tasks/9/daily-updates",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"update_date\": \"2026-08-11\",\n    \"status\": \"in_progress\",\n    \"remark\": \"今日完成进厂检验\",\n    \"audio_duration\": null\n}",
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "28",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"任务不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "任务管理"
+    },
+    {
+      "name": "上传进度照片",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/tasks/daily-updates/1/photos",
+      "request_headers": {
+        "Content-Type": "multipart/form-data; boundary=----WebKitFormBoundary2a9f517cb9b74b63",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "------WebKitFormBoundary2a9f517cb9b74b63\r\nContent-Disposition: form-data; name=\"file\"; filename=\"dummy.txt\"\r\nContent-Type: text/plain\r\n\r\nLG-management postman-runner dummy upload file\n\r\n------WebKitFormBoundary2a9f517cb9b74b63--\r\n",
+      "status": 403,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "76",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"每日每任务最多上传 2 张照片，当前已上传 2 张\"}",
+      "error": null,
+      "file_upload_fields": [
+        "file"
+      ],
+      "folder": "任务管理"
+    },
+    {
+      "name": "删除进度照片",
+      "method": "DELETE",
+      "url": "http://localhost:8000/api/v1/tasks/task-photos/1",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "28",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"照片不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "任务管理"
+    },
+    {
+      "name": "日报列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/reports/projects/36/daily-reports?start_date=2026-08-01&end_date=2026-08-31",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "2",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "[]",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "报告管理"
+    },
+    {
+      "name": "获取日报详情",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/reports/daily-reports/1",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "206",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":1,\"project_id\":13,\"report_date\":\"2026-08-11\",\"completed_items\":{\"task1\":\"完成\"},\"tomorrow_plan\":\"明天计划\",\"risk_alert\":\"暂无风险\",\"confirmed\":true,\"created_at\":\"2026-08-12T01:01:03.875900\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "报告管理"
+    },
+    {
+      "name": "生成日报（异步）",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/reports/projects/36/daily-reports/generate?report_date=2026-08-11",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "112",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"task_id\":\"7e954a64-8253-4f87-b61a-9a7d4df3e1c8\",\"project_id\":36,\"report_date\":\"2026-08-11\",\"status\":\"pending\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "报告管理"
+    },
+    {
+      "name": "更新日报",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/reports/daily-reports/1",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"report_date\": \"2026-08-11\",\n    \"completed_items\": {\"task1\": \"完成\"},\n    \"tomorrow_plan\": \"明天计划\",\n    \"risk_alert\": \"暂无风险\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "206",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":1,\"project_id\":13,\"report_date\":\"2026-08-11\",\"completed_items\":{\"task1\":\"完成\"},\"tomorrow_plan\":\"明天计划\",\"risk_alert\":\"暂无风险\",\"confirmed\":true,\"created_at\":\"2026-08-12T01:01:03.875900\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "报告管理"
+    },
+    {
+      "name": "确认日报",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/reports/daily-reports/1/confirm",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"confirmed\": true\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "206",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":1,\"project_id\":13,\"report_date\":\"2026-08-11\",\"completed_items\":{\"task1\":\"完成\"},\"tomorrow_plan\":\"明天计划\",\"risk_alert\":\"暂无风险\",\"confirmed\":true,\"created_at\":\"2026-08-12T01:01:03.875900\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "报告管理"
+    },
+    {
+      "name": "周报列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/reports/projects/36/weekly-reports",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "2",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "[]",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "报告管理"
+    },
+    {
+      "name": "生成周报（异步）",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/reports/projects/36/weekly-reports/generate?week_start_date=2026-08-11",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "116",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"task_id\":\"2ee9bd3b-06b8-45e2-beb6-484a1d93b3b1\",\"project_id\":36,\"week_start_date\":\"2026-08-11\",\"status\":\"pending\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "报告管理"
+    },
+    {
+      "name": "更新周报",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/reports/weekly-reports/1",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"week_start_date\": \"2026-08-11\",\n    \"week_end_date\": \"2026-08-17\",\n    \"summary\": \"本周工作总结\",\n    \"next_week_plan\": \"下周计划\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "223",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":1,\"project_id\":13,\"week_start_date\":\"2026-08-11\",\"week_end_date\":\"2026-08-17\",\"summary\":\"本周工作总结\",\"next_week_plan\":\"下周计划\",\"confirmed\":true,\"confirmed_by\":1,\"created_at\":\"2026-08-12T01:00:17.214674\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "报告管理"
+    },
+    {
+      "name": "确认周报",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/reports/weekly-reports/1/confirm",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "223",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":1,\"project_id\":13,\"week_start_date\":\"2026-08-11\",\"week_end_date\":\"2026-08-17\",\"summary\":\"本周工作总结\",\"next_week_plan\":\"下周计划\",\"confirmed\":true,\"confirmed_by\":1,\"created_at\":\"2026-08-12T01:00:17.214674\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "报告管理"
+    },
+    {
+      "name": "风险汇总（未解决）",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/risks/summary?limit=10",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "2",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "[]",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "风险管理"
+    },
+    {
+      "name": "项目风险列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/risks/projects/36/risks?resolved=false",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "2",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "[]",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "风险管理"
+    },
+    {
+      "name": "AI 检测风险（异步）",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/risks/projects/36/risks/ai-detect",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:35 GMT",
+        "server": "uvicorn",
+        "content-length": "85",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"task_id\":\"023c0f75-0d48-43e9-a1de-96704007cca8\",\"project_id\":36,\"status\":\"pending\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "风险管理"
+    },
+    {
+      "name": "解决风险",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/risks/risks/1",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"detail\": \"已处理\",\n    \"risk_level\": \"info\"\n}",
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "34",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"风险事件不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "风险管理"
+    },
+    {
+      "name": "获取调研信息",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/surveys",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "34",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"调研信息不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "创建调研信息",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/surveys",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"conclusion\": \"recommend\",\n    \"survey_detail\": \"船况良好，推荐购买\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "137",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"conclusion\":\"recommend\",\"survey_detail\":\"船况良好，推荐购买\",\"created_at\":\"2026-08-12T01:37:36.641763\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "更新调研信息",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/surveys",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"conclusion\": \"pending\",\n    \"survey_detail\": \"更新后的调研\"\n}",
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "34",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"调研信息不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "删除调研信息",
+      "method": "DELETE",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/surveys",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 204,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "获取商务信息",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/commercials",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "34",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"商务信息不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "创建商务信息",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/commercials",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"quote_amount\": 5000000,\n    \"commission_amount\": 50000,\n    \"payment_status\": \"unpaid\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "145",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"quote_amount\":5000000.0,\"commission_amount\":50000.0,\"payment_status\":\"unpaid\",\"created_at\":\"2026-08-12T01:37:36.824630\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "更新商务信息",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/commercials",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"quote_amount\": 4800000,\n    \"commission_amount\": 48000,\n    \"payment_status\": \"paid\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "143",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"quote_amount\":4800000.0,\"commission_amount\":48000.0,\"payment_status\":\"paid\",\"created_at\":\"2026-08-12T01:37:36.824630\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "获取合同信息",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/contracts",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "34",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"合同信息不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "上传 MOA 合同",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/contracts",
+      "request_headers": {
+        "Content-Type": "multipart/form-data; boundary=----WebKitFormBoundary757ce2da6ed44a89",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "------WebKitFormBoundary757ce2da6ed44a89\r\nContent-Disposition: form-data; name=\"file\"; filename=\"dummy.txt\"\r\nContent-Type: text/plain\r\n\r\nLG-management postman-runner dummy upload file\n\r\n------WebKitFormBoundary757ce2da6ed44a89--\r\n",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "120",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"moa_file_key\":\"20260812_013736_a0b4c9df71c44e53.txt\",\"created_at\":\"2026-08-12T01:37:36.966670\"}",
+      "error": null,
+      "file_upload_fields": [
+        "file"
+      ],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "获取修船经纪信息",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/repair-brokerage",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "40",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"修船经纪信息不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "创建修船经纪信息",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/repair-brokerage",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"shipyard_quote\": 2000000,\n    \"contract_file_key\": null\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "160",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"shipyard_quote\":2000000.0,\"contract_file_key\":null,\"handed_over\":false,\"handed_over_at\":null,\"created_at\":\"2026-08-12T01:37:37.015705\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "更新修船经纪信息",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/repair-brokerage",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"shipyard_quote\": 1800000,\n    \"contract_file_key\": \"contracts/repair.pdf\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "178",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"shipyard_quote\":1800000.0,\"contract_file_key\":\"contracts/repair.pdf\",\"handed_over\":false,\"handed_over_at\":null,\"created_at\":\"2026-08-12T01:37:37.015705\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "修船经纪移交监修",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/brokerage/projects/36/repair-brokerage/1/handover",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "40",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"修船经纪信息不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "经纪业务"
+    },
+    {
+      "name": "获取备件详情",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/spare-parts",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "34",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"备件信息不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "创建备件详情",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/spare-parts",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"item_name\": \"主机活塞环\",\n    \"model_or_drawing\": \"MD-100\",\n    \"quantity\": \"10\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "140",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"item_name\":\"主机活塞环\",\"model_or_drawing\":\"MD-100\",\"quantity\":\"10\",\"created_at\":\"2026-08-12T01:37:37.090360\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "更新备件详情",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/spare-parts",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"item_name\": \"主机活塞环（更新）\",\n    \"model_or_drawing\": \"MD-100A\",\n    \"quantity\": \"12\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "153",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"item_name\":\"主机活塞环（更新）\",\"model_or_drawing\":\"MD-100A\",\"quantity\":\"12\",\"created_at\":\"2026-08-12T01:37:37.090360\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "删除备件详情",
+      "method": "DELETE",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/spare-parts",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 204,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "上传备件照片",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/spare-photos?photo_type=logo",
+      "request_headers": {
+        "Content-Type": "multipart/form-data; boundary=----WebKitFormBoundary5c979cfc9db54057",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "------WebKitFormBoundary5c979cfc9db54057\r\nContent-Disposition: form-data; name=\"file\"; filename=\"dummy.txt\"\r\nContent-Type: text/plain\r\n\r\nLG-management postman-runner dummy upload file\n\r\n------WebKitFormBoundary5c979cfc9db54057--\r\n",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "139",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"photo_type\":\"logo\",\"storage_key\":\"20260812_013737_22e0c54e65214347.txt\",\"created_at\":\"2026-08-12T01:37:37.169615\"}",
+      "error": null,
+      "file_upload_fields": [
+        "file"
+      ],
+      "folder": "备件供应"
+    },
+    {
+      "name": "物流节点列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/logistics",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "2",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "[]",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "创建物流节点",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/logistics",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"node_type\": \"ordered\",\n    \"node_date\": \"2026-08-11\",\n    \"tracking_no\": \"SF1234567890\",\n    \"remark\": \"已下单\",\n    \"attachment_key\": null\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "185",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"node_type\":\"ordered\",\"node_date\":\"2026-08-11\",\"tracking_no\":\"SF1234567890\",\"remark\":\"已下单\",\"attachment_key\":null,\"created_at\":\"2026-08-12T01:37:37.207296\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "更新物流节点",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/logistics/1",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"node_type\": \"arrived\",\n    \"node_date\": \"2026-08-15\",\n    \"tracking_no\": \"SF1234567890\",\n    \"remark\": \"已到达\",\n    \"attachment_key\": null\n}",
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "34",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"物流节点不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "获取 HK 签收单",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/hk-signatures",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "31",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"签收单不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "创建 HK 签收单",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/hk-signatures",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"signature_file_key\": \"signatures/hk_001.pdf\",\n    \"signed_at\": \"2026-08-20\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "136",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"signature_file_key\":\"signatures/hk_001.pdf\",\"signed_at\":\"2026-08-20\",\"created_at\":\"2026-08-12T01:37:37.275283\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "更新 HK 签收单",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/hk-signatures",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"signature_file_key\": \"signatures/hk_002.pdf\",\n    \"signed_at\": \"2026-08-21\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "136",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"signature_file_key\":\"signatures/hk_002.pdf\",\"signed_at\":\"2026-08-21\",\"created_at\":\"2026-08-12T01:37:37.275283\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "获取发票",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/invoices",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "34",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"发票信息不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "创建发票",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/invoices",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"title\": \"备件发票\",\n    \"tax_number\": \"SH12345678\",\n    \"amount\": 100000,\n    \"purpose\": \"用于出口退税\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "164",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"title\":\"备件发票\",\"tax_number\":\"SH12345678\",\"amount\":100000.0,\"purpose\":\"用于出口退税\",\"created_at\":\"2026-08-12T01:37:37.333115\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "更新发票",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/spare-parts/projects/36/invoices",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"title\": \"备件发票（更新）\",\n    \"amount\": 120000,\n    \"purpose\": \"用于出口退税\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "176",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"project_id\":36,\"title\":\"备件发票（更新）\",\"tax_number\":\"SH12345678\",\"amount\":120000.0,\"purpose\":\"用于出口退税\",\"created_at\":\"2026-08-12T01:37:37.333115\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "备件供应"
+    },
+    {
+      "name": "保存文字",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/quick-saves/text?text=%E4%BB%8A%E5%A4%A9%E5%9C%A8%E7%A0%81%E5%A4%B4%E7%9C%8B%E5%88%B0MV+TEST%E8%88%B9%E9%9C%80%E8%A6%81%E8%BF%9B%E5%9D%9E%E6%A3%80%E4%BF%AE",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:36 GMT",
+        "server": "uvicorn",
+        "content-length": "811",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"save\":{\"id\":12,\"content_type\":\"text\",\"content_text\":\"今天在码头看到MV TEST船需要进坞检修\",\"file_key\":null,\"recognized_text\":\"根据您提供的文本，我提取了以下关键信息：\\n\\n- **船舶名称**：MV TEST（船名）\\n- **事件**：进坞检修（干船坞作业）\\n- **地点**：码头（未指明具体港口）\\n- **日期**：未提及\\n- **金额**：未提及\\n- **项目名称**：未明确，可能为“TEST船进坞检修项目”\\n\\n**建议分类**：船舶维修/坞修项目（属于船舶工程中的维护保养类）。\\n\\n如需进一步分析，请提供更多上下文（如日期、金额、船东、项目编号等）。\",\"suggested_project_id\":null,\"confirmed_project_id\":null,\"status\":\"pending\",\"created_at\":\"2026-08-12T01:37:40.324622\"},\"suggestions\":[]}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "随手存"
+    },
+    {
+      "name": "保存图片",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/quick-saves/image",
+      "request_headers": {
+        "Content-Type": "multipart/form-data; boundary=----WebKitFormBoundary46dd0a42e8ca474c",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "------WebKitFormBoundary46dd0a42e8ca474c\r\nContent-Disposition: form-data; name=\"file\"; filename=\"dummy.txt\"\r\nContent-Type: text/plain\r\n\r\nLG-management postman-runner dummy upload file\n\r\n------WebKitFormBoundary46dd0a42e8ca474c--\r\n",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:39 GMT",
+        "server": "uvicorn",
+        "content-length": "266",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"save\":{\"id\":13,\"content_type\":\"image\",\"content_text\":null,\"file_key\":\"20260812_013740_a064199e99724441.png\",\"recognized_text\":\"\",\"suggested_project_id\":null,\"confirmed_project_id\":null,\"status\":\"pending\",\"created_at\":\"2026-08-12T01:37:40.367953\"},\"suggestions\":[]}",
+      "error": null,
+      "file_upload_fields": [
+        "file"
+      ],
+      "folder": "随手存"
+    },
+    {
+      "name": "随手存列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/quick-saves?status=pending",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:39 GMT",
+        "server": "uvicorn",
+        "content-length": "4003",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "[{\"id\":13,\"content_type\":\"image\",\"content_text\":null,\"file_key\":\"20260812_013740_a064199e99724441.png\",\"recognized_text\":\"\",\"suggested_project_id\":null,\"confirmed_project_id\":null,\"status\":\"pending\",\"created_at\":\"2026-08-12T01:37:40.367953\"},{\"id\":12,\"content_type\":\"text\",\"content_text\":\"今天在码头看到MV TEST船需要进坞检修\",\"file_key\":null,\"recognized_text\":\"根据您提供的文本，我提取了以下关键信息：\\n\\n- **船舶名称**：MV TEST（船名）\\n- **事件**：进坞检修（干船坞作业）\\n- **地点**：码头（未指明具体港口）\\n- **日期**：未提及\\n- **金额**：未提及\\n- **项目名称**：未明确，可能为“TEST船进坞检修项目”\\n\\n**建议分类**：船舶维修/坞修项目（属于船舶工程中的维护保养类）。\\n\\n如需进一步分析，请提供更多上下文（如日期、金额、船东、项目编号等）。\",\"suggested_project_id\":null,\"confirmed_project_id\":null,\"status\":\"pending\",\"created_at\":\"2026-08-12T01:37:40.324622\"},{\"id\":11,\"content_type\":\"image\",\"content_text\":null,\"file_key\":\"20260812_013519_6a77d3440df44973.png\",\"recognized_text\":\"\",\"suggested_project_id\":null,\"confirmed_project_id\":null,\"status\":\"pending\",\"created_at\":\"2026-08-12T01:35:19.496752\"},{\"id\":9,\"content_type\":\"image\",\"content_text\":null,\"file_key\":\"20260812_013212_9de8af37955048ee.png\",\"recognized_text\":\"\",\"suggested_project_id\":null,\"confirmed_project_id\":null,\"status\":\"pending\",\"created_at\":\"2026-08-12T01:32:12.868670\"},{\"id\":7,\"content_type\":\"image\",\"content_text\":null,\"file_key\":\"20260812_012558_4d27ec61458a4673.png\",\"recognized_text\":\"\",\"suggested_project_id\":null,\"confirmed_project_id\":null,\"status\":\"pending\",\"created_at\":\"2026-08-12T01:25:58.082112\"},{\"id\":5,\"content_type\":\"image\",\"content_text\":null,\"file_key\":\"20260812_010916_5c3f80c10d5a4697.png\",\"recognized_text\":\"\",\"suggested_project_id\":null,\"confirmed_project_id\":null,\"status\":\"pending\",\"created_at\":\"2026-08-12T01:09:16.897985\"},{\"id\":3,\"content_type\":\"image\",\"content_text\":null,\"file_key\":\"20260812_010011_35830064753f45c5.png\",\"recognized_text\":\"\",\"suggested_project_id\":null,\"confirmed_project_id\":null,\"status\":\"pending\",\"created_at\":\"2026-08-12T01:00:12.945566\"},{\"id\":2,\"content_type\":\"text\",\"content_text\":\"今天在码头看到MV TEST船需要进坞检修\",\"file_key\":null,\"recognized_text\":\"根据您提供的文本，我提取了以下关键信息，并进行了项目分类建议：\\n\\n---\\n\\n### **提取的关键信息**\\n- **船舶名称**：MV TEST（推测为“MV TEST”号船舶，MV通常指机动船）\\n- **事件/任务**：进坞检修（即船舶进入干船坞进行维护、修理或检查）\\n- **地点**：码头（具体码头名称未提及，可能需进一步确认）\\n- **日期**：未提供具体日期（文本中仅提到“今天”，但未给出具体年月日）\\n- **金额**：未提及任何金额信息\\n\\n---\\n\\n### **可能关联的项目信息**\\n- **项目类型**：船舶维修/保养项目（干船坞作业）\\n- **项目阶段**：计划或执行阶段（需确认是否已安排进坞时间）\\n- **潜在关联方**：船东、船厂、坞修承包商、检验机构（如船级社）\\n- **后续行动**：需确认检修范围（如船体、螺旋桨、舵机等）、工期、费用预算及合同安排\\n\\n---\\n\\n### **建议分类**\\n1. **船舶维修与保养类**（最直接匹配）\\n2. **港口/船厂运营类**（若涉及码头资源调度）\\n3. **项目管理类**（若需跟踪进度、成本、资源）\\n\\n---\\n\\n### **补充建议**\\n- 若需进一步分析，请提供更多上下文，如：\\n  - 具体日期、船型、吨位\\n  - 检修原因（例行检查、事故维修等）\\n  - 涉及合同或预算信息\\n  - 关联项目名称或编号\\n\\n如果需要，我可以协助您生成一份结构化的项目跟踪表或提醒事项。\",\"suggested_project_id\":null,\"confirmed_project_id\":null,\"status\":\"pending\",\"created_at\":\"2026-08-11T07:53:33.468337\"}]",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "随手存"
+    },
+    {
+      "name": "更新随手存（确认关联项目）",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/quick-saves/12",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"confirmed_project_id\": 1,\n    \"status\": \"confirmed\",\n    \"recognized_text\": \"手动修正的识别文本\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:39 GMT",
+        "server": "uvicorn",
+        "content-length": "278",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":12,\"content_type\":\"text\",\"content_text\":\"今天在码头看到MV TEST船需要进坞检修\",\"file_key\":null,\"recognized_text\":\"手动修正的识别文本\",\"suggested_project_id\":null,\"confirmed_project_id\":1,\"status\":\"confirmed\",\"created_at\":\"2026-08-12T01:37:40.324622\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "随手存"
+    },
+    {
+      "name": "上传文档",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/knowledge/documents",
+      "request_headers": {
+        "Content-Type": "multipart/form-data; boundary=----WebKitFormBoundaryd456c6a6c0324771",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "------WebKitFormBoundaryd456c6a6c0324771\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n测试文档\r\n------WebKitFormBoundaryd456c6a6c0324771\r\nContent-Disposition: form-data; name=\"category\"\r\n\r\n规则\r\n------WebKitFormBoundaryd456c6a6c0324771\r\nContent-Disposition: form-data; name=\"file\"; filename=\"dummy.txt\"\r\nContent-Type: text/plain\r\n\r\nLG-management postman-runner dummy upload file\n\r\n------WebKitFormBoundaryd456c6a6c0324771--\r\n",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:39 GMT",
+        "server": "uvicorn",
+        "content-length": "180",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":8,\"title\":\"测试文档\",\"category\":\"规则\",\"file_key\":\"20260812_013740_d854257dacca411f.txt\",\"original_text\":null,\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:37:40.447393\"}",
+      "error": null,
+      "file_upload_fields": [
+        "file"
+      ],
+      "folder": "RAG 知识库"
+    },
+    {
+      "name": "文档列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/knowledge/documents?category=%E8%A7%84%E5%88%99",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:39 GMT",
+        "server": "uvicorn",
+        "content-length": "1065",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"items\":[{\"id\":8,\"title\":\"测试文档\",\"category\":\"规则\",\"file_key\":\"20260812_013740_d854257dacca411f.txt\",\"original_text\":null,\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:37:40.447393\"},{\"id\":7,\"title\":\"测试文档\",\"category\":\"规则\",\"file_key\":\"20260812_013519_134e8482c3924df2.txt\",\"original_text\":\"LG-management postman-runner dummy upload file\\n\",\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:35:19.662433\"},{\"id\":6,\"title\":\"测试文档\",\"category\":\"规则\",\"file_key\":\"20260812_013212_155f6cb884e34507.txt\",\"original_text\":\"LG-management postman-runner dummy upload file\\n\",\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:32:13.008125\"},{\"id\":3,\"title\":\"测试文档\",\"category\":\"规则\",\"file_key\":\"20260812_010013_a352e4e3dc5a4d85.txt\",\"original_text\":\"LG-management postman-runner dummy upload file\\n\",\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:00:13.207447\"},{\"id\":2,\"title\":\"测试文档\",\"category\":\"规则\",\"file_key\":\"20260811_075452_4f7f8a268bd84f60.docx\",\"original_text\":null,\"uploaded_by\":1,\"created_at\":\"2026-08-11T07:54:52.895537\"}],\"total\":5}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "RAG 知识库"
+    },
+    {
+      "name": "获取文档详情",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/knowledge/documents/8",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:39 GMT",
+        "server": "uvicorn",
+        "content-length": "180",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":8,\"title\":\"测试文档\",\"category\":\"规则\",\"file_key\":\"20260812_013740_d854257dacca411f.txt\",\"original_text\":null,\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:37:40.447393\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "RAG 知识库"
+    },
+    {
+      "name": "删除文档",
+      "method": "DELETE",
+      "url": "http://localhost:8000/api/v1/knowledge/documents/8",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 204,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:39 GMT",
+        "server": "uvicorn",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "RAG 知识库"
+    },
+    {
+      "name": "知识库问答",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/knowledge/query",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"query\": \"进坞检修的标准流程是什么？\",\n    \"top_k\": 5,\n    \"category\": null\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:39 GMT",
+        "server": "uvicorn",
+        "content-length": "2308",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"answer\":\"根据提供的上下文，进坞检修的标准流程如下：\\n\\n1. **船舶进坞**：船舶进坞后，首先进行船底清洗和除锈，检查船底板、龙骨、舵杆等水下部分。\\n2. **船体钢板更换**：对腐蚀超过极限的钢板进行割换，焊接完成后进行无损探伤检测，确保焊缝质量合格。\\n3. **螺旋桨修理**：检查螺旋桨叶片是否有裂纹、变形，必要时进行矫正或更换，并进行静平衡试验。\",\"citations\":[{\"document_id\":1,\"document_title\":\"船舶修理SOP标准流程\",\"chunk_index\":0,\"chunk_text\":\"船舶修理SOP标准流程\\r\\n\\r\\n一、修船前准备\\r\\n1. 进厂前检验：船舶进厂前，由监理工程师对船舶进行全面检验，记录船体、主机、辅机、管系等设备的技术状态。\\r\\n2. 修理工程单编制：根据检验结果编制修理工程单，明确修理项目、工程范围、技术要求和验收标准。\\r\\n3. 物料备件准备：根据修理工程单提前采购所需的钢板、管材、阀门、焊条等物料和备件。\\r\\n\\r\\n二、坞内作业\\r\\n1. 船舶进坞：船舶进坞后，首先进行\",\"score\":0.640164632802148},{\"document_id\":1,\"document_title\":\"船舶修理SOP标准流程\",\"chunk_index\":1,\"chunk_text\":\"隙至规定范围。\\r\\n3. 组装调试：组装后进行磨合运转，检测各缸压缩压力和排气温度，确保主机性能达标。\\r\\n\\r\\n四、管系修理\\r\\n1. 管路拆检：拆检海水管、淡水管、燃油管、滑油管等管系，更换腐蚀严重的管段。\\r\\n2. 阀门研磨：对各类阀门进行研磨和密封性试验，确保无泄漏。\\r\\n3. 系统试压：管系组装后进行水压试验，试验压力为工作压力的1.5倍，保压30分钟无渗漏为合格。\\r\\n\\r\\n五、电气设备修理\\r\\n1. \",\"score\":0.6270760484658497},{\"document_id\":3,\"document_title\":\"测试文档\",\"chunk_index\":0,\"chunk_text\":\"LG-management postman-runner dummy upload file\",\"score\":0.3539029254346229},{\"document_id\":6,\"document_title\":\"测试文档\",\"chunk_index\":0,\"chunk_text\":\"LG-management postman-runner dummy upload file\",\"score\":0.3539029254346229},{\"document_id\":7,\"document_title\":\"测试文档\",\"chunk_index\":0,\"chunk_text\":\"LG-management postman-runner dummy upload file\",\"score\":0.3539029254346229}]}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "RAG 知识库"
+    },
+    {
+      "name": "客户列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/customers?name=&page=1&page_size=20",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:41 GMT",
+        "server": "uvicorn",
+        "content-length": "22",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"items\":[],\"total\":0}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "客户管理"
+    },
+    {
+      "name": "创建客户",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/customers",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"name\": \"测试船务有限公司\",\n    \"contact_person\": \"张三\",\n    \"phone\": \"13800138000\",\n    \"survey_conclusion\": \"recommend\",\n    \"remarks\": \"优质客户\"\n}",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:41 GMT",
+        "server": "uvicorn",
+        "content-length": "231",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"name\":\"测试船务有限公司\",\"contact_person\":\"张三\",\"phone\":\"13800138000\",\"survey_conclusion\":\"recommend\",\"remarks\":\"优质客户\",\"created_at\":\"2026-08-12T01:37:42.487626\",\"updated_at\":\"2026-08-12T01:37:42.487635\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "客户管理"
+    },
+    {
+      "name": "获取客户详情",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/customers/6",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:41 GMT",
+        "server": "uvicorn",
+        "content-length": "231",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"name\":\"测试船务有限公司\",\"contact_person\":\"张三\",\"phone\":\"13800138000\",\"survey_conclusion\":\"recommend\",\"remarks\":\"优质客户\",\"created_at\":\"2026-08-12T01:37:42.487626\",\"updated_at\":\"2026-08-12T01:37:42.487635\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "客户管理"
+    },
+    {
+      "name": "更新客户",
+      "method": "PATCH",
+      "url": "http://localhost:8000/api/v1/customers/6",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "{\n    \"name\": \"测试船务有限公司（更新）\",\n    \"contact_person\": \"李四\",\n    \"phone\": \"13900139000\",\n    \"survey_conclusion\": \"pending\",\n    \"remarks\": \"更新备注\"\n}",
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:41 GMT",
+        "server": "uvicorn",
+        "content-length": "241",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"id\":6,\"name\":\"测试船务有限公司（更新）\",\"contact_person\":\"李四\",\"phone\":\"13900139000\",\"survey_conclusion\":\"pending\",\"remarks\":\"更新备注\",\"created_at\":\"2026-08-12T01:37:42.487626\",\"updated_at\":\"2026-08-12T01:37:42.537872\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "客户管理"
+    },
+    {
+      "name": "删除客户",
+      "method": "DELETE",
+      "url": "http://localhost:8000/api/v1/customers/6",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 204,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:41 GMT",
+        "server": "uvicorn",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "客户管理"
+    },
+    {
+      "name": "上传文件",
+      "method": "POST",
+      "url": "http://localhost:8000/api/v1/files/upload",
+      "request_headers": {
+        "Content-Type": "multipart/form-data; boundary=----WebKitFormBoundaryd08fa92e17634f59",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": "------WebKitFormBoundaryd08fa92e17634f59\r\nContent-Disposition: form-data; name=\"file\"; filename=\"dummy.txt\"\r\nContent-Type: text/plain\r\n\r\nLG-management postman-runner dummy upload file\n\r\n------WebKitFormBoundaryd08fa92e17634f59\r\nContent-Disposition: form-data; name=\"project_id\"\r\n\r\n1\r\n------WebKitFormBoundaryd08fa92e17634f59\r\nContent-Disposition: form-data; name=\"file_type\"\r\n\r\ndocument\r\n------WebKitFormBoundaryd08fa92e17634f59--\r\n",
+      "status": 201,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:41 GMT",
+        "server": "uvicorn",
+        "content-length": "141",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"file_name\":\"dummy.txt\",\"file_type\":\"document\",\"storage_key\":\"20260812_013742_f38377993b4f48ad.txt\",\"file_size\":47,\"mime_type\":\"text/plain\"}",
+      "error": null,
+      "file_upload_fields": [
+        "file"
+      ],
+      "folder": "文件中心"
+    },
+    {
+      "name": "文件列表",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/files?project_id=1&file_type=document&page=1&page_size=20",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 200,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:42 GMT",
+        "server": "uvicorn",
+        "content-length": "1131",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"items\":[{\"id\":6,\"project_id\":1,\"file_name\":\"dummy.txt\",\"file_type\":\"document\",\"storage_key\":\"20260812_013742_f38377993b4f48ad.txt\",\"file_size\":47,\"mime_type\":\"text/plain\",\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:37:42.670599\"},{\"id\":5,\"project_id\":1,\"file_name\":\"dummy.txt\",\"file_type\":\"document\",\"storage_key\":\"20260812_013522_7c6b9e0509e44b7b.txt\",\"file_size\":47,\"mime_type\":\"text/plain\",\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:35:22.849899\"},{\"id\":4,\"project_id\":1,\"file_name\":\"dummy.txt\",\"file_type\":\"document\",\"storage_key\":\"20260812_013214_72c569c481544efc.txt\",\"file_size\":47,\"mime_type\":\"text/plain\",\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:32:14.853335\"},{\"id\":3,\"project_id\":1,\"file_name\":\"dummy.txt\",\"file_type\":\"document\",\"storage_key\":\"20260812_012600_2598ef3922f648e6.txt\",\"file_size\":47,\"mime_type\":\"text/plain\",\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:26:00.660840\"},{\"id\":2,\"project_id\":1,\"file_name\":\"dummy.txt\",\"file_type\":\"document\",\"storage_key\":\"20260812_010918_fed8c55445f04548.txt\",\"file_size\":47,\"mime_type\":\"text/plain\",\"uploaded_by\":1,\"created_at\":\"2026-08-12T01:09:18.661538\"}],\"total\":5}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "文件中心"
+    },
+    {
+      "name": "下载文件",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/files/1/download",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:42 GMT",
+        "server": "uvicorn",
+        "content-length": "28",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"文件不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "文件中心"
+    },
+    {
+      "name": "预览文件",
+      "method": "GET",
+      "url": "http://localhost:8000/api/v1/files/1/preview",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:42 GMT",
+        "server": "uvicorn",
+        "content-length": "28",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"文件不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "文件中心"
+    },
+    {
+      "name": "删除文件",
+      "method": "DELETE",
+      "url": "http://localhost:8000/api/v1/files/1",
+      "request_headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg2NTg1MDU0fQ.ZSW7fBJO2HReXbi5LkSRAQQIJyfB8F4eEvk6TBAgDB8"
+      },
+      "request_body": null,
+      "status": 404,
+      "response_headers": {
+        "date": "Wed, 12 Aug 2026 01:37:42 GMT",
+        "server": "uvicorn",
+        "content-length": "28",
+        "content-type": "application/json",
+        "connection": "close"
+      },
+      "response_body": "{\"detail\":\"文件不存在\"}",
+      "error": null,
+      "file_upload_fields": [],
+      "folder": "文件中心"
+    }
+  ]
+}

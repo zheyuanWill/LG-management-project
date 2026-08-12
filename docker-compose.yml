@@ -113,7 +113,6 @@ services:
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-small-zh-v1.5}
       - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
       - HF_HUB_CACHE=/cache/models
-      - OCR_ENABLED=${OCR_ENABLED:-false}
     ports:
       - "8001:8001"
     volumes:

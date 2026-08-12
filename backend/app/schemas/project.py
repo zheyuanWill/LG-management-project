@@ -53,6 +53,15 @@ class ProjectResponse(BaseModel):
     updated_at: datetime
 
 
+class ProjectDetailResponse(ProjectResponse):
+    """Project enriched with relation data the frontend cards need to display."""
+
+    customer_name: str | None = None
+    customer_phone: str | None = None
+    risk_summary: str | None = None
+    has_unconfirmed_report: bool = False
+
+
 class ProjectListResponse(BaseModel):
-    items: list[ProjectResponse]
+    items: list[ProjectDetailResponse]
     total: int

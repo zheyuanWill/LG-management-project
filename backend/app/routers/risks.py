@@ -16,6 +16,7 @@ router = APIRouter()
 
 
 class RiskResolveRequest(BaseModel):
+    resolved: bool | None = None
     detail: str | None = None
     risk_level: str | None = None
 
@@ -108,7 +109,8 @@ async def resolve_risk(
     if risk is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="风险事件不存在")
 
-    risk.resolved = True
+    if payload.resolved is not None:
+        risk.resolved = payload.resolved
     if payload.detail is not None:
         risk.detail = payload.detail
     if payload.risk_level is not None:

@@ -1,20 +1,21 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Plus, Edit2, Trash2, Save, Truck, Package, CheckCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { useApiGet, useApiPost, useApiPatch, useApiDelete } from '@/hooks/useApi'
+import { useApiGet, useApiPost, useApiDelete } from '@/hooks/useApi'
+import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
 
 interface LogisticsNodeItem {
-  id: string
-  type: string
-  title: string
-  date: string
+  id: number
+  node_type: string
+  node_date: string
   remark?: string
   tracking_no?: string
-  attachment_url?: string
+  attachment_key?: string
   created_at: string
 }
 
@@ -22,73 +23,88 @@ interface LogisticsTimelineProps {
   projectId: string
 }
 
+// Keys MUST match the backend LogisticsNodeType enum.
 const nodeTypeConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  order_placed: { label: '已下单', icon: <Package className="h-4 w-4" />, color: 'bg-blue-500' },
+  ordered: { label: '已下单', icon: <Package className="h-4 w-4" />, color: 'bg-blue-500' },
   supplier_shipped: { label: '供应商发货', icon: <Truck className="h-4 w-4" />, color: 'bg-purple-500' },
   in_transit: { label: '运输中', icon: <Truck className="h-4 w-4" />, color: 'bg-amber-500' },
-  arrived_port: { label: '到港', icon: <Package className="h-4 w-4" />, color: 'bg-cyan-500' },
+  arrived: { label: '到港', icon: <Package className="h-4 w-4" />, color: 'bg-cyan-500' },
   warehoused: { label: '入库', icon: <Package className="h-4 w-4" />, color: 'bg-teal-500' },
-  shipped_to_owner: { label: '发给船东', icon: <Truck className="h-4 w-4" />, color: 'bg-indigo-500' },
+  sent_to_owner: { label: '发给船东', icon: <Truck className="h-4 w-4" />, color: 'bg-indigo-500' },
   hk_signed: { label: '香港签收', icon: <CheckCircle className="h-4 w-4" />, color: 'bg-green-500' },
-  settlement_done: { label: '结算完成', icon: <CheckCircle className="h-4 w-4" />, color: 'bg-emerald-500' },
+  settled: { label: '结算完成', icon: <CheckCircle className="h-4 w-4" />, color: 'bg-emerald-500' },
 }
 
 const nodeTypes = Object.keys(nodeTypeConfig)
 
 export default function LogisticsTimeline({ projectId }: LogisticsTimelineProps) {
+  const queryClient = useQueryClient()
   const { data: nodes, isLoading } = useApiGet<LogisticsNodeItem[]>(
     `/projects/${projectId}/logistics`
   )
   const postNode = useApiPost<LogisticsNodeItem>(`/projects/${projectId}/logistics`)
-  const patchNode = useApiPatch<LogisticsNodeItem>(`/projects/${projectId}/logistics`)
   const deleteNode = useApiDelete<void>(`/projects/${projectId}/logistics`)
 
   const [showAddForm, setShowAddForm] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [newNode, setNewNode] = useState({
-    type: 'order_placed',
-    date: new Date().toISOString().split('T')[0],
+    node_type: 'ordered',
+    node_date: new Date().toISOString().split('T')[0],
     remark: '',
     tracking_no: '',
   })
   const [editNode, setEditNode] = useState<LogisticsNodeItem | null>(null)
 
   const sortedNodes = [...(nodes || [])].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    (a, b) => new Date(a.node_date).getTime() - new Date(b.node_date).getTime()
   )
+
+  const refresh = () =>
+    queryClient.invalidateQueries({
+      queryKey: [`/projects/${projectId}/logistics`],
+    })
 
   const handleAdd = async () => {
     await postNode.mutateAsync({
-      type: newNode.type,
-      date: newNode.date,
+      node_type: newNode.node_type,
+      node_date: newNode.node_date,
       remark: newNode.remark,
-      tracking_no: newNode.type === 'in_transit' ? newNode.tracking_no : undefined,
-    } as unknown as Record<string, unknown>)
+      tracking_no: newNode.node_type === 'in_transit' ? newNode.tracking_no : undefined,
+    })
     setShowAddForm(false)
     setNewNode({
-      type: 'order_placed',
-      date: new Date().toISOString().split('T')[0],
+      node_type: 'ordered',
+      node_date: new Date().toISOString().split('T')[0],
       remark: '',
       tracking_no: '',
     })
+    refresh()
   }
 
   const handleUpdate = async () => {
     if (editNode) {
-      await patchNode.mutateAsync({
-        type: editNode.type,
-        date: editNode.date,
-        remark: editNode.remark,
-        tracking_no: editNode.type === 'in_transit' ? editNode.tracking_no : undefined,
-      } as unknown as Record<string, unknown>)
+      await apiFetch<LogisticsNodeItem>(
+        `/projects/${projectId}/logistics/${editNode.id}`,
+        {
+          method: 'PATCH',
+          body: {
+            node_type: editNode.node_type,
+            node_date: editNode.node_date,
+            remark: editNode.remark,
+            tracking_no:
+              editNode.node_type === 'in_transit' ? editNode.tracking_no : undefined,
+          },
+        }
+      )
       setEditingId(null)
       setEditNode(null)
+      refresh()
     }
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     if (confirm('确定删除该物流节点?')) {
-      deleteNode.mutate(id)
+      deleteNode.mutate(id.toString())
     }
   }
 
@@ -114,8 +130,8 @@ export default function LogisticsTimeline({ projectId }: LogisticsTimelineProps)
                     <label className="text-xs text-muted-foreground">节点类型</label>
                     <select
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={newNode.type}
-                      onChange={(e) => setNewNode({ ...newNode, type: e.target.value })}
+                      value={newNode.node_type}
+                      onChange={(e) => setNewNode({ ...newNode, node_type: e.target.value })}
                     >
                       {nodeTypes.map((t) => (
                         <option key={t} value={t}>
@@ -128,11 +144,11 @@ export default function LogisticsTimeline({ projectId }: LogisticsTimelineProps)
                     <label className="text-xs text-muted-foreground">日期</label>
                     <Input
                       type="date"
-                      value={newNode.date}
-                      onChange={(e) => setNewNode({ ...newNode, date: e.target.value })}
+                      value={newNode.node_date}
+                      onChange={(e) => setNewNode({ ...newNode, node_date: e.target.value })}
                     />
                   </div>
-                  {newNode.type === 'in_transit' && (
+                  {newNode.node_type === 'in_transit' && (
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">物流单号</label>
                       <Input
@@ -172,7 +188,7 @@ export default function LogisticsTimeline({ projectId }: LogisticsTimelineProps)
                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
                 <div className="space-y-4">
                   {sortedNodes.map((node) => {
-                    const config = nodeTypeConfig[node.type]
+                    const config = nodeTypeConfig[node.node_type]
                     const isEditing = editingId === node.id
 
                     return (
@@ -191,9 +207,9 @@ export default function LogisticsTimeline({ projectId }: LogisticsTimelineProps)
                                   <label className="text-xs text-muted-foreground">节点类型</label>
                                   <select
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    value={editNode?.type}
+                                    value={editNode?.node_type}
                                     onChange={(e) =>
-                                      setEditNode(editNode ? { ...editNode, type: e.target.value } : null)
+                                      setEditNode(editNode ? { ...editNode, node_type: e.target.value } : null)
                                     }
                                   >
                                     {nodeTypes.map((t) => (
@@ -207,13 +223,13 @@ export default function LogisticsTimeline({ projectId }: LogisticsTimelineProps)
                                   <label className="text-xs text-muted-foreground">日期</label>
                                   <Input
                                     type="date"
-                                    value={editNode?.date || ''}
+                                    value={editNode?.node_date || ''}
                                     onChange={(e) =>
-                                      setEditNode(editNode ? { ...editNode, date: e.target.value } : null)
+                                      setEditNode(editNode ? { ...editNode, node_date: e.target.value } : null)
                                     }
                                   />
                                 </div>
-                                {editNode?.type === 'in_transit' && (
+                                {editNode?.node_type === 'in_transit' && (
                                   <div className="space-y-1">
                                     <label className="text-xs text-muted-foreground">物流单号</label>
                                     <Input
@@ -247,7 +263,7 @@ export default function LogisticsTimeline({ projectId }: LogisticsTimelineProps)
                                 >
                                   取消
                                 </Button>
-                                <Button size="sm" onClick={handleUpdate} disabled={patchNode.isPending}>
+                                <Button size="sm" onClick={handleUpdate}>
                                   保存
                                 </Button>
                               </div>
@@ -264,7 +280,7 @@ export default function LogisticsTimeline({ projectId }: LogisticsTimelineProps)
                                   >
                                     {config?.icon}
                                   </span>
-                                  <span className="font-medium text-sm">{config?.label || node.type}</span>
+                                  <span className="font-medium text-sm">{config?.label || node.node_type}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <button
@@ -285,20 +301,13 @@ export default function LogisticsTimeline({ projectId }: LogisticsTimelineProps)
                                 </div>
                               </div>
                               <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-                                <p>日期: {formatDate(node.date)}</p>
+                                <p>日期: {formatDate(node.node_date)}</p>
                                 {node.tracking_no && (
                                   <p>物流单号: <span className="font-medium text-foreground">{node.tracking_no}</span></p>
                                 )}
                                 {node.remark && <p>备注: {node.remark}</p>}
-                                {node.attachment_url && (
-                                  <a
-                                    href={node.attachment_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-primary hover:underline inline-flex items-center gap-1"
-                                  >
-                                    查看附件
-                                  </a>
+                                {node.attachment_key && (
+                                  <p className="text-xs text-muted-foreground/80">已上传附件</p>
                                 )}
                               </div>
                             </div>
