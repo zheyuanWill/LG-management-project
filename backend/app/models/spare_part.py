@@ -10,13 +10,14 @@ class SparePartDetail(Base):
     __tablename__ = "spare_part_details"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False, unique=True, index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
     item_name: Mapped[str] = mapped_column(String(256), nullable=False)
     model_or_drawing: Mapped[str | None] = mapped_column(String(256), nullable=True)
     quantity: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     project: Mapped["Project"] = relationship(back_populates="spare_part_detail")
+    logistics_nodes: Mapped[list["LogisticsNode"]] = relationship(back_populates="spare_part")
 
     def __repr__(self) -> str:
         return f"<SparePartDetail(id={self.id}, project_id={self.project_id})>"
@@ -42,6 +43,7 @@ class LogisticsNode(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
+    spare_part_id: Mapped[int | None] = mapped_column(ForeignKey("spare_part_details.id"), nullable=True, index=True)
     node_type: Mapped[str] = mapped_column(String(32), nullable=False)
     node_date: Mapped[date] = mapped_column(Date, nullable=False)
     tracking_no: Mapped[str | None] = mapped_column(String(128), nullable=True)
@@ -50,6 +52,7 @@ class LogisticsNode(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     project: Mapped["Project"] = relationship(back_populates="logistics_nodes")
+    spare_part: Mapped["SparePartDetail"] = relationship(back_populates="logistics_nodes")
 
     def __repr__(self) -> str:
         return f"<LogisticsNode(id={self.id}, project_id={self.project_id}, type={self.node_type})>"

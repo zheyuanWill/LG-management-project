@@ -103,7 +103,7 @@ export default function DailyUpdateForm({
         task_id: task.id,
         status,
         remark,
-        date: today,
+        update_date: today,
         photos: photos.map((p) => ({ id: p.id, url: p.url, caption: p.caption })),
         audio_duration: recordSeconds,
       })

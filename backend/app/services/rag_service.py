@@ -61,10 +61,25 @@ async def ingest_document(
             logger.warning("PyPDF2 not installed, using basic extraction")
             text = file_content.decode("utf-8", errors="ignore")
     elif file_type in ("doc", "docx"):
-        text = file_content.decode("utf-8", errors="ignore")
-        logger.warning("For proper Word extraction, install python-docx")
+        try:
+            import io
+            from docx import Document
+            doc = Document(io.BytesIO(file_content))
+            text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
+            # Also extract from tables
+            for table in doc.tables:
+                for row in table.rows:
+                    row_text = " | ".join([cell.text.strip() for cell in row.cells if cell.text.strip()])
+                    if row_text.strip():
+                        text += "\n" + row_text
+        except ImportError:
+            logger.warning("python-docx not installed, cannot extract text from docx")
+            text = f"[Word document: {title or 'unknown'} - {len(file_content)} bytes]"
     else:
         text = file_content.decode("utf-8", errors="ignore")
+
+    # Remove null bytes that can cause PostgreSQL encoding errors
+    text = text.replace("\x00", "")
 
     if not text.strip():
         text = f"[Binary content: {len(file_content)} bytes]"
@@ -106,6 +121,41 @@ async def ingest_document(
 
     await db.flush()
     logger.info(f"Ingested document {doc_id}: {len(chunks)} chunks, {len(all_embeddings)} embeddings")
+
+
+async def retrieve(
+    db: AsyncSession, question: str, top_k: int = 5, category: str | None = None
+) -> list[str]:
+    """检索与问题最相关的知识库片段文本（仅检索，不调用 LLM 作答）。
+
+    用于把修船知识库要点作为上下文拼进 prompt，避免 `query()` 额外做一次问答。
+    """
+    ai_client = get_ai_client()
+
+    query_embedding = await ai_client.embed([question])
+    if not query_embedding:
+        return []
+
+    query_vec = query_embedding[0]
+
+    doc_filter = select(KnowledgeDocument.id)
+    if category:
+        doc_filter = doc_filter.where(KnowledgeDocument.category == category)
+    doc_ids_result = await db.execute(doc_filter)
+    doc_ids = list(doc_ids_result.scalars().all())
+
+    if not doc_ids:
+        return []
+
+    search_stmt = (
+        select(KnowledgeEmbedding)
+        .where(KnowledgeEmbedding.document_id.in_(doc_ids))
+        .order_by(KnowledgeEmbedding.embedding.cosine_distance(query_vec))
+        .limit(top_k)
+    )
+    rows = (await db.execute(search_stmt)).scalars().all()
+
+    return [r.chunk_text for r in rows if r.chunk_text]
 
 
 async def query(

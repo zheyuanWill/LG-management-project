@@ -23,35 +23,38 @@ import {
 import { formatDate } from '@/lib/utils'
 
 export default function Dashboard() {
-  const { data: projects } = useApiGet<Project[]>('/projects')
-  const { data: risks } = useApiGet<RiskEvent[]>('/risks/summary')
+  const { data: projectsRaw } = useApiGet<Project[]>('/projects')
+  const { data: risksRaw } = useApiGet<RiskEvent[]>('/risks/summary')
+
+  const projects = Array.isArray(projectsRaw) ? projectsRaw : []
+  const risks = Array.isArray(risksRaw) ? risksRaw : []
 
   const stats = [
     {
       label: '活跃项目',
-      value: projects?.filter(
+      value: projects.filter(
         (p) => p.status === 'active'
-      ).length ?? 0,
+      ).length,
       icon: ClipboardList,
       color: 'text-primary',
     },
     {
       label: '已完成项目',
-      value: projects?.filter(
+      value: projects.filter(
         (p) => p.status === 'completed'
-      ).length ?? 0,
+      ).length,
       icon: TrendingUp,
       color: 'text-secondary',
     },
     {
       label: '风险预警',
-      value: risks?.length ?? 0,
+      value: risks.length,
       icon: AlertTriangle,
       color: 'text-accent',
     },
     {
       label: '项目总数',
-      value: projects?.length ?? 0,
+      value: projects.length,
       icon: FolderOpen,
       color: 'text-foreground',
     },

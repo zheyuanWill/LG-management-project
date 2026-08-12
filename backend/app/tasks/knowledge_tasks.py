@@ -39,8 +39,9 @@ def ingest_document_task(doc_id: int) -> dict:
                     tmp_path = Path(tmp.name)
                     file_content = tmp_path.read_bytes()
 
-                filename = title
-                file_type = filename.rsplit(".", 1)[-1].lower() if "." in filename else "txt"
+                # 用 file_key（保留原始扩展名，如 xxx.docx）判定类型，
+                # 不能用 title（标题通常不带扩展名），否则会误判成 txt 导致二进制乱码。
+                file_type = file_key.rsplit(".", 1)[-1].lower() if "." in file_key else "txt"
                 if file_type not in ("pdf", "doc", "docx", "txt", "md"):
                     file_type = "txt"
 

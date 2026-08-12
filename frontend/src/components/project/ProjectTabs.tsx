@@ -50,7 +50,7 @@ export default function ProjectTabs({
       icon: <FileText className="h-4 w-4" />,
       content: (
         <Suspense fallback={<LoadingFallback />}>
-          <DailyReportList projectId={project.id} reports={dailyReports} />
+          <DailyReportList projectId={project.id} reports={dailyReports} onReportsChange={onDataChange} />
         </Suspense>
       ),
     },

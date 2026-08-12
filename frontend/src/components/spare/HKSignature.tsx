@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Upload, Calendar, Save, Loader2, FileText, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -21,17 +21,18 @@ interface HKSignatureProps {
 
 export default function HKSignature({ projectId }: HKSignatureProps) {
   const { data: signature, isLoading } = useApiGet<SignatureData>(
-    `/projects/${projectId}/hk-signatures`,
+    `/spare-parts/projects/${projectId}/hk-signatures`,
     { retry: false }
   )
   const exists = !!signature
-  const postMutation = useApiPost<SignatureData>(`/projects/${projectId}/hk-signatures`)
-  const patchMutation = useApiPatch<SignatureData>(`/projects/${projectId}/hk-signatures`)
+  const postMutation = useApiPost<SignatureData>(`/spare-parts/projects/${projectId}/hk-signatures`)
+  const patchMutation = useApiPatch<SignatureData>(`/spare-parts/projects/${projectId}/hk-signatures`)
 
   const [signDate, setSignDate] = useState('')
   const [fileKey, setFileKey] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (signature) {
@@ -91,19 +92,18 @@ export default function HKSignature({ projectId }: HKSignatureProps) {
                   <p className="font-medium">签收单扫描件</p>
                   <p className="text-sm text-muted-foreground">上传香港签收单扫描件 (PDF/图片)</p>
                 </div>
-                <label className="inline-block cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    className="hidden"
-                    onChange={handleFileSelect}
-                    disabled={isUploading}
-                  />
-                  <Button variant="outline">
-                    <Upload className="h-4 w-4" />
-                    {isUploading ? '上传中...' : '上传签收单'}
-                  </Button>
-                </label>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  disabled={isUploading}
+                />
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="h-4 w-4" />
+                  {isUploading ? '上传中...' : '上传签收单'}
+                </Button>
                 {fileKey && (
                   <p className="text-xs text-muted-foreground break-all font-mono">
                     已选择文件: {fileKey}

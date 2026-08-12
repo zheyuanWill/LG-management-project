@@ -41,6 +41,37 @@ class AIClient:
             logger.error(f"AI embed request failed: {e}")
             return []
 
+    async def chat_stream(self, messages: list[dict], temperature: float = 0.7):
+        """流式调用 AI 聊天，异步 yield 文本增量。解析 ai-service 的 SSE。"""
+        import json as _json
+
+        url = f"{self.base_url}/v1/chat/stream"
+        payload = {"messages": messages, "temperature": temperature}
+        try:
+            async with self._client.stream("POST", url, json=payload) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    if not line.startswith("data:"):
+                        continue
+                    data = line[len("data:"):].strip()
+                    if data == "[DONE]":
+                        break
+                    try:
+                        chunk = _json.loads(data)
+                    except _json.JSONDecodeError:
+                        continue
+                    if "error" in chunk:
+                        logger.error(f"AI 流式返回错误: {chunk['error']}")
+                        raise RuntimeError(chunk["error"])
+                    delta = chunk.get("delta")
+                    if delta:
+                        yield delta
+        except httpx.HTTPError as e:
+            logger.error(f"AI 流式 chat 请求失败: {e}")
+            raise
+
     async def qa(self, question: str, context_chunks: list[str]) -> dict[str, Any]:
         url = f"{self.base_url}/v1/qa"
         payload = {

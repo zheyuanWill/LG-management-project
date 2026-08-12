@@ -102,11 +102,13 @@ export interface DailyReport {
   project_id: number
   report_date: string
   date?: string
-  completed_items: DailyReportItem[]
+  completed_items?: DailyReportItem[] | null
+  today_work?: string | null
+  tomorrow_plan?: string | null
+  tomorrow_candidates?: string[] | null
   completed_tasks?: number
   progress_total?: number
-  tomorrow_plan?: string
-  risk_alert?: string
+  risk_alert?: string | null
   confirmed: boolean
   created_at: string
 }

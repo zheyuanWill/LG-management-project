@@ -119,3 +119,71 @@ class LLMClient:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+    def chat_stream(self, messages: list[dict], temperature: float = 0.7, model: str | None = None):
+        """流式对话，yield 文本增量（delta）。支持 cloud / ollama / mock。"""
+        effective_model = model or self.model
+        if self.provider == "mock":
+            yield from self._mock_stream(messages)
+            return
+
+        if self.provider == "cloud":
+            payload = {
+                "model": effective_model,
+                "messages": messages,
+                "temperature": temperature,
+                "stream": True,
+            }
+            headers = {"Content-Type": "application/json"}
+            if self.api_key:
+                headers["Authorization"] = f"Bearer {self.api_key}"
+            with self.client.stream("POST", self._chat_url, json=payload, headers=headers) as response:
+                response.raise_for_status()
+                for line in response.iter_lines():
+                    if not line:
+                        continue
+                    if line.startswith("data:"):
+                        data = line[len("data:"):].strip()
+                        if data == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data)
+                            delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                            if delta:
+                                yield delta
+                        except json.JSONDecodeError:
+                            continue
+        elif self.provider == "ollama":
+            payload = {
+                "model": effective_model,
+                "messages": messages,
+                "stream": True,
+                "options": {"temperature": temperature},
+            }
+            with self.client.stream("POST", f"{self.base_url}/api/chat", json=payload) as response:
+                response.raise_for_status()
+                for line in response.iter_lines():
+                    if not line:
+                        continue
+                    try:
+                        chunk = json.loads(line)
+                        delta = chunk.get("message", {}).get("content", "")
+                        if delta:
+                            yield delta
+                    except json.JSONDecodeError:
+                        continue
+        else:
+            yield self._mock_chat(messages)
+
+    def _mock_stream(self, messages: list[dict]):
+        last_user_msg = ""
+        for msg in reversed(messages):
+            if msg.get("role") == "user":
+                last_user_msg = msg.get("content", "")
+                break
+        full = (
+            f"[Mock 流式回复] 收到你的消息：「{last_user_msg[:50]}」。"
+            "这是一条模拟流式回复，用于开发测试。在实际部署时将由真正的 LLM 提供服务。"
+        )
+        for i in range(0, len(full), 8):
+            yield full[i : i + 8]

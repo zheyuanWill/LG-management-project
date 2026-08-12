@@ -36,6 +36,7 @@ class SparePartPhotoResponse(BaseModel):
 
 
 class LogisticsNodeCreate(BaseModel):
+    spare_part_id: int | None = Field(default=None, description="所属备件 id；不传则归项目级")
     node_type: str = Field(..., max_length=32)
     node_date: date
     tracking_no: str | None = Field(default=None, max_length=128)
@@ -48,6 +49,7 @@ class LogisticsNodeResponse(BaseModel):
 
     id: int
     project_id: int
+    spare_part_id: int | None = None
     node_type: str
     node_date: date
     tracking_no: str | None = None

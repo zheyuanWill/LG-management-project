@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -32,15 +32,17 @@ const photoTypeLabels: Record<string, string> = {
 
 export default function SparePhotos({ projectId }: SparePhotosProps) {
   const uploadLogo = useApiPost<PhotoResponse>(
-    `/projects/${projectId}/spare-photos?photo_type=logo`
+    `/spare-parts/projects/${projectId}/spare-photos?photo_type=logo`
   )
   const uploadLoading = useApiPost<PhotoResponse>(
-    `/projects/${projectId}/spare-photos?photo_type=loading`
+    `/spare-parts/projects/${projectId}/spare-photos?photo_type=loading`
   )
 
   const [photos, setPhotos] = useState<UploadedPhoto[]>([])
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [uploadingType, setUploadingType] = useState<string | null>(null)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+  const loadingInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -88,20 +90,23 @@ export default function SparePhotos({ projectId }: SparePhotosProps) {
               </span>
             )}
           </div>
-          <label className="cursor-pointer">
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => handleFileSelect(e, type)}
-              disabled={uploadingType !== null}
-            />
-            <Button variant="outline" size="sm">
-              <Upload className="h-3 w-3" />
-              {uploadingType === type ? '上传中...' : '上传'}
-            </Button>
-          </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            ref={type === 'logo' ? logoInputRef : loadingInputRef}
+            onChange={(e) => handleFileSelect(e, type)}
+            disabled={uploadingType !== null}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => (type === 'logo' ? logoInputRef : loadingInputRef).current?.click()}
+          >
+            <Upload className="h-3 w-3" />
+            {uploadingType === type ? '上传中...' : '上传'}
+          </Button>
         </div>
 
         {typePhotos.length === 0 ? (

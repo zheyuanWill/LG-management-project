@@ -7,8 +7,18 @@ from pydantic import BaseModel, ConfigDict, Field
 class DailyReportCreate(BaseModel):
     report_date: date
     completed_items: dict | None = None
+    today_work: str | None = None
     tomorrow_plan: str | None = None
+    tomorrow_candidates: list[str] | None = None
     risk_alert: str | None = None
+
+
+class DailyReportFinalizeRequest(BaseModel):
+    report_date: date
+    today_work: str | None = None
+    tomorrow_items: list[str] | None = None
+    risk_alert: str | None = None
+    confirmed: bool = True
 
 
 class DailyReportResponse(BaseModel):
@@ -19,7 +29,9 @@ class DailyReportResponse(BaseModel):
     report_date: date
     # Persisted JSON may be a dict or list depending on earlier writes; accept both.
     completed_items: Any | None = None
+    today_work: str | None = None
     tomorrow_plan: str | None = None
+    tomorrow_candidates: Any | None = None
     risk_alert: str | None = None
     confirmed: bool
     created_at: datetime

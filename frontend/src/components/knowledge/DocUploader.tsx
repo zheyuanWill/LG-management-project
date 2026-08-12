@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Upload, X, FileText, CheckCircle, Loader2 } from 'lucide-react'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -20,6 +20,7 @@ const categoryOptions = [
 
 export default function DocUploader({ onClose }: DocUploaderProps) {
   const uploadMutation = useApiPost<{ id: string }>('/knowledge/documents')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [files, setFiles] = useState<File[]>([])
   const [category, setCategory] = useState('QM')
@@ -80,15 +81,20 @@ export default function DocUploader({ onClose }: DocUploaderProps) {
           <Upload className="h-10 w-10 text-muted-foreground opacity-50 mb-3" />
           <p className="font-medium mb-1">拖拽文件到此处上传</p>
           <p className="text-sm text-muted-foreground mb-4">支持 PDF、Word 文档</p>
-          <label className="cursor-pointer">
-            <input type="file" accept=".pdf,.doc,.docx" multiple className="hidden" onChange={handleFileSelect} />
-            <Button variant="outline" asChild>
-              <span className="flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                选择文件
-              </span>
-            </Button>
-          </label>
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx"
+            multiple
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+          />
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <span className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              选择文件
+            </span>
+          </Button>
         </div>
 
         <div className="space-y-2">

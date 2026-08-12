@@ -28,36 +28,51 @@ from app.schemas.spare_part import (
 )
 from app.services.file_service import upload_to_minio
 
-VALID_LOGISTICS_NODE_TYPES = {
-    "ordered",
-    "supplier_shipped",
-    "in_transit",
-    "arrived",
-    "warehoused",
-    "sent_to_owner",
-    "hk_signed",
-    "settled",
+# 固定物流节点顺序（可视化时间轴用）
+LOGISTICS_NODE_ORDER = [
+    "ordered",          # 已下单
+    "supplier_shipped",  # 供应商已发货
+    "in_transit",        # 运输中
+    "arrived",           # 已到港
+    "warehoused",        # 已入库
+    "sent_to_owner",     # 已送船东
+    "hk_signed",         # 香港签收
+    "settled",           # 已结算
+]
+VALID_LOGISTICS_NODE_TYPES = set(LOGISTICS_NODE_ORDER)
+
+# 每个节点要求/建议上传的文件说明
+NODE_ATTACHMENT_HINT = {
+    "supplier_shipped": "供应商发货单",
+    "hk_signed": "香港签收单",
+    "settled": "结算单/发票",
 }
 
 router = APIRouter()
 
 
+# ── 备件（一项目多个）─────────────────────────────────────
 @router.get(
     "/projects/{project_id}/spare-parts",
-    response_model=SparePartDetailResponse,
+    response_model=list[SparePartDetailResponse],
 )
-async def get_spare_part_detail(
+async def list_spare_part_details(
     project_id: int,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
-    result = await db.execute(
-        select(SparePartDetail).where(SparePartDetail.project_id == project_id)
+    project_result = await db.execute(
+        select(Project).where(Project.id == project_id)
     )
-    detail = result.scalar_one_or_none()
-    if detail is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="备件信息不存在")
-    return SparePartDetailResponse.model_validate(detail)
+    if not project_result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
+
+    result = await db.execute(
+        select(SparePartDetail)
+        .where(SparePartDetail.project_id == project_id)
+        .order_by(SparePartDetail.id)
+    )
+    return [SparePartDetailResponse.model_validate(d) for d in result.scalars().all()]
 
 
 @router.post(
@@ -89,22 +104,17 @@ async def create_spare_part_detail(
 
 
 @router.patch(
-    "/projects/{project_id}/spare-parts",
+    "/projects/{project_id}/spare-parts/{spare_id}",
     response_model=SparePartDetailResponse,
 )
 async def update_spare_part_detail(
     project_id: int,
+    spare_id: int,
     payload: SparePartDetailCreate,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
-    result = await db.execute(
-        select(SparePartDetail).where(SparePartDetail.project_id == project_id)
-    )
-    detail = result.scalar_one_or_none()
-    if detail is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="备件信息不存在")
-
+    detail = await _get_spare_part(db, project_id, spare_id)
     detail.item_name = payload.item_name
     if payload.model_or_drawing is not None:
         detail.model_or_drawing = payload.model_or_drawing
@@ -115,23 +125,20 @@ async def update_spare_part_detail(
 
 
 @router.delete(
-    "/projects/{project_id}/spare-parts",
+    "/projects/{project_id}/spare-parts/{spare_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_spare_part_detail(
     project_id: int,
+    spare_id: int,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
-    result = await db.execute(
-        select(SparePartDetail).where(SparePartDetail.project_id == project_id)
-    )
-    detail = result.scalar_one_or_none()
-    if detail is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="备件信息不存在")
+    detail = await _get_spare_part(db, project_id, spare_id)
     await db.delete(detail)
 
 
+# ── 备件照片（logo/loading 等）────────────────────────────
 @router.post(
     "/projects/{project_id}/spare-photos",
     response_model=SparePartPhotoResponse,
@@ -164,6 +171,97 @@ async def upload_spare_photo(
     return SparePartPhotoResponse.model_validate(photo)
 
 
+# ── 物流节点（按备件维度）──────────────────────────────────
+@router.get(
+    "/projects/{project_id}/spare-parts/{spare_id}/logistics",
+    response_model=list[LogisticsNodeResponse],
+)
+async def list_spare_logistics_nodes(
+    project_id: int,
+    spare_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    await _get_spare_part(db, project_id, spare_id)
+    result = await db.execute(
+        select(LogisticsNode)
+        .where(LogisticsNode.spare_part_id == spare_id)
+        .order_by(LogisticsNode.node_date)
+    )
+    return [LogisticsNodeResponse.model_validate(n) for n in result.scalars().all()]
+
+
+@router.post(
+    "/projects/{project_id}/spare-parts/{spare_id}/logistics",
+    response_model=LogisticsNodeResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_spare_logistics_node(
+    project_id: int,
+    spare_id: int,
+    payload: LogisticsNodeCreate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    await _get_spare_part(db, project_id, spare_id)
+    _validate_node_type(payload.node_type)
+
+    node = LogisticsNode(
+        project_id=project_id,
+        spare_part_id=spare_id,
+        node_type=payload.node_type,
+        node_date=payload.node_date,
+        tracking_no=payload.tracking_no,
+        remark=payload.remark,
+        attachment_key=payload.attachment_key,
+    )
+    db.add(node)
+    await db.flush()
+    return LogisticsNodeResponse.model_validate(node)
+
+
+@router.patch(
+    "/projects/{project_id}/spare-parts/{spare_id}/logistics/{node_id}",
+    response_model=LogisticsNodeResponse,
+)
+async def update_spare_logistics_node(
+    project_id: int,
+    spare_id: int,
+    node_id: int,
+    payload: LogisticsNodeCreate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    await _get_spare_part(db, project_id, spare_id)
+    _validate_node_type(payload.node_type)
+
+    node = await _get_node(db, spare_id, node_id)
+    node.node_type = payload.node_type
+    node.node_date = payload.node_date
+    node.tracking_no = payload.tracking_no
+    node.remark = payload.remark
+    node.attachment_key = payload.attachment_key
+    await db.flush()
+    return LogisticsNodeResponse.model_validate(node)
+
+
+@router.delete(
+    "/projects/{project_id}/spare-parts/{spare_id}/logistics/{node_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_spare_logistics_node(
+    project_id: int,
+    spare_id: int,
+    node_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    await _get_spare_part(db, project_id, spare_id)
+    node = await _get_node(db, spare_id, node_id)
+    await db.delete(node)
+
+
+# ── 兼容：项目级物流（未挂具体备件）────────────────────────
 @router.get(
     "/projects/{project_id}/logistics",
     response_model=list[LogisticsNodeResponse],
@@ -184,8 +282,7 @@ async def list_logistics_nodes(
         .where(LogisticsNode.project_id == project_id)
         .order_by(LogisticsNode.node_date)
     )
-    nodes = result.scalars().all()
-    return [LogisticsNodeResponse.model_validate(n) for n in nodes]
+    return [LogisticsNodeResponse.model_validate(n) for n in result.scalars().all()]
 
 
 @router.post(
@@ -205,14 +302,11 @@ async def create_logistics_node(
     if not project_result.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
 
-    if payload.node_type not in VALID_LOGISTICS_NODE_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"无效的节点类型。有效类型: {', '.join(sorted(VALID_LOGISTICS_NODE_TYPES))}",
-        )
+    _validate_node_type(payload.node_type)
 
     node = LogisticsNode(
         project_id=project_id,
+        spare_part_id=payload.spare_part_id,
         node_type=payload.node_type,
         node_date=payload.node_date,
         tracking_no=payload.tracking_no,
@@ -224,68 +318,7 @@ async def create_logistics_node(
     return LogisticsNodeResponse.model_validate(node)
 
 
-@router.patch(
-    "/projects/{project_id}/logistics/{node_id}",
-    response_model=LogisticsNodeResponse,
-)
-async def update_logistics_node(
-    project_id: int,
-    node_id: int,
-    payload: LogisticsNodeCreate,
-    db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
-):
-    result = await db.execute(
-        select(LogisticsNode).where(
-            LogisticsNode.id == node_id,
-            LogisticsNode.project_id == project_id,
-        )
-    )
-    node = result.scalar_one_or_none()
-    if node is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="物流节点不存在")
-
-    if payload.node_type not in VALID_LOGISTICS_NODE_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"无效的节点类型。有效类型: {', '.join(sorted(VALID_LOGISTICS_NODE_TYPES))}",
-        )
-
-    node.node_type = payload.node_type
-    node.node_date = payload.node_date
-    node.tracking_no = payload.tracking_no
-    node.remark = payload.remark
-    node.attachment_key = payload.attachment_key
-    await db.flush()
-    return LogisticsNodeResponse.model_validate(node)
-
-
-@router.delete(
-    "/projects/{project_id}/logistics/{node_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-async def delete_logistics_node(
-    project_id: int,
-    node_id: int,
-    db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
-):
-    result = await db.execute(
-        select(LogisticsNode).where(
-            LogisticsNode.id == node_id,
-            LogisticsNode.project_id == project_id,
-        )
-    )
-    node = result.scalar_one_or_none()
-    if node is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="物流节点不存在"
-        )
-
-    await db.delete(node)
-    await db.flush()
-
-
+# ── HK 签收单 ─────────────────────────────────────────────
 @router.get(
     "/projects/{project_id}/hk-signatures",
     response_model=HkSignatureResponse,
@@ -356,6 +389,7 @@ async def update_hk_signature(
     return HkSignatureResponse.model_validate(signature)
 
 
+# ── 发票 ─────────────────────────────────────────────────
 @router.get(
     "/projects/{project_id}/invoices",
     response_model=InvoiceResponse,
@@ -430,3 +464,38 @@ async def update_invoice(
         invoice.purpose = payload.purpose
     await db.flush()
     return InvoiceResponse.model_validate(invoice)
+
+
+# ── 辅助 ─────────────────────────────────────────────────
+async def _get_spare_part(db: AsyncSession, project_id: int, spare_id: int) -> SparePartDetail:
+    result = await db.execute(
+        select(SparePartDetail).where(
+            SparePartDetail.id == spare_id,
+            SparePartDetail.project_id == project_id,
+        )
+    )
+    detail = result.scalar_one_or_none()
+    if detail is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="备件不存在")
+    return detail
+
+
+async def _get_node(db: AsyncSession, spare_id: int, node_id: int) -> LogisticsNode:
+    result = await db.execute(
+        select(LogisticsNode).where(
+            LogisticsNode.id == node_id,
+            LogisticsNode.spare_part_id == spare_id,
+        )
+    )
+    node = result.scalar_one_or_none()
+    if node is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="物流节点不存在")
+    return node
+
+
+def _validate_node_type(node_type: str) -> None:
+    if node_type not in VALID_LOGISTICS_NODE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"无效的节点类型。有效类型(按顺序): {', '.join(LOGISTICS_NODE_ORDER)}",
+        )

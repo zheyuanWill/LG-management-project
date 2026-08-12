@@ -23,9 +23,9 @@ interface SurveyFormProps {
 
 export default function SurveyForm({ projectId }: SurveyFormProps) {
   const { data: survey, isLoading } = useApiGet<SurveyData>(
-    `/projects/${projectId}/surveys`
+    `/brokerage/projects/${projectId}/surveys`
   )
-  const patchSurvey = useApiPatch<SurveyData>(`/projects/${projectId}/surveys`)
+  const patchSurvey = useApiPatch<SurveyData>(`/brokerage/projects/${projectId}/surveys`)
 
   const [conclusion, setConclusion] = useState('')
   const [details, setDetails] = useState('')

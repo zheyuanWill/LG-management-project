@@ -35,7 +35,9 @@ def generate_daily_report_task(project_id: int, report_date_str: str) -> dict:
                             DailyReport.report_date == report_date,
                         ).values(
                             completed_items=report_data.get("completed_items"),
+                            today_work=report_data.get("today_work"),
                             tomorrow_plan=report_data.get("tomorrow_plan"),
+                            tomorrow_candidates=report_data.get("tomorrow_candidates"),
                             risk_alert=report_data.get("risk_alert"),
                         )
                     )
@@ -46,7 +48,9 @@ def generate_daily_report_task(project_id: int, report_date_str: str) -> dict:
                             project_id=project_id,
                             report_date=report_date,
                             completed_items=report_data.get("completed_items"),
+                            today_work=report_data.get("today_work"),
                             tomorrow_plan=report_data.get("tomorrow_plan"),
+                            tomorrow_candidates=report_data.get("tomorrow_candidates"),
                             risk_alert=report_data.get("risk_alert"),
                         )
                     )

@@ -2,12 +2,12 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Sparkles, User, Bot, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { useApiPost } from '@/hooks/useApi'
-import { stripMarkdown } from '@/lib/utils'
+import { useAuthStore } from '@/hooks/useAuth'
+import MarkdownView from '@/components/common/MarkdownView'
 import CitationList from './CitationList'
 
 interface Citation {
-  document_id: string
+  document_id: string | number
   document_title: string
   chunk_index: number
   chunk_text: string
@@ -48,8 +48,8 @@ export default function QAChat() {
   const [isLoading, setIsLoading] = useState(false)
   const [expandedCitations, setExpandedCitations] = useState<Record<string, boolean>>({})
   const scrollRef = useRef<HTMLDivElement>(null)
-
-  const qaMutation = useApiPost<QAResponse>('/knowledge/query')
+  // 流式过程中持有正在写入的助手消息 id，便于增量更新
+  const streamingIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -57,12 +57,15 @@ export default function QAChat() {
     }
   }, [messages])
 
-  // Persist chat history to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
     } catch { /* ignore quota errors */ }
   }, [messages])
+
+  const updateMessage = (id: string, patch: Partial<ChatMessage>) => {
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)))
+  }
 
   const handleSend = async (text?: string) => {
     const question = (text || input).trim()
@@ -74,32 +77,78 @@ export default function QAChat() {
       content: question,
       created_at: new Date().toISOString(),
     }
-
-    setMessages((prev) => [...prev, userMessage])
+    const assistantId = (Date.now() + 1).toString()
+    const assistantMessage: ChatMessage = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      citations: [],
+      created_at: new Date().toISOString(),
+    }
+    setMessages((prev) => [...prev, userMessage, assistantMessage])
     setInput('')
     setIsLoading(true)
+    streamingIdRef.current = assistantId
 
+    const token = useAuthStore.getState().token
     try {
-      const response = await qaMutation.mutateAsync({ query: question, top_k: 5 })
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response.answer,
-        citations: response.citations,
-        created_at: new Date().toISOString(),
-      }
-      setMessages((prev) => [...prev, assistantMessage])
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: '抱歉,我暂时无法回答您的问题。请稍后再试。',
-          created_at: new Date().toISOString(),
+      const resp = await fetch('/api/v1/knowledge/query/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-      ])
+        body: JSON.stringify({ query: question, top_k: 5 }),
+      })
+
+      if (!resp.ok || !resp.body) {
+        throw new Error(`请求失败: ${resp.status}`)
+      }
+
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let acc = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+
+        let sep: number
+        while ((sep = buffer.indexOf('\n\n')) !== -1) {
+          const rawEvent = buffer.slice(0, sep)
+          buffer = buffer.slice(sep + 2)
+          let eventName = 'message'
+          let dataStr = ''
+          for (const line of rawEvent.split('\n')) {
+            if (line.startsWith('event:')) eventName = line.slice(6).trim()
+            else if (line.startsWith('data:')) dataStr += line.slice(5).trim()
+          }
+          if (!dataStr) continue
+          try {
+            const data = JSON.parse(dataStr)
+            if (eventName === 'citations') {
+              updateMessage(assistantId, { citations: data as Citation[] })
+            } else if (typeof data.delta === 'string') {
+              acc += data.delta
+              updateMessage(assistantId, { content: acc })
+            } else if (data.error) {
+              acc += `\n\n> ⚠️ ${data.error}`
+              updateMessage(assistantId, { content: acc })
+            }
+          } catch { /* ignore malformed */ }
+        }
+      }
+      if (!acc) {
+        updateMessage(assistantId, { content: '抱歉，我没有找到相关信息。' })
+      }
+    } catch {
+      updateMessage(assistantId, {
+        content: '抱歉,我暂时无法回答您的问题。请稍后再试。',
+      })
     } finally {
+      streamingIdRef.current = null
       setIsLoading(false)
     }
   }
@@ -159,7 +208,13 @@ export default function QAChat() {
                       : 'bg-muted'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{stripMarkdown(message.content)}</p>
+                  {message.role === 'user' ? (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  ) : message.content ? (
+                    <MarkdownView content={message.content} />
+                  ) : (
+                    <p className="text-muted-foreground">思考中…</p>
+                  )}
                 </div>
 
                 {message.role === 'assistant' && message.citations && message.citations.length > 0 && (

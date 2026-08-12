@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Upload, FileText, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -18,12 +18,13 @@ interface ContractUploadProps {
 
 export default function ContractUpload({ projectId }: ContractUploadProps) {
   const { data: contract, isLoading, isError, error } = useApiGet<ContractData>(
-    `/projects/${projectId}/contracts`,
+    `/brokerage/projects/${projectId}/contracts`,
     { retry: false }
   )
-  const uploadMutation = useApiPost<ContractData>(`/projects/${projectId}/contracts`)
+  const uploadMutation = useApiPost<ContractData>(`/brokerage/projects/${projectId}/contracts`)
 
   const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const notFound = isError && (error as { response?: { status?: number } })?.response?.status === 404
 
@@ -50,19 +51,18 @@ export default function ContractUpload({ projectId }: ContractUploadProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="file"
-              accept="image/*,.pdf,.doc,.docx"
-              className="hidden"
-              onChange={handleFileSelect}
-              disabled={isUploading || !!contract}
-            />
-            <Button variant="outline">
-              <Upload className="h-4 w-4" />
-              {isUploading ? '上传中...' : contract ? '已上传' : '上传合同扫描件'}
-            </Button>
-          </label>
+          <input
+            type="file"
+            accept="image/*,.pdf,.doc,.docx"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            disabled={isUploading || !!contract}
+          />
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="h-4 w-4" />
+            {isUploading ? '上传中...' : contract ? '已上传' : '上传合同扫描件'}
+          </Button>
         </div>
 
         {isLoading ? (

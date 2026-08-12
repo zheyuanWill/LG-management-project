@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
 
 from config import settings
@@ -100,6 +100,30 @@ async def chat(request: ChatRequest):
     except Exception as e:
         logger.error(f"Chat 接口调用失败: {e}")
         raise HTTPException(status_code=500, detail=f"LLM 调用失败: {str(e)}")
+
+
+@app.post("/v1/chat/stream")
+async def chat_stream(request: ChatRequest):
+    """流式对话（SSE）。每个事件为 `data: {"delta": "..."}` 或结束 `data: [DONE]`。"""
+    import json as _json
+
+    llm_client: LLMClient = app.state.llm
+    messages = [{"role": m.role, "content": m.content} for m in request.messages]
+
+    def event_generator():
+        try:
+            for delta in llm_client.chat_stream(
+                messages=messages,
+                temperature=request.temperature,
+                model=request.model,
+            ):
+                yield f"data: {_json.dumps({'delta': delta}, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            logger.error(f"流式 Chat 失败: {e}")
+            yield f"data: {_json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @app.post("/v1/embed", response_model=EmbedResponse)

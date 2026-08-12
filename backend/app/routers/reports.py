@@ -12,10 +12,12 @@ from app.models.user import User
 from app.schemas.report import (
     DailyReportConfirmRequest,
     DailyReportCreate,
+    DailyReportFinalizeRequest,
     DailyReportResponse,
     WeeklyReportCreate,
     WeeklyReportResponse,
 )
+from app.services.report_service import finalize_daily_report, propose_daily_report
 
 router = APIRouter()
 
@@ -123,6 +125,59 @@ async def generate_daily_report(
     }
 
 
+@router.post(
+    "/projects/{project_id}/daily-reports/propose",
+)
+async def propose_daily_report_endpoint(
+    project_id: int,
+    report_date: date | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    """生成日报草稿：今日工作（确定性）+ AI 明日计划候选 + AI 项目级风险。
+
+    前端据此做 human-in-the-loop：逐条确认明日计划、可自增，再调用 finalize 落库。
+    """
+    project_result = await db.execute(
+        select(Project).where(Project.id == project_id)
+    )
+    if not project_result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
+
+    target_date = report_date or date.today()
+    data = await propose_daily_report(db, project_id, target_date)
+    return data
+
+
+@router.post(
+    "/projects/{project_id}/daily-reports/finalize",
+    response_model=DailyReportResponse,
+)
+async def finalize_daily_report_endpoint(
+    project_id: int,
+    payload: DailyReportFinalizeRequest,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    """把用户确认后的日报写入/更新。明日计划以 tomorrow_items（确认+自增）为准。"""
+    project_result = await db.execute(
+        select(Project).where(Project.id == project_id)
+    )
+    if not project_result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
+
+    report = await finalize_daily_report(
+        db,
+        project_id,
+        payload.report_date,
+        today_work=payload.today_work,
+        tomorrow_items=payload.tomorrow_items,
+        risk_alert=payload.risk_alert,
+        confirmed=payload.confirmed,
+    )
+    return DailyReportResponse.model_validate(report)
+
+
 @router.patch(
     "/daily-reports/{report_id}",
     response_model=DailyReportResponse,
@@ -146,6 +201,8 @@ async def update_daily_report(
         report.risk_alert = payload.risk_alert
     if payload.completed_items is not None:
         report.completed_items = payload.completed_items
+    if payload.today_work is not None:
+        report.today_work = payload.today_work
 
     await db.flush()
     return DailyReportResponse.model_validate(report)

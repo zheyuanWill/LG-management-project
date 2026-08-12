@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Save, Loader2 } from 'lucide-react'
+import { Save, Loader2, Package } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { useApiGet, useApiPost, useApiPatch } from '@/hooks/useApi'
+import { useApiGet } from '@/hooks/useApi'
+import { apiFetch } from '@/lib/api'
+import { toast } from '@/components/ui/Toast'
 
 interface SparePartData {
-  id?: number
+  id: number
   item_name: string
   model_or_drawing: string | null
   quantity: string | null
@@ -15,16 +17,20 @@ interface SparePartData {
 
 interface SparePartFormProps {
   projectId: string
+  /** 选中的备件 id；不传则视为新建 */
+  sparePartId?: string
 }
 
-export default function SparePartForm({ projectId }: SparePartFormProps) {
-  const { data: sparePart, isLoading } = useApiGet<SparePartData>(
-    `/projects/${projectId}/spare-parts`,
+export default function SparePartForm({ projectId, sparePartId }: SparePartFormProps) {
+  const { data: list, isLoading } = useApiGet<SparePartData[]>(
+    `/spare-parts/projects/${projectId}/spare-parts`,
     { retry: false }
   )
-  const exists = !!sparePart
-  const postSparePart = useApiPost<SparePartData>(`/projects/${projectId}/spare-parts`)
-  const patchSparePart = useApiPatch<SparePartData>(`/projects/${projectId}/spare-parts`)
+
+  const parts = Array.isArray(list) ? list : []
+  const current = sparePartId
+    ? parts.find((p) => String(p.id) === String(sparePartId))
+    : parts[0]
 
   const [itemName, setItemName] = useState('')
   const [modelOrDrawing, setModelOrDrawing] = useState('')
@@ -32,30 +38,44 @@ export default function SparePartForm({ projectId }: SparePartFormProps) {
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
-    if (sparePart) {
-      setItemName(sparePart.item_name || '')
-      setModelOrDrawing(sparePart.model_or_drawing || '')
-      setQuantity(sparePart.quantity || '')
+    if (current) {
+      setItemName(current.item_name || '')
+      setModelOrDrawing(current.model_or_drawing || '')
+      setQuantity(current.quantity || '')
+    } else {
+      setItemName('')
+      setModelOrDrawing('')
+      setQuantity('')
     }
-  }, [sparePart])
+  }, [current])
 
   const handleSave = async () => {
     if (!itemName.trim()) {
-      alert('请输入品名')
+      toast.error({ title: '请输入品名' })
       return
     }
     setIsSaving(true)
+    const payload = {
+      item_name: itemName.trim(),
+      model_or_drawing: modelOrDrawing.trim() || null,
+      quantity: quantity.trim() || null,
+    }
     try {
-      const payload = {
-        item_name: itemName.trim(),
-        model_or_drawing: modelOrDrawing.trim() || null,
-        quantity: quantity.trim() || null,
-      }
-      if (exists) {
-        await patchSparePart.mutateAsync(payload)
+      if (current) {
+        await apiFetch<SparePartData>(
+          `/spare-parts/projects/${projectId}/spare-parts/${current.id}`,
+          { method: 'PATCH', body: payload }
+        )
+        toast.success({ title: '已更新备件信息' })
       } else {
-        await postSparePart.mutateAsync(payload)
+        await apiFetch<SparePartData>(`/spare-parts/projects/${projectId}/spare-parts`, {
+          method: 'POST',
+          body: payload,
+        })
+        toast.success({ title: '已创建备件' })
       }
+    } catch {
+      toast.error({ title: '保存失败' })
     } finally {
       setIsSaving(false)
     }
@@ -64,7 +84,10 @@ export default function SparePartForm({ projectId }: SparePartFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>备件信息</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Package className="h-4 w-4" />
+          备件信息
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (
@@ -98,15 +121,15 @@ export default function SparePartForm({ projectId }: SparePartFormProps) {
                 />
               </div>
             </div>
-            {exists && sparePart?.created_at && (
+            {current?.created_at && (
               <p className="text-xs text-muted-foreground">
-                已保存 · 创建时间: {new Date(sparePart.created_at).toLocaleString()}
+                已保存 · 创建时间: {new Date(current.created_at).toLocaleString()}
               </p>
             )}
             <div className="flex justify-end">
               <Button onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {exists ? '更新' : '创建'}
+                {current ? '更新' : '创建'}
               </Button>
             </div>
           </>
