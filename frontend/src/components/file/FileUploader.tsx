@@ -69,7 +69,7 @@ export default function FileUploader({ onClose }: FileUploaderProps) {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('project_id', selectedProject)
-      formData.append('type', detectFileType(file))
+      formData.append('file_type', detectFileType(file))
 
       setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }))
       await uploadMutation.mutateAsync(formData as unknown as Record<string, unknown>)

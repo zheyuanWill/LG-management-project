@@ -43,8 +43,8 @@ export default function FilesPage() {
   const filteredFiles = useMemo(() => {
     if (!files) return []
     return files.filter((file) => {
-      if (projectFilter !== 'all' && file.project_id !== projectFilter) return false
-      if (typeFilter !== 'all' && file.type !== typeFilter) return false
+      if (projectFilter !== 'all' && String(file.project_id) !== String(projectFilter)) return false
+      if (typeFilter !== 'all' && (file.file_type || file.type) !== typeFilter) return false
       return true
     })
   }, [files, projectFilter, typeFilter])

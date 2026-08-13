@@ -97,31 +97,35 @@ export default function DailyReportCard({ report, onUpdate, onEdit }: DailyRepor
         </div>
 
         {/* 第二部分：明天要干什么 */}
-        {report.tomorrow_plan && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <Sparkles className="h-4 w-4 text-accent" />
-                明天要干什么
-              </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Sparkles className="h-4 w-4 text-accent" />
+              明天要干什么
+            </div>
+            {report.tomorrow_plan && (
               <button
                 className="text-xs text-muted-foreground hover:text-foreground"
                 onClick={() => setShowRawTomorrow((v) => !v)}
               >
                 {showRawTomorrow ? '预览' : '原文'}
               </button>
-            </div>
-            <div className="rounded-md border border-border bg-muted/30 p-3">
-              {showRawTomorrow ? (
+            )}
+          </div>
+          <div className="rounded-md border border-border bg-muted/30 p-3">
+            {report.tomorrow_plan ? (
+              showRawTomorrow ? (
                 <pre className="whitespace-pre-wrap text-xs text-muted-foreground">
                   {report.tomorrow_plan}
                 </pre>
               ) : (
                 <MarkdownView content={report.tomorrow_plan} />
-              )}
-            </div>
+              )
+            ) : (
+              <p className="text-sm text-muted-foreground">暂无明日计划，点击「编辑」添加</p>
+            )}
           </div>
-        )}
+        </div>
 
         {/* 风险提示 */}
         {report.risk_alert && (
