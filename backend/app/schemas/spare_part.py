@@ -42,6 +42,8 @@ class LogisticsNodeCreate(BaseModel):
     tracking_no: str | None = Field(default=None, max_length=128)
     remark: str | None = None
     attachment_key: str | None = Field(default=None, max_length=512)
+    attachments: list | None = Field(default=None, description="多文件附件: [{file_id, name, kind}]")
+    completed: bool | None = Field(default=None, description="是否已完成（通常由 complete/reopen 接口维护）")
 
 
 class LogisticsNodeResponse(BaseModel):
@@ -55,6 +57,8 @@ class LogisticsNodeResponse(BaseModel):
     tracking_no: str | None = None
     remark: str | None = None
     attachment_key: str | None = None
+    attachments: list | None = None
+    completed: bool = False
     created_at: datetime
 
 

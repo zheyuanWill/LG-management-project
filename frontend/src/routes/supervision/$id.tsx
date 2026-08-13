@@ -97,12 +97,12 @@ export default function SupervisionDetail() {
           <CardContent className="p-5 space-y-3">
             <div>
               <p className="text-xs text-muted-foreground">船东</p>
-              <p className="text-sm font-medium">{project.owner_name || '未设置'}</p>
+              <p className="text-sm font-medium">{project.customer_name || '-'}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">计划完工</p>
               <p className="text-sm font-medium">
-                {project.planned_completion_date ? formatDate(project.planned_completion_date) : '未设置'}
+                {project.planned_completion_date ? formatDate(project.planned_completion_date) : '-'}
               </p>
             </div>
             <div>
@@ -115,7 +115,7 @@ export default function SupervisionDetail() {
           <CardContent className="p-5 space-y-3">
             <div>
               <p className="text-xs text-muted-foreground">备注</p>
-              <p className="text-sm font-medium">{project.remarks || '无'}</p>
+              <p className="text-sm font-medium">{project.remarks || '-'}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">任务数</p>

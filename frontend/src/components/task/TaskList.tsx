@@ -38,10 +38,10 @@ export default function TaskList({ projectId, tasks, onTasksChange }: TaskListPr
   const [newDescription, setNewDescription] = useState('')
   const [search, setSearch] = useState('')
 
-  const createMutation = useApiPost<Task>(`/tasks/projects/${projectId}/tasks`)
+  const createMutation = useApiPost<Task>(`/projects/${projectId}/tasks`)
 
   const filteredTasks = tasks.filter((task) =>
-    (task.name || task.title || '').toLowerCase().includes(search.toLowerCase())
+    (task.name ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
   const handleCreate = async () => {
@@ -54,7 +54,7 @@ export default function TaskList({ projectId, tasks, onTasksChange }: TaskListPr
         name: newTitle.trim(),
         status: newStatus,
         priority: newPriority,
-        planned_end_date: newDueDate || undefined,
+        due_date: newDueDate || undefined,
         description: newDescription || undefined,
       })
       toast.success({ title: '任务创建成功' })

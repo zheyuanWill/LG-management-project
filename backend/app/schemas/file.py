@@ -8,6 +8,7 @@ class FileResponse(BaseModel):
 
     id: int
     project_id: int | None = None
+    project_ship_name: str | None = None
     file_name: str
     file_type: str
     storage_key: str

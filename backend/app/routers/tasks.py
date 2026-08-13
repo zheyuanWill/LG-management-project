@@ -118,7 +118,7 @@ async def delete_task(
 
 
 @router.get(
-    "/tasks/{task_id}/daily-updates",
+    "/{task_id}/daily-updates",
     response_model=list[TaskDailyUpdateResponse],
 )
 async def list_daily_updates(
@@ -136,7 +136,7 @@ async def list_daily_updates(
 
 
 @router.post(
-    "/tasks/{task_id}/daily-updates",
+    "/{task_id}/daily-updates",
     response_model=TaskDailyUpdateResponse,
     status_code=status.HTTP_201_CREATED,
 )

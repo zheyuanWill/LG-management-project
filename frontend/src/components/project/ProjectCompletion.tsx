@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Upload, FileText, CheckCircle, Loader2 } from 'lucide-react'
+import { Upload, FileText, CheckCircle, Loader2, Download } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { useApiPatch } from '@/hooks/useApi'
+import { useApiPatch, useApiPost } from '@/hooks/useApi'
 import { toast } from '@/components/ui/Toast'
+import apiClient from '@/lib/api'
 import type { Project, ProjectCompletionFile } from '@/types'
 
 interface ProjectCompletionProps {
@@ -11,15 +12,33 @@ interface ProjectCompletionProps {
   onStatusChange?: () => void
 }
 
+interface UploadedFile {
+  id: number
+  file_name: string
+}
+
 export default function ProjectCompletion({
   project,
   onStatusChange,
 }: ProjectCompletionProps) {
-  const [completionFiles, setCompletionFiles] = useState<ProjectCompletionFile[]>([])
-  const [acceptanceFiles, setAcceptanceFiles] = useState<ProjectCompletionFile[]>([])
+  const [completionFiles, setCompletionFiles] = useState<ProjectCompletionFile[]>(
+    () => project.completion_files ?? []
+  )
+  const [acceptanceFiles, setAcceptanceFiles] = useState<ProjectCompletionFile[]>(
+    () => project.acceptance_files ?? []
+  )
   const [isUploading, setIsUploading] = useState(false)
 
-  const updateProject = useApiPatch<void>(`/projects/${project.id}`)
+  const updateProject = useApiPatch<Project>(`/projects/${project.id}`)
+  const uploadMutation = useApiPost<UploadedFile>('/files/upload')
+
+  const persist = async (comp: ProjectCompletionFile[], acc: ProjectCompletionFile[]) => {
+    try {
+      await updateProject.mutateAsync({ completion_files: comp, acceptance_files: acc })
+    } catch {
+      toast.error({ title: '保存失败', description: '文件已上传但未能持久化，请刷新页面重试' })
+    }
+  }
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -30,20 +49,33 @@ export default function ProjectCompletion({
 
     setIsUploading(true)
     try {
-      const newFiles: ProjectCompletionFile[] = Array.from(files).map((file, index) => ({
-        id: `temp-${Date.now()}-${index}`,
-        type,
-        name: file.name,
-        url: URL.createObjectURL(file),
-        uploaded_at: new Date().toISOString(),
-      }))
-
-      if (type === 'completion') {
-        setCompletionFiles((prev) => [...prev, ...newFiles])
-      } else {
-        setAcceptanceFiles((prev) => [...prev, ...newFiles])
+      const uploaded: ProjectCompletionFile[] = []
+      for (const file of Array.from(files)) {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('project_id', String(project.id))
+        const res = await uploadMutation.mutateAsync(
+          formData as unknown as Record<string, unknown>
+        )
+        uploaded.push({
+          id: String(res.id),
+          type,
+          name: res.file_name || file.name,
+          url: '',
+          uploaded_at: new Date().toISOString(),
+        })
       }
 
+      let nextComp = completionFiles
+      let nextAcc = acceptanceFiles
+      if (type === 'completion') {
+        nextComp = [...completionFiles, ...uploaded]
+        setCompletionFiles(nextComp)
+      } else {
+        nextAcc = [...acceptanceFiles, ...uploaded]
+        setAcceptanceFiles(nextAcc)
+      }
+      await persist(nextComp, nextAcc)
       toast.success({ title: '文件上传成功' })
     } catch {
       toast.error({ title: '上传失败' })
@@ -53,14 +85,29 @@ export default function ProjectCompletion({
     }
   }
 
-  const handleRemoveFile = (
-    fileId: string,
-    type: 'completion' | 'acceptance'
-  ) => {
+  const handleRemoveFile = (fileId: string, type: 'completion' | 'acceptance') => {
     if (type === 'completion') {
-      setCompletionFiles((prev) => prev.filter((f) => f.id !== fileId))
+      const next = completionFiles.filter((f) => f.id !== fileId)
+      setCompletionFiles(next)
+      void persist(next, acceptanceFiles)
     } else {
-      setAcceptanceFiles((prev) => prev.filter((f) => f.id !== fileId))
+      const next = acceptanceFiles.filter((f) => f.id !== fileId)
+      setAcceptanceFiles(next)
+      void persist(completionFiles, next)
+    }
+  }
+
+  const handleDownload = async (fileId: string) => {
+    try {
+      const resp = await apiClient.get(`/files/${fileId}/download`)
+      const url = resp.data?.download_url
+      if (url) {
+        window.open(url, '_blank')
+      } else {
+        toast.error({ title: '下载链接获取失败' })
+      }
+    } catch {
+      toast.error({ title: '下载失败' })
     }
   }
 
@@ -79,6 +126,40 @@ export default function ProjectCompletion({
       toast.error({ title: '操作失败', description: '请稍后重试' })
     }
   }
+
+  const renderFileList = (files: ProjectCompletionFile[], type: 'completion' | 'acceptance') => (
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium">已上传文件</h4>
+      <div className="space-y-2">
+        {files.map((file) => (
+          <div
+            key={file.id}
+            className="flex items-center justify-between rounded-md border border-border px-3 py-2"
+          >
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              <span className="text-sm">{file.name}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleDownload(file.id)}
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline transition-colors"
+              >
+                <Download className="h-3.5 w-3.5" />
+                下载
+              </button>
+              <button
+                onClick={() => handleRemoveFile(file.id, type)}
+                className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 
   return (
     <div className="space-y-6">
@@ -105,35 +186,12 @@ export default function ProjectCompletion({
               className="cursor-pointer inline-flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
             >
               <Upload className="h-10 w-10" />
-              <span className="text-sm">点击上传完工确认单</span>
+              <span className="text-sm">{isUploading ? '上传中...' : '点击上传完工确认单'}</span>
               <span className="text-xs text-muted-foreground">支持 PDF、图片格式</span>
             </label>
           </div>
 
-          {completionFiles.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">已上传文件</h4>
-              <div className="space-y-2">
-                {completionFiles.map((file) => (
-                  <div
-                    key={file.id}
-                    className="flex items-center justify-between rounded-md border border-border px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" />
-                      <span className="text-sm">{file.name}</span>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveFile(file.id, 'completion')}
-                      className="text-xs text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      删除
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {completionFiles.length > 0 && renderFileList(completionFiles, 'completion')}
         </CardContent>
       </Card>
 
@@ -160,35 +218,12 @@ export default function ProjectCompletion({
               className="cursor-pointer inline-flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
             >
               <Upload className="h-10 w-10" />
-              <span className="text-sm">点击上传验收单</span>
+              <span className="text-sm">{isUploading ? '上传中...' : '点击上传验收单'}</span>
               <span className="text-xs text-muted-foreground">支持 PDF、图片格式</span>
             </label>
           </div>
 
-          {acceptanceFiles.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">已上传文件</h4>
-              <div className="space-y-2">
-                {acceptanceFiles.map((file) => (
-                  <div
-                    key={file.id}
-                    className="flex items-center justify-between rounded-md border border-border px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" />
-                      <span className="text-sm">{file.name}</span>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveFile(file.id, 'acceptance')}
-                      className="text-xs text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      删除
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {acceptanceFiles.length > 0 && renderFileList(acceptanceFiles, 'acceptance')}
         </CardContent>
       </Card>
 

@@ -1,12 +1,13 @@
-import { Eye, Download, Trash2, FileText } from 'lucide-react'
+import { useState } from 'react'
+import { Eye, Download, Trash2, FileText, DownloadCloud } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table'
 import { Button } from '@/components/ui/Button'
 import { useApiDelete } from '@/hooks/useApi'
+import apiClient from '@/lib/api'
 import type { FileItem } from '@/types'
 import FileTypeBadge from './FileTypeBadge'
 import { formatDateTime } from '@/lib/utils'
-import apiClient from '@/lib/api'
 
 interface FileListProps {
   files: FileItem[]
@@ -22,6 +23,7 @@ export default function FileList({
   onPreview,
 }: FileListProps) {
   const deleteMutation = useApiDelete<void>('/files')
+  const [batchDownloading, setBatchDownloading] = useState(false)
 
   const handleDelete = (id: string) => {
     if (confirm('确定删除该文件?')) {
@@ -29,20 +31,41 @@ export default function FileList({
     }
   }
 
+  const getDownloadUrl = async (file: FileItem): Promise<string> => {
+    if (file.download_url) return file.download_url
+    const resp = await apiClient.post('/files/url', { storage_key: file.storage_key })
+    return resp.data.download_url
+  }
+
   const handleDownload = async (file: FileItem) => {
     try {
-      const res = await apiClient.get(`/files/${file.id}/download`)
-      const { download_url, file_name } = res.data
-      const link = document.createElement('a')
-      link.href = download_url
-      link.download = file_name || 'download'
-      link.target = '_blank'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      const url = await getDownloadUrl(file)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = file.name || file.file_name || 'download'
+      a.click()
     } catch {
-      // fallback: try preview URL
-      window.open(file.url || '', '_blank')
+      alert('下载失败，文件可能已失效')
+    }
+  }
+
+  const handleBatchDownload = async () => {
+    setBatchDownloading(true)
+    try {
+      for (const file of files) {
+        try {
+          const url = await getDownloadUrl(file)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = file.name || file.file_name || `file_${file.id}`
+          a.click()
+          await new Promise((r) => setTimeout(r, 500)) // 避免浏览器拦截批量下载
+        } catch {
+          // 单个失败继续
+        }
+      }
+    } finally {
+      setBatchDownloading(false)
     }
   }
 
@@ -68,6 +91,17 @@ export default function FileList({
 
   return (
     <Card>
+      <div className="flex justify-end p-3 border-b border-border">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBatchDownload}
+          disabled={batchDownloading}
+        >
+          <DownloadCloud className="h-4 w-4" />
+          {batchDownloading ? '下载中...' : `批量下载 (${files.length})`}
+        </Button>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -84,14 +118,18 @@ export default function FileList({
               <TableCell>
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-primary shrink-0" />
-                  <span className="font-medium truncate max-w-[200px]">{file.name}</span>
+                  <span className="font-medium truncate max-w-[200px]">
+                    {file.name || file.file_name}
+                  </span>
                 </div>
               </TableCell>
               <TableCell>
-                <FileTypeBadge type={file.type} />
+                <FileTypeBadge type={file.type || file.file_type} />
               </TableCell>
               <TableCell>
-                <span className="text-sm text-muted-foreground">{file.project_id || '-'}</span>
+                <span className="text-sm text-muted-foreground">
+                  {file.project_ship_name || file.project_id || '-'}
+                </span>
               </TableCell>
               <TableCell>{formatDateTime(file.created_at)}</TableCell>
               <TableCell className="text-right">
@@ -105,7 +143,7 @@ export default function FileList({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDelete(file.id)}
+                    onClick={() => handleDelete(String(file.id))}
                     disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />

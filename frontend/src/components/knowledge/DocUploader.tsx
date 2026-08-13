@@ -80,10 +80,10 @@ export default function DocUploader({ onClose }: DocUploaderProps) {
         >
           <Upload className="h-10 w-10 text-muted-foreground opacity-50 mb-3" />
           <p className="font-medium mb-1">拖拽文件到此处上传</p>
-          <p className="text-sm text-muted-foreground mb-4">支持 PDF、Word 文档</p>
+          <p className="text-sm text-muted-foreground mb-4">支持 PDF、Word、Markdown、TXT 文档</p>
           <input
             type="file"
-            accept=".pdf,.doc,.docx"
+            accept=".pdf,.doc,.docx,.md,.txt"
             multiple
             className="hidden"
             ref={fileInputRef}

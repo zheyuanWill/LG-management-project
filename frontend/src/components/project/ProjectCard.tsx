@@ -1,7 +1,8 @@
 import { useNavigate } from '@tanstack/react-router'
-import { Ship, Calendar, Hash, ChevronRight, Building2, AlertTriangle } from 'lucide-react'
+import { Ship, Calendar, Hash, ChevronRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { Progress } from '@/components/ui/Progress'
 import { cn } from '@/lib/utils'
 import type { Project } from '@/types'
 import { PROJECT_STATUS_LABELS } from '@/lib/constants'
@@ -59,36 +60,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           <span>{project.project_no}</span>
         </div>
 
-        {project.customer_name && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Building2 className="h-4 w-4 shrink-0" />
-            <span className="truncate">{project.customer_name}</span>
-            {project.customer_phone && (
-              <span className="text-muted-foreground/70">{project.customer_phone}</span>
-            )}
-          </div>
-        )}
-
-        {(project.risk_summary || project.has_unconfirmed_report) && (
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            {project.risk_summary && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-                <AlertTriangle className="h-3 w-3" />
-                {project.risk_summary}
-              </span>
-            )}
-            {project.has_unconfirmed_report && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">
-                有待确认日报
-              </span>
-            )}
-          </div>
-        )}
-
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/50">
           <div className="flex items-center gap-1">
             <Calendar className="h-3.5 w-3.5" />
-            <span>计划完工: {project.planned_completion_date ? formatDate(project.planned_completion_date) : '未设置'}</span>
+            <span>计划完工: {project.planned_completion_date ? formatDate(project.planned_completion_date) : '-'}</span>
           </div>
           <ChevronRight className="h-4 w-4" />
         </div>

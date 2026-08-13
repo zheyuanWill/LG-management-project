@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_current_user, get_db
 from app.models.file import File as FileModel
+from app.models.project import Project
 from app.models.user import User
 from app.schemas.file import FileListResponse, FileResponse, FileUploadResponse
 from app.services.file_service import (
@@ -80,8 +81,31 @@ async def list_files(
     result = await db.execute(query)
     files = result.scalars().all()
 
+    # 批量查询关联项目的船名
+    project_ids = list(set(f.project_id for f in files if f.project_id))
+    ship_name_map: dict[int, str] = {}
+    if project_ids:
+        pr = await db.execute(
+            select(Project.id, Project.ship_name).where(Project.id.in_(project_ids))
+        )
+        ship_name_map = {row[0]: row[1] for row in pr.all()}
+
     return FileListResponse(
-        items=[FileResponse.model_validate(f) for f in files],
+        items=[
+            FileResponse(
+                id=f.id,
+                project_id=f.project_id,
+                project_ship_name=ship_name_map.get(f.project_id) if f.project_id else None,
+                file_name=f.file_name,
+                file_type=f.file_type,
+                storage_key=f.storage_key,
+                file_size=f.file_size,
+                mime_type=f.mime_type,
+                uploaded_by=f.uploaded_by,
+                created_at=f.created_at,
+            )
+            for f in files
+        ],
         total=total,
     )
 
@@ -124,6 +148,58 @@ async def preview_file(
         "file_type": file.file_type,
         "preview_url": url,
         "mime_type": file.mime_type,
+    }
+
+
+@router.post("/url")
+async def get_file_url_by_key(
+    payload: dict,
+    _: User = Depends(get_current_user),
+):
+    """按 storage_key (MinIO key) 获取下载/预览 URL。
+
+    适用于不经过 files 表、直接以 storage_key 存储的文件
+    （MOA 合同、物流附件、完工单、验收单、知识库文档等）。
+    返回 download_url 与 preview_url（同一 presigned URL，可直接用于
+    <a download> 或 <iframe>/<img> 预览）。
+    """
+    storage_key = payload.get("storage_key") or payload.get("file_key")
+    if not storage_key:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="缺少 storage_key")
+
+    try:
+        url = await get_minio_url(storage_key)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="文件不存在或已失效")
+
+    filename = storage_key.rsplit("/", 1)[-1]
+    return {
+        "storage_key": storage_key,
+        "file_name": filename,
+        "download_url": url,
+        "preview_url": url,
+        "expires_in": 3600,
+    }
+
+
+@router.get("/url")
+async def get_file_url_by_key_query(
+    storage_key: str,
+    _: User = Depends(get_current_user),
+):
+    """GET 版本：按 storage_key 获取下载/预览 URL（前端 <img>/<iframe> 直接引用）。"""
+    try:
+        url = await get_minio_url(storage_key)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="文件不存在或已失效")
+
+    filename = storage_key.rsplit("/", 1)[-1]
+    return {
+        "storage_key": storage_key,
+        "file_name": filename,
+        "download_url": url,
+        "preview_url": url,
+        "expires_in": 3600,
     }
 
 

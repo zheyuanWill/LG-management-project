@@ -5,16 +5,13 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
-import { useApiGet, useApiPost, useApiDelete } from '@/hooks/useApi'
+import { useApiGet, useApiDelete } from '@/hooks/useApi'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/Toast'
 import type { Project } from '@/types'
 import SparePartForm from '@/components/spare/SparePartForm'
-import SparePhotos from '@/components/spare/SparePhotos'
 import LogisticsTimeline from '@/components/spare/LogisticsTimeline'
-import HKSignature from '@/components/spare/HKSignature'
-import InvoiceForm from '@/components/spare/InvoiceForm'
 
 interface SparePartData {
   id: number
@@ -100,36 +97,20 @@ export default function SparePartsDetail() {
     })
   }
 
+  // 新布局：只有两个 tab —— 备件信息 + 物流时间线
+  // 物流时间线已内置每节点文件上传（发货照→供应商发货、签收单→香港签收、发票→结算完成）
   const tabConfig = [
     {
       value: 'info',
       label: '备件信息',
       icon: <Package className="h-4 w-4" />,
-      content: <SparePartForm projectId={project.id} sparePartId={effectiveId} />,
+      content: <SparePartForm projectId={String(project.id)} sparePartId={effectiveId} />,
     },
     {
       value: 'logistics',
       label: '物流时间线',
       icon: <Package className="h-4 w-4" />,
-      content: <LogisticsTimeline projectId={project.id} sparePartId={effectiveId} />,
-    },
-    {
-      value: 'photos',
-      label: '发货照片',
-      icon: <Package className="h-4 w-4" />,
-      content: <SparePhotos projectId={project.id} />,
-    },
-    {
-      value: 'signature',
-      label: '签收单',
-      icon: <Package className="h-4 w-4" />,
-      content: <HKSignature projectId={project.id} />,
-    },
-    {
-      value: 'invoice',
-      label: '发票',
-      icon: <Package className="h-4 w-4" />,
-      content: <InvoiceForm projectId={project.id} />,
+      content: <LogisticsTimeline projectId={String(project.id)} sparePartId={effectiveId} />,
     },
   ]
 
@@ -216,6 +197,7 @@ export default function SparePartsDetail() {
         )}
       </div>
 
+      {/* 新布局：仅两个 tab */}
       <Tabs tabs={tabConfig} defaultValue="info" />
     </div>
   )

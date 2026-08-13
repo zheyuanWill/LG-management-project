@@ -72,6 +72,15 @@ async def get_minio_url(storage_key: str, bucket: str = None, expires: int = 360
             storage_key,
             expires=timedelta(seconds=expires),
         )
+        # presigned URL 默认用 MINIO_ENDPOINT (容器内网域名 minio:9000)，
+        # 浏览器无法访问。替换为外部可访问的地址 (由 MINIO_PUBLIC_ENDPOINT 指定)。
+        public_endpoint = getattr(settings, "MINIO_PUBLIC_ENDPOINT", None)
+        if public_endpoint:
+            from urllib.parse import urlparse, urlunparse
+
+            parsed = urlparse(url)
+            pub = urlparse(f"http://{public_endpoint}" if "://" not in public_endpoint else public_endpoint)
+            url = urlunparse(parsed._replace(netloc=pub.netloc))
         return url
     except S3Error as e:
         logger.error(f"Failed to generate presigned URL: {e}")

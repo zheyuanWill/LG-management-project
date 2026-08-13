@@ -34,6 +34,8 @@ class ProjectUpdate(BaseModel):
     planned_completion_date: date | None = None
     actual_completion_date: date | None = None
     remarks: str | None = None
+    completion_files: list | None = None
+    acceptance_files: list | None = None
 
 
 class ProjectResponse(BaseModel):
@@ -49,6 +51,8 @@ class ProjectResponse(BaseModel):
     planned_completion_date: date | None = None
     actual_completion_date: date | None = None
     remarks: str | None = None
+    completion_files: list | None = None
+    acceptance_files: list | None = None
     created_at: datetime
     updated_at: datetime
 

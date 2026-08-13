@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { BookOpen, Upload, FileText } from 'lucide-react'
+import { BookOpen, Upload, FileText, Download, Eye } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useApiGet } from '@/hooks/useApi'
+import apiClient from '@/lib/api'
 import DocUploader from '@/components/knowledge/DocUploader'
 import QAChat from '@/components/knowledge/QAChat'
 import { cn } from '@/lib/utils'
@@ -13,6 +14,7 @@ interface KnowledgeDoc {
   title: string
   category: string
   file_name: string
+  file_key: string
   created_at: string
 }
 
@@ -101,7 +103,7 @@ export default function KnowledgePage() {
                     return (
                       <div
                         key={doc.id}
-                        className="flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer group"
+                        className="flex items-center gap-2 p-2 rounded-md hover:bg-muted group"
                       >
                         <div className={cn('w-2 h-2 rounded-full shrink-0', cat.color)} />
                         <div className="flex-1 min-w-0">
@@ -111,6 +113,36 @@ export default function KnowledgePage() {
                         <Badge variant="secondary" className="text-xs shrink-0">
                           {cat.label}
                         </Badge>
+                        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                const resp = await apiClient.post('/files/url', { storage_key: doc.file_key })
+                                window.open(resp.data.download_url, '_blank')
+                              } catch {
+                                alert('下载失败')
+                              }
+                            }}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                const resp = await apiClient.post('/files/url', { storage_key: doc.file_key })
+                                window.open(resp.data.preview_url, '_blank')
+                              } catch {
+                                alert('预览失败')
+                              }
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     )
                   })}

@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.project import Project
 from app.models.report import DailyReport, WeeklyReport
@@ -26,6 +27,10 @@ async def _build_today_work(
         .where(
             Task.project_id == project_id,
             TaskDailyUpdate.update_date == report_date,
+        )
+        .options(
+            selectinload(TaskDailyUpdate.photos),
+            selectinload(TaskDailyUpdate.task),
         )
         .order_by(TaskDailyUpdate.id)
     )

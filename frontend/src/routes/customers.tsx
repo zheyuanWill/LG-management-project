@@ -108,7 +108,7 @@ export default function CustomersPage() {
                         {customer.phone}
                       </span>
                     ) : (
-                      <span className="text-muted-foreground/50">-</span>
+                      '-'
                     )}
                   </TableCell>
                   <TableCell>

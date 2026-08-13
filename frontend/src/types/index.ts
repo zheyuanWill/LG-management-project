@@ -43,6 +43,8 @@ export interface Project {
   customer_phone?: string | null
   risk_summary?: string | null
   has_unconfirmed_report?: boolean
+  completion_files?: ProjectCompletionFile[]
+  acceptance_files?: ProjectCompletionFile[]
 }
 
 export type TaskStatus = 'not_started' | 'in_progress' | 'completed' | 'paused'
@@ -187,6 +189,7 @@ export type FileType =
 export interface FileItem {
   id: number
   project_id?: number
+  project_ship_name?: string
   file_name: string
   name?: string
   file_type: FileType

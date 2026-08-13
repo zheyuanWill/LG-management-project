@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react'
-import { Upload, FileText, CheckCircle2 } from 'lucide-react'
+import { Upload, FileText, CheckCircle2, Download, Eye, FileSpreadsheet } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useApiGet, useApiPost } from '@/hooks/useApi'
+import apiClient from '@/lib/api'
 import { formatDate } from '@/lib/utils'
 
 interface ContractData {
@@ -17,16 +18,26 @@ interface ContractUploadProps {
 }
 
 export default function ContractUpload({ projectId }: ContractUploadProps) {
-  const { data: contract, isLoading, isError, error } = useApiGet<ContractData>(
+  const { data: contract, isLoading, isError, error, refetch } = useApiGet<ContractData>(
     `/brokerage/projects/${projectId}/contracts`,
     { retry: false }
   )
   const uploadMutation = useApiPost<ContractData>(`/brokerage/projects/${projectId}/contracts`)
 
   const [isUploading, setIsUploading] = useState(false)
+  const [fileUrl, setFileUrl] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const notFound = isError && (error as { response?: { status?: number } })?.response?.status === 404
+
+  const loadFileUrl = async (storageKey: string) => {
+    try {
+      const resp = await apiClient.post('/files/url', { storage_key: storageKey })
+      setFileUrl(resp.data.download_url)
+    } catch {
+      setFileUrl('')
+    }
+  }
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -38,11 +49,15 @@ export default function ContractUpload({ projectId }: ContractUploadProps) {
       const formData = new FormData()
       formData.append('file', file)
       await uploadMutation.mutateAsync(formData as unknown as Record<string, unknown>)
+      refetch()
     } finally {
       setIsUploading(false)
       e.target.value = ''
     }
   }
+
+  const isImage = /\.(png|jpe?g|gif|bmp|webp)$/i.test(contract?.moa_file_key || '')
+  const isPdf = /\.pdf$/i.test(contract?.moa_file_key || '')
 
   return (
     <Card>
@@ -61,8 +76,37 @@ export default function ContractUpload({ projectId }: ContractUploadProps) {
           />
           <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
             <Upload className="h-4 w-4" />
-            {isUploading ? '上传中...' : contract ? '已上传' : '上传合同扫描件'}
+            {isUploading ? '上传中...' : contract ? '重新上传' : '上传合同扫描件'}
           </Button>
+
+          {contract && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  await loadFileUrl(contract.moa_file_key)
+                  if (fileUrl) window.open(fileUrl, '_blank')
+                }}
+              >
+                <Download className="h-4 w-4" />
+                下载
+              </Button>
+              {isImage || isPdf ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    await loadFileUrl(contract.moa_file_key)
+                    if (fileUrl) window.open(fileUrl, '_blank')
+                  }}
+                >
+                  <Eye className="h-4 w-4" />
+                  预览
+                </Button>
+              ) : null}
+            </div>
+          )}
         </div>
 
         {isLoading ? (
@@ -73,9 +117,16 @@ export default function ContractUpload({ projectId }: ContractUploadProps) {
               <CheckCircle2 className="h-5 w-5 text-green-600" />
               <span className="font-medium text-sm">MOA 合同已上传</span>
             </div>
+            {isImage && fileUrl ? (
+              <img
+                src={fileUrl}
+                alt="MOA 合同"
+                className="max-h-64 rounded border object-contain"
+              />
+            ) : null}
             <div className="text-xs text-muted-foreground space-y-1">
               <p>
-                存储键:{' '}
+                文件名:{' '}
                 <span className="font-mono break-all">{contract.moa_file_key}</span>
               </p>
               <p>上传时间: {formatDate(contract.created_at)}</p>

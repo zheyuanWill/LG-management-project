@@ -1,7 +1,7 @@
 import enum
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, ForeignKey, String, Text
+from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, ForeignKey, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -33,6 +33,8 @@ class Project(Base):
     planned_completion_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     actual_completion_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     remarks: Mapped[str | None] = mapped_column(Text, nullable=True)
+    completion_files: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    acceptance_files: Mapped[list | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False

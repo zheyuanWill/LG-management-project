@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Calendar, CheckCircle, Edit3, AlertTriangle, Sparkles } from 'lucide-react'
+import { Calendar, CheckCircle, Edit3, AlertTriangle, Sparkles, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { DailyReport } from '@/types'
 import { formatDate } from '@/lib/utils'
@@ -47,6 +47,20 @@ export default function DailyReportCard({ report, onUpdate, onEdit }: DailyRepor
   }
 
   const todayWork = fallbackTodayWork(report)
+
+  const handleDownload = () => {
+    const parts = [`# 监修日报 — ${formatDate(report.report_date)}`, '']
+    parts.push('## 今日工作', todayWork, '')
+    if (report.tomorrow_plan) parts.push('## 明日计划', report.tomorrow_plan, '')
+    if (report.risk_alert) parts.push('## 风险预警', report.risk_alert, '')
+    const blob = new Blob([parts.join('\n')], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `监修日报-${report.report_date}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <Card className={cn(report.confirmed && 'border-secondary/50')}>
@@ -126,20 +140,26 @@ export default function DailyReportCard({ report, onUpdate, onEdit }: DailyRepor
           <span className="text-xs text-muted-foreground">
             生成于 {formatDate(report.created_at)}
           </span>
-          {!report.confirmed && (
-            <div className="flex gap-2">
-              {onEdit && (
-                <Button variant="outline" size="sm" onClick={() => onEdit(report)}>
-                  <Edit3 className="h-4 w-4" />
-                  编辑
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleDownload}>
+              <Download className="h-4 w-4" />
+              下载
+            </Button>
+            {!report.confirmed && (
+              <>
+                {onEdit && (
+                  <Button variant="outline" size="sm" onClick={() => onEdit(report)}>
+                    <Edit3 className="h-4 w-4" />
+                    编辑
+                  </Button>
+                )}
+                <Button size="sm" onClick={handleConfirm}>
+                  <CheckCircle className="h-4 w-4" />
+                  确认提交
                 </Button>
-              )}
-              <Button size="sm" onClick={handleConfirm}>
-                <CheckCircle className="h-4 w-4" />
-                确认提交
-              </Button>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

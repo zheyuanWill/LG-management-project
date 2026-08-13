@@ -142,7 +142,7 @@ export default function DailyReportPage() {
                     className="rounded-lg border border-border p-4 space-y-2"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{task.title}</span>
+                      <span className="font-medium text-sm">{task.name}</span>
                       <Badge variant="secondary">已完成</Badge>
                     </div>
                     {task.description && (

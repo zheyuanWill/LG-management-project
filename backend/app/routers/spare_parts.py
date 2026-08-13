@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File as UploadFileDep, status
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_current_user, get_db
@@ -214,6 +214,7 @@ async def create_spare_logistics_node(
         tracking_no=payload.tracking_no,
         remark=payload.remark,
         attachment_key=payload.attachment_key,
+        attachments=payload.attachments,
     )
     db.add(node)
     await db.flush()
@@ -241,6 +242,8 @@ async def update_spare_logistics_node(
     node.tracking_no = payload.tracking_no
     node.remark = payload.remark
     node.attachment_key = payload.attachment_key
+    if payload.attachments is not None:
+        node.attachments = payload.attachments
     await db.flush()
     return LogisticsNodeResponse.model_validate(node)
 
@@ -259,6 +262,37 @@ async def delete_spare_logistics_node(
     await _get_spare_part(db, project_id, spare_id)
     node = await _get_node(db, spare_id, node_id)
     await db.delete(node)
+
+
+# ── 节点完成 / 撤销（级联：以 LOGISTICS_NODE_ORDER 为步骤顺序）────
+@router.post(
+    "/projects/{project_id}/spare-parts/{spare_id}/logistics/{node_id}/complete",
+    response_model=list[LogisticsNodeResponse],
+)
+async def complete_spare_logistics_node(
+    project_id: int,
+    spare_id: int,
+    node_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    await _get_spare_part(db, project_id, spare_id)
+    return await _cascade_node_completion(db, project_id, spare_id, node_id, True)
+
+
+@router.post(
+    "/projects/{project_id}/spare-parts/{spare_id}/logistics/{node_id}/reopen",
+    response_model=list[LogisticsNodeResponse],
+)
+async def reopen_spare_logistics_node(
+    project_id: int,
+    spare_id: int,
+    node_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    await _get_spare_part(db, project_id, spare_id)
+    return await _cascade_node_completion(db, project_id, spare_id, node_id, False)
 
 
 # ── 兼容：项目级物流（未挂具体备件）────────────────────────
@@ -312,10 +346,39 @@ async def create_logistics_node(
         tracking_no=payload.tracking_no,
         remark=payload.remark,
         attachment_key=payload.attachment_key,
+        attachments=payload.attachments,
     )
     db.add(node)
     await db.flush()
     return LogisticsNodeResponse.model_validate(node)
+
+
+@router.post(
+    "/projects/{project_id}/logistics/{node_id}/complete",
+    response_model=list[LogisticsNodeResponse],
+)
+async def complete_logistics_node(
+    project_id: int,
+    node_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    await _require_project(db, project_id)
+    return await _cascade_node_completion(db, project_id, None, node_id, True)
+
+
+@router.post(
+    "/projects/{project_id}/logistics/{node_id}/reopen",
+    response_model=list[LogisticsNodeResponse],
+)
+async def reopen_logistics_node(
+    project_id: int,
+    node_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    await _require_project(db, project_id)
+    return await _cascade_node_completion(db, project_id, None, node_id, False)
 
 
 # ── HK 签收单 ─────────────────────────────────────────────
@@ -467,6 +530,59 @@ async def update_invoice(
 
 
 # ── 辅助 ─────────────────────────────────────────────────
+def _node_order_index(node_type: str) -> int:
+    return (
+        LOGISTICS_NODE_ORDER.index(node_type)
+        if node_type in LOGISTICS_NODE_ORDER
+        else len(LOGISTICS_NODE_ORDER)
+    )
+
+
+def _node_sort_key(node: LogisticsNode) -> tuple:
+    return (_node_order_index(node.node_type), node.node_date, node.id)
+
+
+async def _cascade_node_completion(
+    db: AsyncSession,
+    project_id: int,
+    spare_part_id: int | None,
+    target_node_id: int,
+    complete: bool,
+) -> list[LogisticsNode]:
+    """级联标记完成/撤销。
+
+    complete=True  : 把目标节点及其「之前」所有节点（同 project+spare 分组）标记 completed。
+    complete=False : 把目标节点及其「之后」所有节点标记未完成（撤销）。
+    """
+    conditions = [LogisticsNode.project_id == project_id]
+    if spare_part_id is None:
+        conditions.append(LogisticsNode.spare_part_id.is_(None))
+    else:
+        conditions.append(LogisticsNode.spare_part_id == spare_part_id)
+    result = await db.execute(select(LogisticsNode).where(and_(*conditions)))
+    nodes = result.scalars().all()
+    target = next((n for n in nodes if n.id == target_node_id), None)
+    if target is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="物流节点不存在")
+    target_key = _node_sort_key(target)
+    for n in nodes:
+        key = _node_sort_key(n)
+        if complete:
+            if key <= target_key:
+                n.completed = True
+        else:
+            if key >= target_key:
+                n.completed = False
+    await db.flush()
+    return [LogisticsNodeResponse.model_validate(n) for n in nodes]
+
+
+async def _require_project(db: AsyncSession, project_id: int) -> None:
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
+
+
 async def _get_spare_part(db: AsyncSession, project_id: int, spare_id: int) -> SparePartDetail:
     result = await db.execute(
         select(SparePartDetail).where(

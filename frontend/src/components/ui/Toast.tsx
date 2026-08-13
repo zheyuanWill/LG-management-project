@@ -9,7 +9,7 @@ interface Toast {
   title?: string
   description?: string
   variant: ToastVariant
-  duration: number
+  duration?: number
 }
 
 interface ToastStore {
@@ -22,7 +22,7 @@ export const useToast = create<ToastStore>((set) => ({
   toasts: [],
   addToast: (toast) => {
     const id = Math.random().toString(36).substring(2, 9)
-    const newToast: Toast = { ...toast, id }
+    const newToast: Toast = { ...toast, id, duration: toast.duration ?? 4000 }
     set((state) => ({ toasts: [...state.toasts, newToast] }))
     if (toast.duration > 0) {
       setTimeout(() => {
