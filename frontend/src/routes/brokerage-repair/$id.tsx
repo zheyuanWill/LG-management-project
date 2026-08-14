@@ -1,18 +1,21 @@
-import { useParams } from '@tanstack/react-router'
+import { useParams, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, FileText, DollarSign, FileCheck, Repeat } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Tabs } from '@/components/ui/Tabs'
-import { useApiGet } from '@/hooks/useApi'
+import { useApiDelete, useApiGet } from '@/hooks/useApi'
 import type { Project } from '@/types'
 import CommercialForm from '@/components/brokerage/CommercialForm'
 import ContractUpload from '@/components/brokerage/ContractUpload'
 import RepairHandover from '@/components/brokerage/RepairHandover'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 
 export default function BrokerageRepairDetail() {
   const { id } = useParams({ strict: false })
+  const navigate = useNavigate()
   const { data: project, isLoading } = useApiGet<Project>(`/projects/${id}`)
+  const deleteProject = useApiDelete<Project>('/projects')
 
   if (isLoading) {
     return (
@@ -107,9 +110,21 @@ export default function BrokerageRepairDetail() {
           <h1 className="text-2xl font-bold">{project.ship_name}</h1>
           <p className="text-muted-foreground mt-1">项目编号: {project.project_no}</p>
         </div>
-        <Badge variant={project.status === 'active' ? 'default' : 'secondary'}>
-          {project.status === 'active' ? '进行中' : '已完成'}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={project.status === 'active' ? 'default' : 'secondary'}>
+            {project.status === 'active' ? '进行中' : project.status === 'completed' ? '已完成' : project.status === 'cancelled' ? '已取消' : project.status}
+          </Badge>
+          <DeleteConfirm
+            resourceName="项目"
+            triggerVariant="button"
+            description={`将删除（软取消）「${project.ship_name}」项目及其下所有调研、商务、合同、修船经纪等数据。此操作不可撤销。`}
+            mutation={deleteProject}
+            id={String(project.id)}
+            onDeleted={() => {
+              navigate({ to: '/brokerage-repair' })
+            }}
+          />
+        </div>
       </div>
 
       <Tabs tabs={tabConfig} defaultValue="info" />

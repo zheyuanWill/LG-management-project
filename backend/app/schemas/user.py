@@ -8,6 +8,7 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=6, max_length=128)
     display_name: str | None = Field(default="", max_length=128)
     role: str = Field(default="user", max_length=20)
+    phone: str | None = Field(default=None, max_length=32)
 
 
 class UserUpdate(BaseModel):

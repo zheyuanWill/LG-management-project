@@ -4,9 +4,12 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Progress } from '@/components/ui/Progress'
 import { cn } from '@/lib/utils'
+import { useApiDelete } from '@/hooks/useApi'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Project } from '@/types'
 import { PROJECT_STATUS_LABELS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 
 interface ProjectCardProps {
   project: Project
@@ -20,6 +23,8 @@ const STATUS_BADGE_VARIANTS: Record<string, 'default' | 'secondary' | 'destructi
 
 export default function ProjectCard({ project }: ProjectCardProps) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const deleteProject = useApiDelete<Project>('/projects')
 
   const handleClick = () => {
     navigate({ to: '/supervision/$id', params: { id: project.id } })
@@ -50,9 +55,20 @@ export default function ProjectCard({ project }: ProjectCardProps) {
               )}
             </div>
           </div>
-          <Badge variant={STATUS_BADGE_VARIANTS[project.status] || 'default'}>
-            {PROJECT_STATUS_LABELS[project.status]}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={STATUS_BADGE_VARIANTS[project.status] || 'default'}>
+              {PROJECT_STATUS_LABELS[project.status]}
+            </Badge>
+            <DeleteConfirm
+              resourceName="项目"
+              description={`将删除（软取消）「${project.ship_name}」项目及其下所有任务、日报、周报、风险等数据。此操作不可撤销。`}
+              mutation={deleteProject}
+              id={String(project.id)}
+              onDeleted={() => {
+                queryClient.invalidateQueries({ queryKey: ['/projects'] })
+              }}
+            />
+          </div>
         </div>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -97,6 +97,10 @@ services:
     <<: *common
 
   # ── AI 推理服务 ───────────────────────────────────
+  # 默认 LLM_PROVIDER=mock：开发环境无需依赖外部 LLM 即可生成报告；
+  # 接入真实模型二选一：
+  #   1) 本地 Ollama：起 ollama 后设 LLM_PROVIDER=ollama + LLM_BASE_URL=http://host.docker.internal:11434
+  #   2) 云端 LLM：设 LLM_PROVIDER=cloud + LLM_BASE_URL=https://api.deepseek.com + LLM_MODEL=deepseek-chat + LLM_API_KEY=...
   ai-service:
     build:
       context: ./backend/ai_service
@@ -106,9 +110,9 @@ services:
         DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.tuna.tsinghua.edu.cn}
     container_name: lg-ai-service
     environment:
-      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - LLM_PROVIDER=${LLM_PROVIDER:-mock}
       - LLM_BASE_URL=${LLM_BASE_URL:-http://host.docker.internal:11434}
-      - LLM_MODEL=${LLM_MODEL:-qwen2.5:7b}
+      - LLM_MODEL=${LLM_MODEL:-deepseek-chat}
       - LLM_API_KEY=${LLM_API_KEY:-}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-small-zh-v1.5}
       - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
@@ -118,6 +122,10 @@ services:
       - "8001:8001"
     volumes:
       - ai-cache:/cache
+      # 卷挂载源码（dev 友好）：修改 .py 后只需 `docker compose restart ai-service`，
+      # 与 backend 的 ./backend:/app 模式一致。
+      - ./backend/ai_service:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
     <<: *common
 
   # ── Celery Worker ──────────────────────────────────

@@ -4,12 +4,16 @@ import { Badge } from '@/components/ui/Badge'
 import { Calendar, Sparkles, ChevronRight, Download } from 'lucide-react'
 import type { WeeklyReport } from '@/types'
 import { formatDate } from '@/lib/utils'
+import { useApiDelete } from '@/hooks/useApi'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 
 interface WeeklyReportCardProps {
   report: WeeklyReport
+  onDeleted?: () => void
 }
 
-export default function WeeklyReportCard({ report }: WeeklyReportCardProps) {
+export default function WeeklyReportCard({ report, onDeleted }: WeeklyReportCardProps) {
+  const deleteMutation = useApiDelete<void>(`/reports/weekly-reports`)
   const handleDownload = () => {
     const start = report.week_start ?? report.week_start_date
     const end = report.week_end ?? report.week_end_date
@@ -42,6 +46,13 @@ export default function WeeklyReportCard({ report }: WeeklyReportCardProps) {
             <Download className="h-4 w-4" />
             下载
           </Button>
+          <DeleteConfirm
+            resourceName="周报"
+            description="删除后该周报将无法恢复。"
+            mutation={deleteMutation}
+            id={String(report.id)}
+            onDeleted={() => onDeleted?.()}
+          />
           <Badge variant="secondary">
             进度 {report.progress_total}%
           </Badge>

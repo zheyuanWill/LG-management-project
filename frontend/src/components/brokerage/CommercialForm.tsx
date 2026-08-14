@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Save, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select, type SelectOption } from '@/components/ui/Select'
 import { useApiGet, useApiPost, useApiPatch } from '@/hooks/useApi'
+import apiClient from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 
 const paymentStatusOptions: SelectOption[] = [
   { value: 'unpaid', label: '未到账' },
@@ -26,12 +29,20 @@ interface CommercialFormProps {
 
 export default function CommercialForm({ projectId }: CommercialFormProps) {
   const { data: commercial, isLoading } = useApiGet<CommercialData>(
-    `/projects/${projectId}/commercials`,
+    `/brokerage/projects/${projectId}/commercials`,
     { retry: false }
   )
   const exists = !!commercial
-  const postCommercial = useApiPost<CommercialData>(`/projects/${projectId}/commercials`)
-  const patchCommercial = useApiPatch<CommercialData>(`/projects/${projectId}/commercials`)
+  const postCommercial = useApiPost<CommercialData>(`/brokerage/projects/${projectId}/commercials`)
+  const patchCommercial = useApiPatch<CommercialData>(`/brokerage/projects/${projectId}/commercials`)
+  const queryClient = useQueryClient()
+  // 商务是「每项目单条」资源，后端 DELETE 仅以 project_id 定位，
+  // 用自定义 mutation 删除精确 URL（不追加 id，避免双重 project_id）。
+  const deleteCommercial = useMutation<void, unknown, string | undefined>({
+    mutationFn: () => apiClient.delete(`/brokerage/projects/${projectId}/commercials`),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [`/brokerage/projects/${projectId}/commercials`] }),
+  })
 
   const [quoteAmount, setQuoteAmount] = useState('')
   const [commissionAmount, setCommissionAmount] = useState('')
@@ -66,8 +77,20 @@ export default function CommercialForm({ projectId }: CommercialFormProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>商务结果</CardTitle>
+        {exists && (
+          <DeleteConfirm
+            resourceName="商务结果"
+            triggerVariant="button"
+            description="将删除本项目的全部商务数据（报价/佣金/到账状态），此操作不可撤销。"
+            mutation={deleteCommercial}
+            id={String(projectId)}
+            onDeleted={() => {
+              queryClient.invalidateQueries({ queryKey: [`/projects/${projectId}/commercials`] })
+            }}
+          />
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (

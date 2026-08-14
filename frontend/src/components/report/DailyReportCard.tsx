@@ -7,8 +7,9 @@ import { cn } from '@/lib/utils'
 import type { DailyReport } from '@/types'
 import { formatDate } from '@/lib/utils'
 import MarkdownView from '@/components/common/MarkdownView'
-import { useApiPost } from '@/hooks/useApi'
+import { useApiDelete, useApiPost } from '@/hooks/useApi'
 import { toast } from '@/components/ui/Toast'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 
 interface DailyReportCardProps {
   report: DailyReport
@@ -34,6 +35,7 @@ export default function DailyReportCard({ report, onUpdate, onEdit }: DailyRepor
   const [showRawTomorrow, setShowRawTomorrow] = useState(false)
 
   const confirmMutation = useApiPost<void>(`/reports/daily-reports/${report.id}/confirm`)
+  const deleteMutation = useApiDelete<void>(`/reports/daily-reports`)
 
   const handleConfirm = async () => {
     if (!confirm('确认提交日报？提交后内容将锁定为终版。')) return
@@ -149,6 +151,13 @@ export default function DailyReportCard({ report, onUpdate, onEdit }: DailyRepor
               <Download className="h-4 w-4" />
               下载
             </Button>
+            <DeleteConfirm
+              resourceName="日报"
+              description="删除后该日报将无法恢复，且已确认提交的日报也会被删除。"
+              mutation={deleteMutation}
+              id={String(report.id)}
+              onDeleted={() => onUpdate?.()}
+            />
             {!report.confirmed && (
               <>
                 {onEdit && (

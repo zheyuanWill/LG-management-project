@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
+import { useApiDelete, useApiGet } from '@/hooks/useApi'
 import { ArrowLeft, Edit3, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import RiskTicker from '@/components/layout/RiskTicker'
 import ProjectTabs from '@/components/project/ProjectTabs'
 import ProjectForm from '@/components/project/ProjectForm'
-import { useApiGet } from '@/hooks/useApi'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 import { PROJECT_STATUS_LABELS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 
@@ -22,6 +23,7 @@ export default function SupervisionDetail() {
   const { data: dailyReports } = useApiGet<any[]>(`/reports/projects/${id}/daily-reports`)
   const { data: weeklyReports } = useApiGet<any[]>(`/reports/projects/${id}/weekly-reports`)
   const { data: risks } = useApiGet<any[]>(`/risks/projects/${id}/risks`)
+  const deleteProject = useApiDelete<any>('/projects')
 
   const handleDataChange = () => {
     setDataVersion((v) => v + 1)
@@ -82,10 +84,22 @@ export default function SupervisionDetail() {
             </div>
           </div>
         </div>
-        <Button variant="outline" onClick={() => setShowEditForm(true)}>
-          <Edit3 className="h-4 w-4" />
-          编辑项目
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowEditForm(true)}>
+            <Edit3 className="h-4 w-4" />
+            编辑项目
+          </Button>
+          <DeleteConfirm
+            resourceName="项目"
+            triggerVariant="button"
+            description={`将删除（软取消）「${project.ship_name}」项目及其下所有任务、日报、周报、风险等数据。此操作不可撤销。`}
+            mutation={deleteProject}
+            id={String(project.id)}
+            onDeleted={() => {
+              navigate({ to: '/supervision' })
+            }}
+          />
+        </div>
       </div>
 
       {risks && risks.length > 0 && (

@@ -3,16 +3,19 @@ import { cn } from '@/lib/utils'
 import type { RiskEvent } from '@/types'
 import { RISK_LEVEL_LABELS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
-import { useApiPatch } from '@/hooks/useApi'
+import { useApiDelete, useApiPatch } from '@/hooks/useApi'
 import { toast } from '@/components/ui/Toast'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 
 interface RiskDetailProps {
   risk: RiskEvent
   onResolved?: (riskId: string) => void
+  onDeleted?: () => void
 }
 
-export default function RiskDetail({ risk, onResolved }: RiskDetailProps) {
+export default function RiskDetail({ risk, onResolved, onDeleted }: RiskDetailProps) {
   const resolveMutation = useApiPatch<void>(`/risks/${risk.id}`)
+  const deleteMutation = useApiDelete<void>(`/risks`)
 
   const handleResolve = async () => {
     try {
@@ -59,16 +62,25 @@ export default function RiskDetail({ risk, onResolved }: RiskDetailProps) {
             {risk.resolved_at && <span>处理于 {formatDate(risk.resolved_at)}</span>}
           </div>
         </div>
-        {!risk.resolved && (
-          <button
-            onClick={handleResolve}
-            disabled={resolveMutation.isPending}
-            className="inline-flex items-center gap-1 rounded-md bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground hover:bg-secondary/90 transition-colors disabled:opacity-50"
-          >
-            <Check className="h-4 w-4" />
-            标记已处理
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <DeleteConfirm
+            resourceName="风险事件"
+            description="删除后该风险记录将无法恢复。"
+            mutation={deleteMutation}
+            id={String(risk.id)}
+            onDeleted={() => onDeleted?.()}
+          />
+          {!risk.resolved && (
+            <button
+              onClick={handleResolve}
+              disabled={resolveMutation.isPending}
+              className="inline-flex items-center gap-1 rounded-md bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground hover:bg-secondary/90 transition-colors disabled:opacity-50"
+            >
+              <Check className="h-4 w-4" />
+              标记已处理
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

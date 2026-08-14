@@ -1,10 +1,12 @@
 import { useState, useRef } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Upload, FileText, CheckCircle2, Download, Eye, FileSpreadsheet } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useApiGet, useApiPost } from '@/hooks/useApi'
 import apiClient from '@/lib/api'
 import { formatDate } from '@/lib/utils'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 
 interface ContractData {
   id: number
@@ -18,11 +20,19 @@ interface ContractUploadProps {
 }
 
 export default function ContractUpload({ projectId }: ContractUploadProps) {
+  const queryClient = useQueryClient()
   const { data: contract, isLoading, isError, error, refetch } = useApiGet<ContractData>(
     `/brokerage/projects/${projectId}/contracts`,
     { retry: false }
   )
   const uploadMutation = useApiPost<ContractData>(`/brokerage/projects/${projectId}/contracts`)
+  // 合同是「每项目单条」资源，后端 DELETE 仅以 project_id 定位，
+  // 用自定义 mutation 删除精确 URL（不追加 id，避免双重 project_id）。
+  const deleteMutation = useMutation<void, unknown, string | undefined>({
+    mutationFn: () => apiClient.delete(`/brokerage/projects/${projectId}/contracts`),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [`/brokerage/projects/${projectId}/contracts`] }),
+  })
 
   const [isUploading, setIsUploading] = useState(false)
   const [fileUrl, setFileUrl] = useState<string>('')
@@ -61,8 +71,20 @@ export default function ContractUpload({ projectId }: ContractUploadProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>MOA 合同</CardTitle>
+        {contract && (
+          <DeleteConfirm
+            resourceName="合同"
+            triggerVariant="button"
+            description="将删除已上传的 MOA 合同文件，此操作不可撤销。"
+            mutation={deleteMutation}
+            id={String(projectId)}
+            onDeleted={() => {
+              queryClient.invalidateQueries({ queryKey: [`/brokerage/projects/${projectId}/contracts`] })
+            }}
+          />
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-4">

@@ -41,7 +41,9 @@ export default function DailyUpdateForm({
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [audioPlaying, setAudioPlaying] = useState(false)
 
-  const submitMutation = useApiPost<void>(`/tasks/tasks/${task.id}/daily-updates`)
+  // Backend route: POST /{task_id}/daily-updates (mounted under /api/v1/tasks).
+  // Do NOT add another /tasks/ segment — apiClient baseURL is already /api/v1.
+  const submitMutation = useApiPost<void>(`/tasks/${task.id}/daily-updates`)
 
   useEffect(() => {
     if (open) {

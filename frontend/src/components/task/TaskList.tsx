@@ -38,7 +38,9 @@ export default function TaskList({ projectId, tasks, onTasksChange }: TaskListPr
   const [newDescription, setNewDescription] = useState('')
   const [search, setSearch] = useState('')
 
-  const createMutation = useApiPost<Task>(`/projects/${projectId}/tasks`)
+  // Backend route: POST /tasks/projects/{project_id}/tasks (tasks router mounted at /api/v1/tasks).
+  // apiClient baseURL is /api/v1, so the relative path is /tasks/projects/{pid}/tasks.
+  const createMutation = useApiPost<Task>(`/tasks/projects/${projectId}/tasks`)
 
   const filteredTasks = tasks.filter((task) =>
     (task.name ?? '').toLowerCase().includes(search.toLowerCase())

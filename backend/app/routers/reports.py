@@ -208,6 +208,24 @@ async def update_daily_report(
     return DailyReportResponse.model_validate(report)
 
 
+@router.delete(
+    "/daily-reports/{report_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_daily_report(
+    report_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(DailyReport).where(DailyReport.id == report_id)
+    )
+    report = result.scalar_one_or_none()
+    if report is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="日报不存在")
+    await db.delete(report)
+
+
 @router.post(
     "/daily-reports/{report_id}/confirm",
     response_model=DailyReportResponse,
@@ -360,3 +378,21 @@ async def confirm_weekly_report(
     report.confirmed_by = current_user.id
     await db.flush()
     return WeeklyReportResponse.model_validate(report)
+
+
+@router.delete(
+    "/weekly-reports/{report_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_weekly_report(
+    report_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(WeeklyReport).where(WeeklyReport.id == report_id)
+    )
+    report = result.scalar_one_or_none()
+    if report is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="周报不存在")
+    await db.delete(report)

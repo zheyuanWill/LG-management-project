@@ -186,6 +186,24 @@ async def update_commercial(
     return BrokerageCommercialResponse.model_validate(commercial)
 
 
+@router.delete(
+    "/projects/{project_id}/commercials",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_commercial(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(BrokerageCommercial).where(BrokerageCommercial.project_id == project_id)
+    )
+    commercial = result.scalar_one_or_none()
+    if commercial is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="商务信息不存在")
+    await db.delete(commercial)
+
+
 @router.get(
     "/projects/{project_id}/contracts",
     response_model=BrokerageContractResponse,
@@ -232,6 +250,24 @@ async def create_contract(
     db.add(contract)
     await db.flush()
     return BrokerageContractResponse.model_validate(contract)
+
+
+@router.delete(
+    "/projects/{project_id}/contracts",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_contract(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(BrokerageContract).where(BrokerageContract.project_id == project_id)
+    )
+    contract = result.scalar_one_or_none()
+    if contract is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="合同信息不存在")
+    await db.delete(contract)
 
 
 @router.get(

@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Pencil, Trash2, Calendar } from 'lucide-react'
+import { Pencil, Trash2, Calendar, History } from 'lucide-react'
 import type { Task, TaskStatus } from '@/types'
 import { TASK_STATUS_LABELS } from '@/lib/constants'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import DailyUpdateForm from './DailyUpdateForm'
+import DailyUpdateHistory from './DailyUpdateHistory'
 import { useApiDelete, useApiPatch } from '@/hooks/useApi'
 import { toast } from '@/components/ui/Toast'
 import { formatDate } from '@/lib/utils'
@@ -25,6 +26,7 @@ const STATUS_BADGE_VARIANTS: Record<TaskStatus, 'default' | 'secondary' | 'accen
 
 export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
   const [updateOpen, setUpdateOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const [status, setStatus] = useState<TaskStatus>(task.status)
 
   const deleteMutation = useApiDelete<void>(`/tasks`)
@@ -112,6 +114,15 @@ export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
               <Pencil className="h-4 w-4" />
               填写今日更新
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setHistoryOpen(true)}
+              className="text-muted-foreground"
+            >
+              <History className="h-4 w-4" />
+              历史记录
+            </Button>
             <button
               onClick={handleDelete}
               className="rounded-md p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -129,6 +140,12 @@ export default function TaskItem({ task, onUpdate, onDelete }: TaskItemProps) {
         open={updateOpen}
         onOpenChange={setUpdateOpen}
         onSubmitted={onUpdate}
+      />
+
+      <DailyUpdateHistory
+        task={task}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
       />
     </>
   )

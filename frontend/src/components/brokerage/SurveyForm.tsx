@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Select, type SelectOption } from '@/components/ui/Select'
 import { useApiGet, useApiPatch } from '@/hooks/useApi'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import apiClient from '@/lib/api'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 
 const conclusionOptions: SelectOption[] = [
   { value: '', label: '请选择结论...' },
@@ -13,6 +16,7 @@ const conclusionOptions: SelectOption[] = [
 ]
 
 interface SurveyData {
+  id?: number
   conclusion: string
   survey_detail: string
 }
@@ -22,10 +26,18 @@ interface SurveyFormProps {
 }
 
 export default function SurveyForm({ projectId }: SurveyFormProps) {
+  const queryClient = useQueryClient()
   const { data: survey, isLoading } = useApiGet<SurveyData>(
     `/brokerage/projects/${projectId}/surveys`
   )
   const patchSurvey = useApiPatch<SurveyData>(`/brokerage/projects/${projectId}/surveys`)
+  // 调研是「每项目单条」资源，后端 DELETE 仅以 project_id 定位，
+  // 因此用自定义 mutation 删除精确 URL（不追加 id，避免双重 project_id）。
+  const deleteSurvey = useMutation<void, unknown, string | undefined>({
+    mutationFn: () => apiClient.delete(`/brokerage/projects/${projectId}/surveys`),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [`/brokerage/projects/${projectId}/surveys`] }),
+  })
 
   const [conclusion, setConclusion] = useState('')
   const [details, setDetails] = useState('')
@@ -49,8 +61,20 @@ export default function SurveyForm({ projectId }: SurveyFormProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>背景调研</CardTitle>
+        {survey && (
+          <DeleteConfirm
+            resourceName="调研信息"
+            triggerVariant="button"
+            description="将删除本项目的全部背景调研内容（结论+详情），此操作不可撤销。"
+            mutation={deleteSurvey}
+            id={String(projectId)}
+            onDeleted={() => {
+              queryClient.invalidateQueries({ queryKey: [`/brokerage/projects/${projectId}/surveys`] })
+            }}
+          />
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (

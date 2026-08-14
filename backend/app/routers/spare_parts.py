@@ -452,6 +452,24 @@ async def update_hk_signature(
     return HkSignatureResponse.model_validate(signature)
 
 
+@router.delete(
+    "/projects/{project_id}/hk-signatures",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_hk_signature(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(HkSignature).where(HkSignature.project_id == project_id)
+    )
+    signature = result.scalar_one_or_none()
+    if signature is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="签收单不存在")
+    await db.delete(signature)
+
+
 # ── 发票 ─────────────────────────────────────────────────
 @router.get(
     "/projects/{project_id}/invoices",
@@ -527,6 +545,24 @@ async def update_invoice(
         invoice.purpose = payload.purpose
     await db.flush()
     return InvoiceResponse.model_validate(invoice)
+
+
+@router.delete(
+    "/projects/{project_id}/invoices",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_invoice(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(Invoice).where(Invoice.project_id == project_id)
+    )
+    invoice = result.scalar_one_or_none()
+    if invoice is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="发票信息不存在")
+    await db.delete(invoice)
 
 
 # ── 辅助 ─────────────────────────────────────────────────

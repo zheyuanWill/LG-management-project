@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react'
-import { useParams } from '@tanstack/react-router'
+import { useParams, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Package, Plus, Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
-import { useApiGet, useApiDelete } from '@/hooks/useApi'
+import { useApiDelete, useApiGet } from '@/hooks/useApi'
 import { apiFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/Toast'
 import type { Project } from '@/types'
 import SparePartForm from '@/components/spare/SparePartForm'
 import LogisticsTimeline from '@/components/spare/LogisticsTimeline'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 
 interface SparePartData {
   id: number
@@ -22,7 +23,9 @@ interface SparePartData {
 
 export default function SparePartsDetail() {
   const { id } = useParams({ strict: false })
+  const navigate = useNavigate()
   const { data: project, isLoading } = useApiGet<Project>(`/projects/${id}`)
+  const deleteProject = useApiDelete<Project>('/projects')
 
   const { data: parts } = useApiGet<SparePartData[]>(`/spare-parts/projects/${id}/spare-parts`, {
     retry: false,
@@ -127,9 +130,21 @@ export default function SparePartsDetail() {
             <p className="text-muted-foreground mt-1">项目编号: {project.project_no}</p>
           </div>
         </div>
-        <Badge variant={project.status === 'active' ? 'default' : 'secondary'}>
-          {project.status === 'active' ? '进行中' : '已完成'}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={project.status === 'active' ? 'default' : 'secondary'}>
+            {project.status === 'active' ? '进行中' : project.status === 'completed' ? '已完成' : project.status === 'cancelled' ? '已取消' : project.status}
+          </Badge>
+          <DeleteConfirm
+            resourceName="项目"
+            triggerVariant="button"
+            description={`将删除（软取消）「${project.ship_name}」项目及其下所有备件、物流节点、HK 签收、发票等数据。此操作不可撤销。`}
+            mutation={deleteProject}
+            id={String(project.id)}
+            onDeleted={() => {
+              navigate({ to: '/spare-parts' })
+            }}
+          />
+        </div>
       </div>
 
       {/* 备件选择器 */}

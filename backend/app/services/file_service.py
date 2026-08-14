@@ -9,7 +9,7 @@ from minio.error import S3Error
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.dependencies import get_minio_client
+from app.dependencies import get_minio_client, get_minio_public_client
 from app.models.file import File
 
 
@@ -64,7 +64,9 @@ async def get_minio_url(storage_key: str, bucket: str = None, expires: int = 360
     if bucket is None:
         bucket = settings.MINIO_BUCKET
 
-    client = get_minio_client()
+    # 用公开地址签名的客户端（见 get_minio_public_client 说明），
+    # 使 URL 中的 Host 与浏览器实际访问的 Host 一致，避免 SignatureDoesNotMatch。
+    client = get_minio_public_client()
 
     try:
         url = client.presigned_get_object(
@@ -72,15 +74,6 @@ async def get_minio_url(storage_key: str, bucket: str = None, expires: int = 360
             storage_key,
             expires=timedelta(seconds=expires),
         )
-        # presigned URL 默认用 MINIO_ENDPOINT (容器内网域名 minio:9000)，
-        # 浏览器无法访问。替换为外部可访问的地址 (由 MINIO_PUBLIC_ENDPOINT 指定)。
-        public_endpoint = getattr(settings, "MINIO_PUBLIC_ENDPOINT", None)
-        if public_endpoint:
-            from urllib.parse import urlparse, urlunparse
-
-            parsed = urlparse(url)
-            pub = urlparse(f"http://{public_endpoint}" if "://" not in public_endpoint else public_endpoint)
-            url = urlunparse(parsed._replace(netloc=pub.netloc))
         return url
     except S3Error as e:
         logger.error(f"Failed to generate presigned URL: {e}")

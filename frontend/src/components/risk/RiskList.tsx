@@ -6,6 +6,7 @@ import { RISK_LEVEL_LABELS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 import RiskDetail from './RiskDetail'
 import { useApiPost } from '@/hooks/useApi'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from '@/components/ui/Toast'
 
 interface RiskListProps {
@@ -16,6 +17,12 @@ interface RiskListProps {
 export default function RiskList({ risks, projectId }: RiskListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [analyzingAll, setAnalyzingAll] = useState(false)
+  const queryClient = useQueryClient()
+
+  const handleRiskDeleted = () => {
+    queryClient.invalidateQueries({ queryKey: [`/risks/projects/${projectId}/risks`] })
+    setExpandedId(null)
+  }
 
   const batchAnalyze = useApiPost<{ task_id: string; project_id: number; status: string }>(
     `/risks/projects/${projectId}/risks/ai-detect`
@@ -65,7 +72,7 @@ export default function RiskList({ risks, projectId }: RiskListProps) {
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              自动检测风险
+              自动进度检查
             </>
           )}
         </button>
@@ -148,7 +155,7 @@ export default function RiskList({ risks, projectId }: RiskListProps) {
                 {expandedId === risk.id && (
                   <tr className="border-b border-border">
                     <td colSpan={5} className="p-0">
-                      <RiskDetail risk={risk} onResolved={handleResolved} />
+                      <RiskDetail risk={risk} onResolved={handleResolved} onDeleted={handleRiskDeleted} />
                     </td>
                   </tr>
                 )}

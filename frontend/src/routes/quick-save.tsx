@@ -3,40 +3,80 @@ import { Save, Sparkles, FileText } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import TextPaster from '@/components/quick-save/TextPaster'
 import ImageUploader from '@/components/quick-save/ImageUploader'
-import SuggestionList from '@/components/quick-save/SuggestionList'
+import SuggestionList, {
+  type SuggestionItem,
+  type QuickSaveResponse,
+} from '@/components/quick-save/SuggestionList'
+import apiClient from '@/lib/api'
+import { toast } from '@/components/ui/Toast'
 
 type QuickSaveTab = 'text' | 'image'
 
-interface AISuggestion {
-  summary: string
-  projects: {
-    id: string
-    name: string
-    project_no: string
-    confidence: number
-  }[]
+interface RecognizeResult {
+  save: QuickSaveResponse
+  suggestions: SuggestionItem[]
 }
 
 export default function QuickSavePage() {
   const [activeTab, setActiveTab] = useState<QuickSaveTab>('text')
-  const [suggestion, setSuggestion] = useState<AISuggestion | null>(null)
+  const [result, setResult] = useState<RecognizeResult | null>(null)
   const [isRecognizing, setIsRecognizing] = useState(false)
 
-  const handleRecognize = async (_content: string, type: 'text' | 'image') => {
+  const handleRecognizeText = async (text: string) => {
     setIsRecognizing(true)
-    setSuggestion(null)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setSuggestion({
-        summary: `AI 识别结果: 从${type === 'text' ? '文字' : '截图'}中提取到关键信息,匹配到相关项目。`,
-        projects: [
-          { id: '1', name: '远洋一号', project_no: 'BS-2024-001', confidence: 0.92 },
-          { id: '2', name: '海运先锋', project_no: 'BS-2024-005', confidence: 0.78 },
-          { id: '3', name: '东方之星', project_no: 'SP-2024-012', confidence: 0.65 },
-        ],
+      const res = await apiClient.post<RecognizeResult>('/quick-saves/text', null, {
+        params: { text },
       })
+      setResult(res.data)
+    } catch {
+      toast.error({ title: '识别失败', description: 'AI 服务暂不可用,请稍后重试' })
     } finally {
       setIsRecognizing(false)
+    }
+  }
+
+  const handleRecognizeImage = async (file: File) => {
+    setIsRecognizing(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await apiClient.post<RecognizeResult>('/quick-saves/image', formData)
+      setResult(res.data)
+      if (!res.data.suggestions || res.data.suggestions.length === 0) {
+        toast.info({
+          title: '图片已保存',
+          description: '当前未启用图片文字识别,请手动选择关联项目',
+        })
+      }
+    } catch {
+      toast.error({ title: '保存失败', description: '请稍后重试' })
+    } finally {
+      setIsRecognizing(false)
+    }
+  }
+
+  const handleConfirm = async (projectId: number) => {
+    if (!result) return
+    try {
+      await apiClient.patch(`/quick-saves/${result.save.id}`, {
+        confirmed_project_id: projectId,
+      })
+      toast.success({ title: '已关联项目', description: '随手存记录已确认' })
+      setResult(null)
+    } catch {
+      toast.error({ title: '关联失败', description: '请稍后重试' })
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!result) return
+    try {
+      await apiClient.patch(`/quick-saves/${result.save.id}`, { status: 'deleted' })
+      toast.success({ title: '已删除随手存记录' })
+      setResult(null)
+    } catch {
+      toast.error({ title: '删除失败', description: '请稍后重试' })
     }
   }
 
@@ -47,7 +87,9 @@ export default function QuickSavePage() {
           <Save className="h-8 w-8 text-primary" />
           随手存
         </h1>
-        <p className="text-muted-foreground mt-1">快速保存微信截图或文字,AI 智能识别关联项目</p>
+        <p className="text-muted-foreground mt-1">
+          快速保存微信截图或文字,AI 智能识别并关联项目
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -80,9 +122,9 @@ export default function QuickSavePage() {
             </div>
 
             {activeTab === 'text' ? (
-              <TextPaster onRecognize={(text) => handleRecognize(text, 'text')} />
+              <TextPaster onRecognize={handleRecognizeText} />
             ) : (
-              <ImageUploader onRecognize={(file) => handleRecognize(file, 'image')} />
+              <ImageUploader onRecognize={handleRecognizeImage} />
             )}
           </CardContent>
         </Card>
@@ -100,24 +142,17 @@ export default function QuickSavePage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent mx-auto mb-3" />
                 <p>AI 正在识别中...</p>
               </div>
-            ) : !suggestion ? (
+            ) : !result ? (
               <div className="py-16 text-center text-muted-foreground">
                 <FileText className="mx-auto h-10 w-10 opacity-50 mb-3" />
-                <p className="text-sm">请在左侧输入内容并点击"识别"</p>
+                <p className="text-sm">请在左侧输入内容并点击“识别”</p>
               </div>
             ) : (
               <SuggestionList
-                suggestion={suggestion}
-                onConfirm={(projectId) => {
-                  alert(`已关联到项目: ${projectId}`)
-                  setSuggestion(null)
-                }}
-                onChangeProject={() => {
-                  setSuggestion({ ...suggestion, projects: suggestion.projects.slice(1) })
-                }}
-                onDelete={() => {
-                  setSuggestion(null)
-                }}
+                save={result.save}
+                suggestions={result.suggestions ?? []}
+                onConfirm={handleConfirm}
+                onDelete={handleDelete}
               />
             )}
           </CardContent>

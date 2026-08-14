@@ -119,3 +119,21 @@ async def resolve_risk(
 
     await db.flush()
     return RiskEventResponse.model_validate(risk)
+
+
+@router.delete(
+    "/risks/{risk_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_risk(
+    risk_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(RiskEvent).where(RiskEvent.id == risk_id)
+    )
+    risk = result.scalar_one_or_none()
+    if risk is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="风险事件不存在")
+    await db.delete(risk)

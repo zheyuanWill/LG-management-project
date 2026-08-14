@@ -20,6 +20,27 @@ def get_minio_client() -> Minio:
     )
 
 
+def get_minio_public_client() -> Minio:
+    """生成预签名 URL 专用的 MinIO 客户端。
+
+    预签名 URL 的 SigV4 签名会绑定 endpoint 主机名（写入 canonical request 的
+    `host`）。浏览器实际访问的是 MINIO_PUBLIC_ENDPOINT（如 localhost:9000），
+    因此必须用**公开地址**签名，否则浏览器携带 `Host: localhost:9000` 访问时，
+    MinIO 用收到的 Host 重新计算签名，与 URL 中针对 `minio:9000` 计算的签名不一致，
+    报 `SignatureDoesNotMatch`。
+
+    该客户端仅用于本地签名（`presigned_get_object` 不发起网络连接），
+    故在后端容器内用公开主机名初始化是安全的。
+    """
+    public_endpoint = getattr(settings, "MINIO_PUBLIC_ENDPOINT", None) or settings.MINIO_ENDPOINT
+    return Minio(
+        public_endpoint,
+        access_key=settings.MINIO_ACCESS_KEY,
+        secret_key=settings.MINIO_SECRET_KEY,
+        secure=False,
+    )
+
+
 async def get_current_user(
     request: Request,
     db: AsyncSession = Depends(get_db),

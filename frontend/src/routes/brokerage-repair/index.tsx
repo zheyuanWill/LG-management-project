@@ -1,14 +1,16 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, Ship, ChevronRight, CheckCircle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { useApiGet } from '@/hooks/useApi'
+import { useApiDelete, useApiGet } from '@/hooks/useApi'
 import type { Project } from '@/types'
 import { cn } from '@/lib/utils'
+import DeleteConfirm from '@/components/common/DeleteConfirm'
 
 const statusOptions = [
   { value: 'all', label: '全部状态' },
@@ -29,6 +31,8 @@ interface RepairProject extends Project {
 
 export default function BrokerageRepairIndex() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const deleteProject = useApiDelete<Project>('/projects')
   const [statusFilter, setStatusFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -117,9 +121,20 @@ export default function BrokerageRepairIndex() {
                       <p className="text-xs text-muted-foreground">{project.project_no}</p>
                     </div>
                   </div>
-                  <Badge variant={statusVariantMap[project.status] || 'default'}>
-                    {project.status === 'active' ? '进行中' : project.status === 'completed' ? '已完成' : '已取消'}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={statusVariantMap[project.status] || 'default'}>
+                      {project.status === 'active' ? '进行中' : project.status === 'completed' ? '已完成' : '已取消'}
+                    </Badge>
+                    <DeleteConfirm
+                      resourceName="项目"
+                      description={`将删除（软取消）「${project.ship_name}」项目及其下所有调研、商务、合同、备件等数据。此操作不可撤销。`}
+                      mutation={deleteProject}
+                      id={String(project.id)}
+                      onDeleted={() => {
+                        queryClient.invalidateQueries({ queryKey: ['/projects'] })
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">

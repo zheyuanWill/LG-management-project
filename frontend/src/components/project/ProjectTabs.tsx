@@ -5,7 +5,7 @@ import type { Project } from '@/types'
 
 const TaskList = lazy(() => import('@/components/task/TaskList'))
 const DailyReportList = lazy(() => import('@/components/report/DailyReportList'))
-const WeeklyReportCard = lazy(() => import('@/components/report/WeeklyReportCard'))
+const WeeklyReportList = lazy(() => import('@/components/report/WeeklyReportList'))
 const RiskList = lazy(() => import('@/components/risk/RiskList'))
 const ProjectCompletion = lazy(() => import('@/components/project/ProjectCompletion'))
 
@@ -60,17 +60,11 @@ export default function ProjectTabs({
       icon: <Calendar className="h-4 w-4" />,
       content: (
         <Suspense fallback={<LoadingFallback />}>
-          <div className="space-y-4">
-            {weeklyReports.length === 0 ? (
-              <div className="py-12 text-center text-muted-foreground">
-                暂无周报数据
-              </div>
-            ) : (
-              weeklyReports.map((report) => (
-                <WeeklyReportCard key={report.id} report={report} />
-              ))
-            )}
-          </div>
+          <WeeklyReportList
+            projectId={project.id}
+            reports={weeklyReports}
+            onReportsChange={onDataChange}
+          />
         </Suspense>
       ),
     },
