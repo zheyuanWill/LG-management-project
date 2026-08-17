@@ -1,0 +1,17 @@
+# LG 生产 Caddyfile —— 唯一公网入口
+# SITE_ADDRESS 由 docker compose 以环境变量注入（来自 .env 的 SITE_ADDRESS）
+#   :80            -> 仅 http，用 ECS 公网 IP 访问（备案前用这个）
+#   example.com    -> Caddy 自动申请并续期 Let's Encrypt 证书（域名已备案 + DNS 指向本机）
+{$SITE_ADDRESS:80} {
+    # 后端 API：禁止缓存，保证登录态/数据实时
+    handle /api/* {
+        header -Cache-Control
+        header Cache-Control "no-store, no-cache, must-revalidate"
+        reverse_proxy backend:8000
+    }
+
+    # 前端静态资源（SPA）：兜底到 index.html
+    handle {
+        reverse_proxy frontend:80
+    }
+}

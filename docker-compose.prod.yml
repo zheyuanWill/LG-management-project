@@ -1,0 +1,227 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# LG 船舶管理 ERP · 生产环境编排
+# 用法（在 ECS 上，项目根目录）:
+#   docker compose -f docker-compose.prod.yml up -d --build
+# 说明:
+#   - 代码已烤进镜像（无 --reload、无源码卷挂载），改代码必须重新 build
+#   - 仅 caddy(80/443) 与 minio(9000) 暴露公网；数据库/Redis/后端只在内部网络
+#   - 入网统一走 caddy: /api/* -> backend:8000, 其余 -> frontend:80
+#   - 数据库表由后端启动时 init_db() 自动建好；init.sql 负责启用 pgvector
+# ═══════════════════════════════════════════════════════════════════════════
+version: '3.9'
+
+x-common: &common
+  restart: unless-stopped
+  networks:
+    - lg-net
+
+services:
+  # ── 数据库 ──────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: lg-postgres
+    environment:
+      POSTGRES_USER: ${PG_USER:-lgadmin}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-CHANGE_ME_PG}
+      POSTGRES_DB: ${PG_DATABASE:-lg_erp}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    # 不暴露端口：仅内部网络访问
+    <<: *common
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-lgadmin} -d ${PG_DATABASE:-lg_erp}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (缓存 + 队列) ──────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: lg-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    # 不暴露端口
+    <<: *common
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── MinIO 对象存储 ────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: lg-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-CHANGE_ME_MINIO}
+    volumes:
+      - miniodata:/data
+    ports:
+      - "9000:9000"   # 浏览器预签名下载需要公网可达；9001 控制台不暴露
+    <<: *common
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── 后端 API ─────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.tuna.tsinghua.edu.cn}
+    container_name: lg-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${PG_USER:-lgadmin}:${PG_PASSWORD:-CHANGE_ME_PG}@postgres:5432/${PG_DATABASE:-lg_erp}
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_PASSWORD:-CHANGE_ME_MINIO}
+      - MINIO_BUCKET=${MINIO_BUCKET:-lg-erp}
+      - MINIO_PUBLIC_ENDPOINT=${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
+      - AI_SERVICE_URL=http://ai-service:8001
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-CHANGE_ME_JWT}
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRE_MINUTES=1440
+    # 代码烤进镜像：无源码挂载、无 --reload（Dockerfile CMD 即生产启动命令）
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    <<: *common
+
+  # ── AI 推理服务 ───────────────────────────────────
+  # LLM_PROVIDER=mock: 无需外部 LLM 即可跑通（报告生成等高级能力不可用）。
+  # 接入真实模型：设 LLM_PROVIDER=cloud + LLM_BASE_URL/LLM_MODEL/LLM_API_KEY
+  #   (如 deepseek: https://api.deepseek.com, deepseek-chat)
+  # 或本地 ollama: LLM_PROVIDER=ollama + LLM_BASE_URL=http://host.docker.internal:11434
+  ai-service:
+    build:
+      context: ./backend/ai_service
+      dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.tuna.tsinghua.edu.cn}
+    container_name: lg-ai-service
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-mock}
+      - LLM_BASE_URL=${LLM_BASE_URL:-}
+      - LLM_MODEL=${LLM_MODEL:-deepseek-chat}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-small-zh-v1.5}
+      - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
+      - HF_HUB_CACHE=/cache/models
+      - OCR_ENABLED=${OCR_ENABLED:-false}
+    volumes:
+      - ai-cache:/cache
+    # 代码烤进镜像，无 --reload
+    depends_on:
+      - redis
+    <<: *common
+
+  # ── Celery Worker ──────────────────────────────────
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.tuna.tsinghua.edu.cn}
+    container_name: lg-celery
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${PG_USER:-lgadmin}:${PG_PASSWORD:-CHANGE_ME_PG}@postgres:5432/${PG_DATABASE:-lg_erp}
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_PASSWORD:-CHANGE_ME_MINIO}
+      - MINIO_BUCKET=${MINIO_BUCKET:-lg-erp}
+      - AI_SERVICE_URL=http://ai-service:8001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    <<: *common
+
+  # ── Celery Beat (定时任务) ─────────────────────────
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-https://mirrors.tuna.tsinghua.edu.cn}
+    container_name: lg-celery-beat
+    command: celery -A app.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${PG_USER:-lgadmin}:${PG_PASSWORD:-CHANGE_ME_PG}@postgres:5432/${PG_DATABASE:-lg_erp}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    <<: *common
+
+  # ── 前端 (静态构建 + Caddy，仅内部 :80) ─────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+    container_name: lg-frontend
+    # 不暴露端口：只通过 caddy 内部访问
+    depends_on:
+      - backend
+    <<: *common
+
+  # ── Caddy 反向代理（唯一公网入口） ──────────────────
+  caddy:
+    image: caddy:2-alpine
+    container_name: lg-caddy
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # SITE_ADDRESS=:80 走 http(IP 访问)；设成域名则 Caddy 自动申请 HTTPS 证书
+      - SITE_ADDRESS=${SITE_ADDRESS:-:80}
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    <<: *common
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  ai-cache:
+  caddy-data:
+  caddy-config:
+
+networks:
+  lg-net:
+    driver: bridge
