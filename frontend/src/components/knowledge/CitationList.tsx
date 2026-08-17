@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { FileText, ExternalLink, Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface Citation {
+export interface Citation {
   document_id: string
   document_title: string
   chunk_index: number

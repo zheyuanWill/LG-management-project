@@ -37,3 +37,25 @@ class QueryResponse(BaseModel):
 class KnowledgeDocumentListResponse(BaseModel):
     items: list[DocumentUploadResponse]
     total: int
+
+
+class KnowledgeChatMessageCreate(BaseModel):
+    role: str = Field(..., pattern="^(user|assistant)$")
+    content: str = Field(..., min_length=1)
+    citations: list[dict] | None = None
+
+
+class KnowledgeChatMessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    role: str
+    content: str
+    citations: list[dict] | None = None
+    created_at: datetime
+
+
+class KnowledgeChatMessageListResponse(BaseModel):
+    items: list[KnowledgeChatMessageResponse]
+    total: int

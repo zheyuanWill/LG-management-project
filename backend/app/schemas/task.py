@@ -45,6 +45,15 @@ class TaskDailyUpdateCreate(BaseModel):
     audio_duration: int | None = None
 
 
+class TaskPhotoUploadResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    update_id: int
+    storage_key: str
+    created_at: datetime
+
+
 class TaskDailyUpdateResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -54,13 +63,5 @@ class TaskDailyUpdateResponse(BaseModel):
     status: str | None = None
     remark: str | None = None
     audio_duration: int | None = None
-    created_at: datetime
-
-
-class TaskPhotoUploadResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    update_id: int
-    storage_key: str
+    photos: list[TaskPhotoUploadResponse] = []
     created_at: datetime

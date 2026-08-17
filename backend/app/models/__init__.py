@@ -17,7 +17,7 @@ from app.models.spare_part import (
     Invoice,
 )
 from app.models.quick_save import QuickSave
-from app.models.knowledge import KnowledgeDocument, KnowledgeEmbedding
+from app.models.knowledge import KnowledgeChatMessage, KnowledgeDocument, KnowledgeEmbedding
 from app.models.file import File
 from app.models.logistics import LogisticsNodeType
 
@@ -47,6 +47,7 @@ __all__ = [
     "QuickSave",
     "KnowledgeDocument",
     "KnowledgeEmbedding",
+    "KnowledgeChatMessage",
     "File",
     "LogisticsNodeType",
 ]

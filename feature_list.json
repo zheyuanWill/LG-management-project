@@ -1,0 +1,210 @@
+{
+  "project": "LG 船舶管理 ERP",
+  "updated": "2026-08-17",
+  "rules": {
+    "status_enum": ["not_started", "in_progress", "blocked", "passing"],
+    "max_in_progress": 1,
+    "no_fake_passing": true
+  },
+  "features": [
+    {
+      "id": "supervision-core",
+      "priority": 10,
+      "area": "supervision",
+      "title": "监修项目主表与详情",
+      "user_visible_behavior": "新建/查看修船监修项目，详情页含头部信息卡、统计卡、风险滚动条与 5 个 Tab。",
+      "status": "passing",
+      "verification": [
+        "POST /projects 创建 type=supervision 项目，编号 LG-SV-{year}-{seq:03d}",
+        "GET /projects/{id} 经 _enrich_project 富化（船东/风险摘要/待确认报表红点）",
+        "GET /projects/{id}/stats 返回任务完成率/风险数",
+        "POST /projects/{id}/handover-to-supervision 对 brokerage_repair 生效并播种 5 条默认任务"
+      ],
+      "evidence": "功能与流程总览.md 模块3；监修模块组件流程.md 组件树。前端 $id.tsx 已接通。",
+      "notes": "详情页子 Tab 写操作后仅 bump dataVersion、未 invalidateQueries，刷新不完全（接缝，见 supervision-refresh）。"
+    },
+    {
+      "id": "task-management",
+      "priority": 20,
+      "area": "tasks",
+      "title": "监修任务管理（CRUD + 每日更新 + 历史）",
+      "user_visible_behavior": "任务拆分、状态流转、每日进度上报、查看任务历史版本。",
+      "status": "passing",
+      "verification": [
+        "POST /tasks/projects/{pid}/tasks 新建（路径已修正）",
+        "PATCH/DELETE /tasks/{id}",
+        "POST /tasks/{id}/daily-updates 提交当日更新（双前缀 404 已修）",
+        "GET /tasks/{id}/daily-updates 历史倒序；DailyUpdateHistory 已接通"
+      ],
+      "evidence": "监修模块组件流程.md 第4-7 节；2026-08-14 复盘已修路径回归。",
+      "notes": "每日更新照片已持久化（见 daily-update-photo-persist，已完成）。"
+    },
+    {
+      "id": "daily-update-photo-persist",
+      "priority": 15,
+      "area": "tasks",
+      "title": "日报每日更新照片持久化",
+      "user_visible_behavior": "任务每日更新上传的照片应存入 MinIO 并在历史记录中可见。",
+      "status": "passing",
+      "verification": [
+        "前端 DailyUpdateForm 创建更新后逐个 POST /tasks/daily-updates/{id}/photos（multipart）上传真实 File",
+        "后端 create_daily_update 返回 TaskDailyUpdateResponse（含 photos 列表，joinedload 已加）",
+        "新增 GET /tasks/task-photos/{photo_id}/url 返回 presigned URL",
+        "前端 DailyUpdateHistory 渲染 persisted 照片（TaskPhotoThumb）"
+      ],
+      "evidence": "代码改动 + LIVE e2e 验证（2026-08-17，admin/admin123）：e2e_smoke.sh 全流程通过——建项目→建任务(planned_end_date 持久化)→建每日更新→上传真实 PNG 到 /daily-updates/{id}/photos(返回 storage_key)→GET 列表照片 round-trip 命中→GET /task-photos/{id}/url 返回 322 字符 presigned URL。py_compile OK；frontend tsc 无新增错误。",
+      "notes": "e2e 同时暴露并修复 2 个后端缺陷：(1) create/list_daily_updates 用 joinedload(photos) 但 .scalar_one()/.scalars().all() 未加 .unique() → SQLAlchemy 500，已改为 refresh/unique()；(2) get_minio_public_client 未 pin region，presigned_get_object 在容器内解析 bucket region 连接 localhost:9000 失败 → 已加 region='us-east-1'(MinIO 默认，与 make_bucket 一致)。回归测试脚本见 e2e_smoke.sh。"
+    },
+    {
+      "id": "daily-report-hitl",
+      "priority": 25,
+      "area": "reports",
+      "title": "日报（AI 辅助 + 人在回路）",
+      "user_visible_behavior": "生成日报草稿（明日计划+风险，接知识库 RAG）→ 人工确认 → 下载。",
+      "status": "passing",
+      "verification": [
+        "POST .../daily-reports/propose 同步返回候选",
+        "POST .../daily-reports/finalize / PATCH .../confirm",
+        "前端 daily.$date.tsx 编辑器已接通"
+      ],
+      "evidence": "功能与流程总览.md 模块8；监修模块组件流程.md 第9 节。"
+    },
+    {
+      "id": "weekly-report-ui",
+      "priority": 30,
+      "area": "reports",
+      "title": "周报生成 UI 接通",
+      "user_visible_behavior": "周报 Tab 有「生成周报」按钮，轮询 latest 刷新。",
+      "status": "passing",
+      "verification": [
+        "POST .../weekly-reports/generate → Celery 任务",
+        "前端 WeeklyReportList 生成+轮询已接通（2026-08-14 新增）"
+      ],
+      "evidence": "功能与流程总览.md 模块8 标注 ✅ 已修；监修模块组件流程.md 第10 节。"
+    },
+    {
+      "id": "risk-rule-engine",
+      "priority": 35,
+      "area": "risks",
+      "title": "风险登记 + 规则引擎检测",
+      "user_visible_behavior": "风险登记、红点提示、「自动进度检查」按阈值规则登记风险。",
+      "status": "passing",
+      "verification": [
+        "GET /risks/summary 未解决列表",
+        "POST .../risks/ai-detect 规则引擎（未开始>50%→warning；逾期→critical；完成率<30%→info）",
+        "前端按钮文案已改「自动进度检查」"
+      ],
+      "evidence": "功能与流程总览.md 模块9；监修模块组件流程.md 第11 节。",
+      "notes": "强调：规则引擎非 LLM，勿误加 AI 调用。"
+    },
+    {
+      "id": "knowledge-rag",
+      "priority": 40,
+      "area": "knowledge",
+      "title": "知识库 RAG 向量问答",
+      "user_visible_behavior": "文档入库切块→向量→流式问答（引用可追溯）。",
+      "status": "passing",
+      "verification": [
+        "POST /knowledge/documents 上传→Celery 入库（bge-small 512 维）",
+        "POST /knowledge/query 与 /query/stream（SSE）",
+        "前端 QAChat 流式接通"
+      ],
+      "evidence": "功能与流程总览.md 模块11。",
+      "notes": "QA 聊天记录仅 localStorage，跨设备不同步（已知限制）。"
+    },
+    {
+      "id": "quick-save-wiring",
+      "priority": 45,
+      "area": "quick-save",
+      "title": "随手存前端接线（原 mock）",
+      "user_visible_behavior": "现场文字/图片记录 → AI 抽取 → 联想活跃项目 → 确认关联。",
+      "status": "passing",
+      "verification": [
+        "POST /quick-saves/text|image 接通",
+        "映射到 SuggestionList；确认 PATCH confirmed_project_id / 删除 status=deleted"
+      ],
+      "evidence": "功能与流程总览.md 模块10 标注 ✅ 已修（2026-08-14）。",
+      "notes": "OCR 默认关闭，image 识别文本为空（后端配置）。"
+    },
+    {
+      "id": "users-real",
+      "priority": 50,
+      "area": "auth",
+      "title": "用户管理真实接口",
+      "user_visible_behavior": "admin 可列出/创建用户（含可选 phone）。",
+      "status": "passing",
+      "verification": [
+        "GET /users 列表；POST /users（admin，hash_password+重名校验）",
+        "UserCreate 含可选 phone"
+      ],
+      "evidence": "功能与流程总览.md 模块1/模块10 复核 ✅ 已修。"
+    },
+    {
+      "id": "spare-parts-logistics",
+      "priority": 55,
+      "area": "spare-parts",
+      "title": "备件供应 + 物流级联时间线",
+      "user_visible_behavior": "备件订购、8 节点物流时间线（级联完成/重开）、HK 签收、发票。",
+      "status": "passing",
+      "verification": [
+        "LogisticsNode 级联完成/重开规则正确",
+        "删除死代码 HKSignature/InvoiceForm/SparePhotos（2026-08-14）"
+      ],
+      "evidence": "功能与流程总览.md 模块6；复核 ✅ 已删死代码。"
+    },
+    {
+      "id": "supervision-refresh",
+      "priority": 60,
+      "area": "supervision",
+      "title": "子 Tab 写操作后统一刷新",
+      "user_visible_behavior": "详情页任一子 Tab 写操作后，数据立即全局刷新。",
+      "status": "passing",
+      "verification": [
+        "详情页改用 queryClient.invalidateQueries 替代 bump dataVersion",
+        "子 Tab 内写操作后详情页缓存同步刷新"
+      ],
+      "evidence": "前端 $id.tsx 移除无效 setDataVersion 状态变量，handleDataChange 改为对详情页真实 queryKey(/projects/{id}, /tasks/projects/{id}/tasks, /reports/..., /risks/..., /projects) 统一 invalidateQueries。live e2e 验证数据层：建任务后 GET /tasks/projects/{id}/tasks 与 GET /projects/{id} 返回最新数据。tsc 无新增错误；vite build 通过。",
+      "notes": "前端缓存一致性修复；WebSocket 实时刷新在 realtime-websocket 中已额外联动 handleDataChange。"
+    },
+    {
+      "id": "brokerage-404-ux",
+      "priority": 65,
+      "area": "brokerage",
+      "title": "经纪子资源 404 → 200+null",
+      "user_visible_behavior": "经纪/修船 8 个子资源未创建时返回 200+null 而非 404。",
+      "status": "passing",
+      "verification": [
+        "GET surveys/commercials/contracts/repair-brokerage/hk-signatures/invoices 未创建返回 200+null"
+      ],
+      "evidence": "brokerage.py 4 个 GET 与 spare_parts.py 的 hk-signatures/invoices GET 改为 response_model=Optional[...] 并 return None(200+null)。live e2e 验证 6 个子资源全部 200+null。",
+      "notes": "设计性 UX 缺口已修复；logistics/spare-parts 列表本就返回空数组，无需改。"
+    },
+    {
+      "id": "knowledge-chat-persist",
+      "priority": 70,
+      "area": "knowledge",
+      "title": "知识库聊天记录后端持久化",
+      "user_visible_behavior": "QA 历史跨设备同步。",
+      "status": "passing",
+      "verification": [
+        "聊天记录存后端（用户维度）而非仅 localStorage"
+      ],
+      "evidence": "新增 KnowledgeChatMessage 模型 + /knowledge/chat-messages(GET/POST/DELETE) 端点；QAChat.tsx 挂载时从后端恢复历史、每条消息落库，localStorage 仅作离线兜底。live e2e 验证：POST 两条消息→GET 含 user+assistant→再次 GET 跨请求可回溯→DELETE 清理。",
+      "notes": "跨设备同步已实现；localStorage 保留为离线兜底。"
+    },
+    {
+      "id": "realtime-websocket",
+      "priority": 80,
+      "area": "infra",
+      "title": "实时推送（WebSocket）",
+      "user_visible_behavior": "现场更新实时广播给其他在线用户。",
+      "status": "passing",
+      "verification": [
+        "ASGI WebSocket 服务 + 事件推送 + 鉴权",
+        "前端 lib/websocket.ts 接通"
+      ],
+      "evidence": "新增 app/ws.py(FastAPI 原生 WebSocket，按 project_id 分房间，token 鉴权)；main.py 挂载 /ws/projects/{project_id}；tasks.create_daily_update 触发 manager.broadcast；Dockerfile 改单 worker(进程内广播)；lib/websocket.ts 改为原生 WS；$id.tsx 订阅房间并刷新+提示。live e2e 验证：WS 连接后提交每日更新，收到 daily_update_created 事件。",
+      "notes": "单 worker 部署；多 worker 需 Redis pub/sub(接口不变)。"
+    }
+  ]
+}

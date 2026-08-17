@@ -55,9 +55,7 @@ export default function TaskList({ projectId, tasks, onTasksChange }: TaskListPr
       await createMutation.mutateAsync({
         name: newTitle.trim(),
         status: newStatus,
-        priority: newPriority,
-        due_date: newDueDate || undefined,
-        description: newDescription || undefined,
+        planned_end_date: newDueDate || undefined,
       })
       toast.success({ title: '任务创建成功' })
       setNewTitle('')

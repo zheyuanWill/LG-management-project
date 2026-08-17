@@ -1,14 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { useApiDelete, useApiGet } from '@/hooks/useApi'
 import { ArrowLeft, Edit3, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { toast } from '@/components/ui/Toast'
 import RiskTicker from '@/components/layout/RiskTicker'
 import ProjectTabs from '@/components/project/ProjectTabs'
 import ProjectForm from '@/components/project/ProjectForm'
 import DeleteConfirm from '@/components/common/DeleteConfirm'
+import { wsClient } from '@/lib/websocket'
+import { useAuthStore } from '@/hooks/useAuth'
 import { PROJECT_STATUS_LABELS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 
@@ -16,7 +20,7 @@ export default function SupervisionDetail() {
   const { id } = useParams({ strict: false }) as { id: string }
   const navigate = useNavigate()
   const [showEditForm, setShowEditForm] = useState(false)
-  const [, setDataVersion] = useState(0)
+  const queryClient = useQueryClient()
 
   const { data: project, isLoading } = useApiGet<any>(`/projects/${id}`)
   const { data: tasks } = useApiGet<any[]>(`/tasks/projects/${id}/tasks`)
@@ -26,8 +30,40 @@ export default function SupervisionDetail() {
   const deleteProject = useApiDelete<any>('/projects')
 
   const handleDataChange = () => {
-    setDataVersion((v) => v + 1)
+    // 详情页数据来自 react-query（useApiGet 以 url 为 queryKey）。
+    // 子 Tab 写操作后统一使其失效，触发详情页（头部/统计卡/风险滚动条）重取，
+    // 取代原先无副作用的 setDataVersion 状态变量。
+    const keys = [
+      `/projects/${id}`,
+      `/tasks/projects/${id}/tasks`,
+      `/reports/projects/${id}/daily-reports`,
+      `/reports/projects/${id}/weekly-reports`,
+      `/risks/projects/${id}/risks`,
+      `/projects`,
+    ]
+    keys.forEach((k) => queryClient.invalidateQueries({ queryKey: [k] }))
   }
+
+  // 实时推送：进入详情页即订阅该项目房间，收到「现场更新」事件时刷新并提示
+  useEffect(() => {
+    const token = useAuthStore.getState().token
+    wsClient.connect(id, token || undefined)
+
+    const handler = (data: unknown) => {
+      const evt = data as { type?: string }
+      if (evt?.type === 'daily_update_created') {
+        handleDataChange()
+        toast.success({ title: '现场更新', description: '有新的每日更新已提交，列表已刷新' })
+      }
+    }
+    wsClient.on('daily_update_created', handler)
+
+    return () => {
+      wsClient.off('daily_update_created', handler)
+      wsClient.disconnect()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   if (isLoading) {
     return (

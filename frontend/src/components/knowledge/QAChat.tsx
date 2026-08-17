@@ -4,15 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAuthStore } from '@/hooks/useAuth'
 import MarkdownView from '@/components/common/MarkdownView'
-import CitationList from './CitationList'
-
-interface Citation {
-  document_id: string | number
-  document_title: string
-  chunk_index: number
-  chunk_text: string
-  score?: number
-}
+import CitationList, { type Citation } from './CitationList'
 
 interface ChatMessage {
   id: string
@@ -20,11 +12,6 @@ interface ChatMessage {
   content: string
   citations?: Citation[]
   created_at: string
-}
-
-interface QAResponse {
-  answer: string
-  citations: Citation[]
 }
 
 const sampleQuestions = [
@@ -35,21 +22,85 @@ const sampleQuestions = [
 ]
 
 const STORAGE_KEY = 'lg-qa-chat-history'
+const CHAT_API = '/api/v1/knowledge/chat-messages'
+
+function getToken(): string | undefined {
+  return useAuthStore.getState().token ?? undefined
+}
+
+async function apiLoadMessages(): Promise<ChatMessage[] | null> {
+  try {
+    const token = getToken()
+    const resp = await fetch(CHAT_API, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!resp.ok) return null
+    const data = await resp.json()
+    const items = data?.items || []
+    return items.map((m: any) => ({
+      id: String(m.id),
+      role: m.role,
+      content: m.content,
+      citations: m.citations || undefined,
+      created_at: m.created_at,
+    }))
+  } catch {
+    return null
+  }
+}
+
+async function apiSaveMessage(
+  role: 'user' | 'assistant',
+  content: string,
+  citations?: Citation[]
+): Promise<void> {
+  try {
+    const token = getToken()
+    await fetch(CHAT_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ role, content, citations: citations || null }),
+    })
+  } catch {
+    /* 离线时静默失败，由 localStorage 兜底 */
+  }
+}
 
 export default function QAChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) return JSON.parse(saved)
-    } catch { /* ignore */ }
-    return []
-  })
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [expandedCitations, setExpandedCitations] = useState<Record<string, boolean>>({})
   const scrollRef = useRef<HTMLDivElement>(null)
   // 流式过程中持有正在写入的助手消息 id，便于增量更新
   const streamingIdRef = useRef<string | null>(null)
+  const [hydrated, setHydrated] = useState(false)
+
+  // 挂载时优先从后端恢复历史（跨设备同步），失败则回退 localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    let localMsgs: ChatMessage[] = []
+    try {
+      if (saved) localMsgs = JSON.parse(saved)
+    } catch { /* ignore */ }
+
+    apiLoadMessages().then((remote) => {
+      if (remote && remote.length > 0) {
+        setMessages(remote)
+      } else {
+        setMessages(localMsgs)
+      }
+      setHydrated(true)
+    }).catch(() => {
+      setMessages(localMsgs)
+      setHydrated(true)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -57,11 +108,13 @@ export default function QAChat() {
     }
   }, [messages])
 
+  // 镜像到 localStorage（离线兜底）
   useEffect(() => {
+    if (!hydrated) return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
     } catch { /* ignore quota errors */ }
-  }, [messages])
+  }, [messages, hydrated])
 
   const updateMessage = (id: string, patch: Partial<ChatMessage>) => {
     setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)))
@@ -90,7 +143,12 @@ export default function QAChat() {
     setIsLoading(true)
     streamingIdRef.current = assistantId
 
+    // 用户消息持久化（后端）
+    apiSaveMessage('user', question)
+
     const token = useAuthStore.getState().token
+    let finalContent = ''
+    let finalCitations: Citation[] = []
     try {
       const resp = await fetch('/api/v1/knowledge/query/stream', {
         method: 'POST',
@@ -108,7 +166,6 @@ export default function QAChat() {
       const reader = resp.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
-      let acc = ''
 
       while (true) {
         const { done, value } = await reader.read()
@@ -129,27 +186,30 @@ export default function QAChat() {
           try {
             const data = JSON.parse(dataStr)
             if (eventName === 'citations') {
+              finalCitations = data as Citation[]
               updateMessage(assistantId, { citations: data as Citation[] })
             } else if (typeof data.delta === 'string') {
-              acc += data.delta
-              updateMessage(assistantId, { content: acc })
+              finalContent += data.delta
+              updateMessage(assistantId, { content: finalContent })
             } else if (data.error) {
-              acc += `\n\n> ⚠️ ${data.error}`
-              updateMessage(assistantId, { content: acc })
+              finalContent += `\n\n> ⚠️ ${data.error}`
+              updateMessage(assistantId, { content: finalContent })
             }
           } catch { /* ignore malformed */ }
         }
       }
-      if (!acc) {
-        updateMessage(assistantId, { content: '抱歉，我没有找到相关信息。' })
+      if (!finalContent) {
+        finalContent = '抱歉，我没有找到相关信息。'
+        updateMessage(assistantId, { content: finalContent })
       }
     } catch {
-      updateMessage(assistantId, {
-        content: '抱歉,我暂时无法回答您的问题。请稍后再试。',
-      })
+      finalContent = '抱歉,我暂时无法回答您的问题。请稍后再试。'
+      updateMessage(assistantId, { content: finalContent })
     } finally {
       streamingIdRef.current = null
       setIsLoading(false)
+      // 助手消息持久化（后端），携带最终内容与引用
+      apiSaveMessage('assistant', finalContent, finalCitations)
     }
   }
 
@@ -240,21 +300,6 @@ export default function QAChat() {
               </div>
             </div>
           ))
-        )}
-
-        {isLoading && (
-          <div className="flex gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted shrink-0">
-              <Bot className="h-4 w-4" />
-            </div>
-            <div className="bg-muted rounded-lg p-3">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.2s]" />
-                <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.4s]" />
-              </div>
-            </div>
-          </div>
         )}
       </div>
 

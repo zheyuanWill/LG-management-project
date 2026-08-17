@@ -120,6 +120,7 @@ app.mount("/temp", StaticFiles(directory=str(TEMP_DIR)), name="temp")
 
 try:
     from app.routers import auth, users, projects, tasks, reports, risks, brokerage, spare_parts, quick_saves, knowledge, customers, files
+    from app.ws import router as ws_router
 
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["认证"])
     app.include_router(users.router, prefix="/api/v1/users", tags=["用户"])
@@ -133,6 +134,7 @@ try:
     app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["知识库"])
     app.include_router(customers.router, prefix="/api/v1/customers", tags=["客户"])
     app.include_router(files.router, prefix="/api/v1/files", tags=["文件"])
+    app.include_router(ws_router, tags=["实时推送"])
 except ImportError:
     logger.warning("Some routers not found. Creating placeholder routers...")
 

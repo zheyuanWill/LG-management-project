@@ -20,14 +20,20 @@ async def generate_project_number(db: AsyncSession, project_type: str) -> str:
     year = datetime.now().year
     type_code = TYPE_CODE_MAP.get(project_type, "UN")
 
+    # 取该类型当年已用的最大序号 +1，确保始终大于历史最大值
+    # （含软删除/残留行），避免 COUNT+1 在唯一约束下碰撞。
     result = await db.execute(
-        select(func.count(Project.id)).where(
+        select(Project.project_no).where(
             Project.type == project_type,
             func.extract("year", Project.created_at) == year,
         )
     )
-    seq = result.scalar() or 0
-    seq += 1
+    max_seq = 0
+    for (pn,) in result.all():
+        suffix = str(pn).split("-")[-1]
+        if suffix.isdigit():
+            max_seq = max(max_seq, int(suffix))
+    seq = max_seq + 1
 
     project_no = f"LG-{type_code}-{year}-{seq:03d}"
     logger.info(f"Generated project number: {project_no}")

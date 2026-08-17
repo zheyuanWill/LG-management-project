@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File as UploadFileDep, status
 from sqlalchemy import and_, select
@@ -384,7 +385,7 @@ async def reopen_logistics_node(
 # ── HK 签收单 ─────────────────────────────────────────────
 @router.get(
     "/projects/{project_id}/hk-signatures",
-    response_model=HkSignatureResponse,
+    response_model=Optional[HkSignatureResponse],
 )
 async def get_hk_signature(
     project_id: int,
@@ -396,7 +397,7 @@ async def get_hk_signature(
     )
     signature = result.scalar_one_or_none()
     if signature is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="签收单不存在")
+        return None
     return HkSignatureResponse.model_validate(signature)
 
 
@@ -473,7 +474,7 @@ async def delete_hk_signature(
 # ── 发票 ─────────────────────────────────────────────────
 @router.get(
     "/projects/{project_id}/invoices",
-    response_model=InvoiceResponse,
+    response_model=Optional[InvoiceResponse],
 )
 async def get_invoice(
     project_id: int,
@@ -485,7 +486,7 @@ async def get_invoice(
     )
     invoice = result.scalar_one_or_none()
     if invoice is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="发票信息不存在")
+        return None
     return InvoiceResponse.model_validate(invoice)
 
 

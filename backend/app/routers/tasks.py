@@ -3,6 +3,7 @@ from datetime import date, datetime
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.dependencies import get_current_user, get_db
 from app.models.project import Project
@@ -128,10 +129,11 @@ async def list_daily_updates(
 ):
     result = await db.execute(
         select(TaskDailyUpdate)
+        .options(joinedload(TaskDailyUpdate.photos))
         .where(TaskDailyUpdate.task_id == task_id)
         .order_by(TaskDailyUpdate.update_date.desc())
     )
-    updates = result.scalars().all()
+    updates = result.unique().scalars().all()
     return [TaskDailyUpdateResponse.model_validate(u) for u in updates]
 
 
@@ -160,6 +162,27 @@ async def create_daily_update(
     )
     db.add(update)
     await db.flush()
+    await db.refresh(update, ["photos"])
+
+    # 实时推送：通知该项目在线用户「现场更新已提交」
+    try:
+        from app.ws import manager
+
+        pid_result = await db.execute(select(Task.project_id).where(Task.id == task_id))
+        project_id = pid_result.scalar_one_or_none()
+        if project_id is not None:
+            await manager.broadcast(
+                project_id,
+                {
+                    "type": "daily_update_created",
+                    "task_id": task_id,
+                    "update_id": update.id,
+                    "update_date": str(update.update_date),
+                },
+            )
+    except Exception:
+        # 推送失败不影响主流程
+        pass
 
     return TaskDailyUpdateResponse.model_validate(update)
 
@@ -209,3 +232,19 @@ async def delete_task_photo(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="照片不存在")
 
     await db.delete(photo)
+
+
+@router.get("/task-photos/{photo_id}/url")
+async def get_task_photo_url(
+    photo_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(select(TaskPhoto).where(TaskPhoto.id == photo_id))
+    photo = result.scalar_one_or_none()
+    if photo is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="照片不存在"
+        )
+    url = await get_minio_url(photo.storage_key)
+    return {"url": url}

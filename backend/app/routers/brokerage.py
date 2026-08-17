@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File as UploadFileDep, status
 from sqlalchemy import select
@@ -30,7 +31,7 @@ router = APIRouter()
 
 @router.get(
     "/projects/{project_id}/surveys",
-    response_model=BrokerageSurveyResponse,
+    response_model=Optional[BrokerageSurveyResponse],
 )
 async def get_survey(
     project_id: int,
@@ -41,8 +42,9 @@ async def get_survey(
         select(BrokerageSurvey).where(BrokerageSurvey.project_id == project_id)
     )
     survey = result.scalar_one_or_none()
+    # 子资源未创建时返回 200 + null（而非 404），避免前端每个 Tab 都要特判 404。
     if survey is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="调研信息不存在")
+        return None
     return BrokerageSurveyResponse.model_validate(survey)
 
 
@@ -118,7 +120,7 @@ async def delete_survey(
 
 @router.get(
     "/projects/{project_id}/commercials",
-    response_model=BrokerageCommercialResponse,
+    response_model=Optional[BrokerageCommercialResponse],
 )
 async def get_commercial(
     project_id: int,
@@ -130,7 +132,7 @@ async def get_commercial(
     )
     commercial = result.scalar_one_or_none()
     if commercial is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="商务信息不存在")
+        return None
     return BrokerageCommercialResponse.model_validate(commercial)
 
 
@@ -206,7 +208,7 @@ async def delete_commercial(
 
 @router.get(
     "/projects/{project_id}/contracts",
-    response_model=BrokerageContractResponse,
+    response_model=Optional[BrokerageContractResponse],
 )
 async def get_contract(
     project_id: int,
@@ -218,7 +220,7 @@ async def get_contract(
     )
     contract = result.scalar_one_or_none()
     if contract is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="合同信息不存在")
+        return None
     return BrokerageContractResponse.model_validate(contract)
 
 
@@ -272,7 +274,7 @@ async def delete_contract(
 
 @router.get(
     "/projects/{project_id}/repair-brokerage",
-    response_model=RepairBrokerageResponse,
+    response_model=Optional[RepairBrokerageResponse],
 )
 async def get_repair_brokerage(
     project_id: int,
@@ -284,7 +286,7 @@ async def get_repair_brokerage(
     )
     repair = result.scalar_one_or_none()
     if repair is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="修船经纪信息不存在")
+        return None
     return RepairBrokerageResponse.model_validate(repair)
 
 

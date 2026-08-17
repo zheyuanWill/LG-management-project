@@ -9,11 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.celery_app import celery_app
 from app.dependencies import get_current_user, get_db
-from app.models.knowledge import KnowledgeDocument
+from app.models.knowledge import KnowledgeChatMessage, KnowledgeDocument
 from app.models.user import User
 from app.schemas.knowledge import (
     CitationItem,
     DocumentUploadResponse,
+    KnowledgeChatMessageCreate,
+    KnowledgeChatMessageListResponse,
+    KnowledgeChatMessageResponse,
     KnowledgeDocumentListResponse,
     QueryRequest,
     QueryResponse,
@@ -129,6 +132,57 @@ async def delete_document(
     # ("all, delete-orphan") fires and removes child knowledge_embeddings rows
     # first, avoiding a foreign-key violation.
     await db.delete(doc)
+
+
+# ── 聊天记录持久化（用户维度，替代仅 localStorage）──────────────
+@router.get("/chat-messages", response_model=KnowledgeChatMessageListResponse)
+async def list_chat_messages(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(KnowledgeChatMessage)
+        .where(KnowledgeChatMessage.user_id == current_user.id)
+        .order_by(KnowledgeChatMessage.created_at.asc(), KnowledgeChatMessage.id.asc())
+    )
+    messages = result.scalars().all()
+    return KnowledgeChatMessageListResponse(
+        items=[KnowledgeChatMessageResponse.model_validate(m) for m in messages],
+        total=len(messages),
+    )
+
+
+@router.post(
+    "/chat-messages",
+    response_model=KnowledgeChatMessageResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_chat_message(
+    payload: KnowledgeChatMessageCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    message = KnowledgeChatMessage(
+        user_id=current_user.id,
+        role=payload.role,
+        content=payload.content,
+        citations=payload.citations,
+    )
+    db.add(message)
+    await db.flush()
+    return KnowledgeChatMessageResponse.model_validate(message)
+
+
+@router.delete("/chat-messages", status_code=status.HTTP_204_NO_CONTENT)
+async def clear_chat_messages(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(KnowledgeChatMessage).where(KnowledgeChatMessage.user_id == current_user.id)
+    )
+    for m in result.scalars().all():
+        await db.delete(m)
 
 
 @router.post("/query", response_model=QueryResponse)

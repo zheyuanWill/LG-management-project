@@ -14,7 +14,22 @@ interface DailyUpdateRecord {
   status: TaskStatus | null
   remark: string | null
   audio_duration: number | null
+  photos: { id: number }[]
   created_at: string
+}
+
+function TaskPhotoThumb({ photoId }: { photoId: number }) {
+  const { data } = useApiGet<{ url: string }>(`/tasks/task-photos/${photoId}/url`)
+  if (!data?.url) {
+    return <div className="w-20 h-20 rounded-md bg-muted animate-pulse" />
+  }
+  return (
+    <img
+      src={data.url}
+      alt="现场照片"
+      className="w-20 h-20 rounded-md object-cover border border-border"
+    />
+  )
 }
 
 interface DailyUpdateHistoryProps {
@@ -70,6 +85,13 @@ export default function DailyUpdateHistory({
                 语音备注时长: {u.audio_duration}s
               </p>
             ) : null}
+            {u.photos && u.photos.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {u.photos.map((p) => (
+                  <TaskPhotoThumb key={p.id} photoId={p.id} />
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

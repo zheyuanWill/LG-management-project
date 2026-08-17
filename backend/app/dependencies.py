@@ -38,6 +38,12 @@ def get_minio_public_client() -> Minio:
         access_key=settings.MINIO_ACCESS_KEY,
         secret_key=settings.MINIO_SECRET_KEY,
         secure=False,
+        # Pin the region so presigned_get_object signs locally instead of
+        # resolving the bucket region over the network. Inside the container the
+        # public endpoint (localhost:9000) is unreachable, so the region lookup
+        # would otherwise raise a connection error. MinIO's default region is
+        # us-east-1, which matches the bucket created via make_bucket().
+        region="us-east-1",
     )
 
 

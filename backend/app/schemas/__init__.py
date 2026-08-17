@@ -67,6 +67,9 @@ from app.schemas.knowledge import (
     QueryResponse,
     CitationItem,
     KnowledgeDocumentListResponse,
+    KnowledgeChatMessageCreate,
+    KnowledgeChatMessageResponse,
+    KnowledgeChatMessageListResponse,
 )
 from app.schemas.customer import (
     CustomerCreate,
@@ -135,6 +138,9 @@ __all__ = [
     "QueryResponse",
     "CitationItem",
     "KnowledgeDocumentListResponse",
+    "KnowledgeChatMessageCreate",
+    "KnowledgeChatMessageResponse",
+    "KnowledgeChatMessageListResponse",
     "CustomerCreate",
     "CustomerUpdate",
     "CustomerResponse",

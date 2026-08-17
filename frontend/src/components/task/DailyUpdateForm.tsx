@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Mic, Square, Play, Pause, Send, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import apiClient from '@/lib/api'
 import type { Task, TaskStatus, Photo } from '@/types'
 import { useApiPost } from '@/hooks/useApi'
 import { toast } from '@/components/ui/Toast'
@@ -35,7 +36,14 @@ export default function DailyUpdateForm({
   const today = date || formatDate(new Date())
   const [status, setStatus] = useState<TaskStatus>(task.status)
   const [remark, setRemark] = useState('')
-  const [photos, setPhotos] = useState<Photo[]>([])
+  const [photoItems, setPhotoItems] = useState<{ id: string; file: File; url: string }[]>([])
+  const previewPhotos: Photo[] = photoItems.map((p) => ({
+    id: p.id,
+    url: p.url,
+    thumbnail_url: p.url,
+    caption: '',
+    created_at: new Date().toISOString(),
+  }))
   const [recording, setRecording] = useState(false)
   const [recordSeconds, setRecordSeconds] = useState(0)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
@@ -43,13 +51,13 @@ export default function DailyUpdateForm({
 
   // Backend route: POST /{task_id}/daily-updates (mounted under /api/v1/tasks).
   // Do NOT add another /tasks/ segment — apiClient baseURL is already /api/v1.
-  const submitMutation = useApiPost<void>(`/tasks/${task.id}/daily-updates`)
+  const submitMutation = useApiPost<{ id: number }>(`/tasks/${task.id}/daily-updates`)
 
   useEffect(() => {
     if (open) {
       setStatus(task.status)
       setRemark('')
-      setPhotos([])
+      setPhotoItems([])
       setAudioUrl(null)
       setRecordSeconds(0)
       setRecording(false)
@@ -68,19 +76,21 @@ export default function DailyUpdateForm({
     }
   }, [recording])
 
-  const handleFileUpload = async (files: File[]) => {
-    const newPhotos: Photo[] = files.map((file, index) => ({
-      id: `temp-${Date.now()}-${index}`,
+  const handleFileUpload = (files: File[]) => {
+    const items = files.map((file) => ({
+      id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      file,
       url: URL.createObjectURL(file),
-      thumbnail_url: URL.createObjectURL(file),
-      caption: '',
-      created_at: new Date().toISOString(),
     }))
-    setPhotos((prev) => [...prev, ...newPhotos])
+    setPhotoItems((prev) => [...prev, ...items])
   }
 
   const handlePhotoDelete = (photoId: string) => {
-    setPhotos((prev) => prev.filter((p) => p.id !== photoId))
+    setPhotoItems((prev) => {
+      const target = prev.find((p) => p.id === photoId)
+      if (target) URL.revokeObjectURL(target.url)
+      return prev.filter((p) => p.id !== photoId)
+    })
   }
 
   const toggleRecording = () => {
@@ -101,15 +111,28 @@ export default function DailyUpdateForm({
 
   const handleSubmit = async () => {
     try {
-      await submitMutation.mutateAsync({
+      const created = await submitMutation.mutateAsync({
         task_id: task.id,
         status,
         remark,
         update_date: today,
-        photos: photos.map((p) => ({ id: p.id, url: p.url, caption: p.caption })),
         audio_duration: recordSeconds,
       })
-      toast.success({ title: '提交成功' })
+      let uploadFailed = false
+      for (const item of photoItems) {
+        try {
+          const form = new FormData()
+          form.append('file', item.file)
+          await apiClient.post(`/tasks/daily-updates/${created.id}/photos`, form)
+        } catch {
+          uploadFailed = true
+        }
+      }
+      if (uploadFailed) {
+        toast.warning({ title: '已保存更新', description: '部分照片上传失败，可稍后在历史中补传' })
+      } else {
+        toast.success({ title: '提交成功' })
+      }
       onSubmitted?.()
       onOpenChange(false)
     } catch {
@@ -203,7 +226,7 @@ export default function DailyUpdateForm({
         <PhotoUploader
           taskId={task.id}
           date={today}
-          photos={photos}
+          photos={previewPhotos}
           maxPhotos={2}
           onUpload={handleFileUpload}
           onDelete={handlePhotoDelete}
