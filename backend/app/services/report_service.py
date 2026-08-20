@@ -60,8 +60,12 @@ async def _build_today_work(
     return completed_items, today_work
 
 
-async def _build_project_summary(db: AsyncSession, project_id: int, max_chars: int = 3000) -> str:
-    """汇总任务列表 + 近期日报，作为 RAG 检索与 AI 生成的基础摘要（过长则压缩）。"""
+async def _build_project_summary(db: AsyncSession, project_id: int) -> str:
+    """汇总任务列表 + 近期日报，作为 RAG 检索与 AI 生成的基础摘要。
+
+    设计原则：DeepSeek 上下文 64k，3000 字远不到上限，无需预先压缩。
+    之前的压缩多花一次 API 调用、多花一倍延迟和成本，已砍掉。
+    """
     tasks_result = await db.execute(
         select(Task).where(Task.project_id == project_id).order_by(Task.sort_order)
     )
@@ -86,61 +90,31 @@ async def _build_project_summary(db: AsyncSession, project_id: int, max_chars: i
             parts.append(f"风险：{r.risk_alert}")
         report_lines.append("\n".join(parts))
 
-    summary = (
+    return (
         "### 任务列表\n"
         + ("\n".join(task_lines) if task_lines else "（无）")
         + "\n\n### 近期日报\n"
         + ("\n\n".join(report_lines) if report_lines else "（无）")
     )
 
-    if len(summary) > max_chars:
-        ai_client = get_ai_client()
-        compress_messages = [
-            {
-                "role": "system",
-                "content": "你是项目管理助手。请将下面的项目信息压缩为不超过 800 字的要点摘要，"
-                            "保留关键任务、进度状态与已记录的风险提示。",
-            },
-            {"role": "user", "content": summary},
-        ]
-        try:
-            summary = await ai_client.chat(compress_messages, temperature=0.2)
-        except Exception as e:
-            logger.warning(f"项目摘要压缩失败，使用截断原文：{e}")
-            summary = summary[:max_chars]
-
-    return summary
-
 
 def _parse_candidate_list(raw: str) -> list[str]:
-    """把 LLM 返回的（可能是 JSON 数组 / 带代码块 / 多行文本）解析为明日计划条目列表。"""
+    """已废弃：保留只为兼容旧调用。新代码使用 ai_client.chat_json 直接拿结构化数组。"""
     if not raw:
         return []
-
-    text = raw.strip()
-    # 去掉 ```json ... ``` 之类代码块标记
-    text = re.sub(r"^```(?:json)?", "", text, flags=re.IGNORECASE).strip()
-    text = re.sub(r"```$", "", text).strip()
-    # 取第一个 [ ... ] 片段
-    start = text.find("[")
-    end = text.rfind("]")
-    if start != -1 and end != -1 and end > start:
-        text = text[start : end + 1]
-        try:
-            data = json.loads(text)
+    try:
+        text = raw.strip()
+        text = re.sub(r"^```(?:json)?", "", text, flags=re.IGNORECASE).strip()
+        text = re.sub(r"```$", "", text).strip()
+        start = text.find("[")
+        end = text.rfind("]")
+        if start != -1 and end != -1 and end > start:
+            data = json.loads(text[start : end + 1])
             if isinstance(data, list):
-                items = [str(x).strip() for x in data if str(x).strip()]
-                return items
-        except json.JSONDecodeError:
-            pass
-
-    # 退化：按行拆分
-    items = [
-        line.strip().lstrip("-0123456789.、）) ").strip()
-        for line in raw.splitlines()
-        if line.strip()
-    ]
-    return [it for it in items if it]
+                return [str(x).strip() for x in data if str(x).strip()]
+    except Exception:
+        pass
+    return []
 
 
 # ── 日报：提议（human-in-the-loop 前置） ──────────────────────────────
@@ -187,19 +161,27 @@ async def propose_daily_report(
                 "role": "user",
                 "content": (
                     f"项目：{project.ship_name}（类型：{project.type}）\n\n"
+                    f"今日工作：\n{today_work}\n\n"
                     f"项目摘要（任务列表 + 历史日报）：\n{summary}\n\n"
                     f"修船知识库相关要点：\n{knowledge_text}\n\n"
                     "请基于以上信息，为该项目制定明天的重点工作计刬。\n"
                     "要求：\n"
-                    "1. 输出一个 JSON 数组，每个元素是一句简洁、可执行的明日计划条目；\n"
-                    "2. 每条不超过 30 个汉字，聚焦项目整体推进；\n"
+                    "1. 输出 JSON 数组，每个元素是一句简洁、可执行的明日计划条目（≤30 汉字）；\n"
+                    "2. 聚焦项目整体推进，3-6 条为宜；\n"
                     "3. 只输出 JSON 数组本身，不要任何额外说明或代码块标记。"
                 ),
             },
         ]
         try:
-            raw = await ai_client.chat(messages, temperature=0.6)
-            return _parse_candidate_list(raw)
+            data = await ai_client.chat_json(messages, temperature=0.6)
+            if isinstance(data, list):
+                items = [str(x).strip() for x in data if str(x).strip()]
+                return items[:8]
+            if isinstance(data, dict) and "items" in data:
+                items = [str(x).strip() for x in data["items"] if str(x).strip()]
+                return items[:8]
+            logger.warning(f"明日计划返回非数组：{type(data).__name__}")
+            return []
         except Exception as e:
             logger.warning(f"明日计划生成失败：{e}")
             return []
@@ -360,24 +342,6 @@ async def generate_weekly_report(
         context_parts.append(block)
     context = "\n\n".join(context_parts)
 
-    if len(context) > 3000:
-        ai_client = get_ai_client()
-        try:
-            context = await ai_client.chat(
-                [
-                    {
-                        "role": "system",
-                        "content": "你是项目管理助手，请把下面的周报素材压缩为不超过 1000 字摘要，"
-                                    "保留关键工作、明日计划与风险。",
-                    },
-                    {"role": "user", "content": context},
-                ],
-                temperature=0.2,
-            )
-        except Exception as e:
-            logger.warning(f"周报素材压缩失败，使用截断原文：{e}")
-            context = context[:3000]
-
     project_result = await db.execute(
         select(Project).where(Project.id == project_id)
     )
@@ -387,7 +351,13 @@ async def generate_weekly_report(
     messages = [
         {
             "role": "system",
-            "content": "你是专业的船舶工程项目周报生成助手。请根据本周日报汇总生成简洁、专业的周报。",
+            "content": (
+                "你是专业的船舶工程项目周报生成助手。"
+                "请严格输出 JSON 对象，不要任何额外说明或代码块标记。\n"
+                "字段定义：\n"
+                "- summary: 本周工作摘要（string，Markdown 分点，≤200 字）\n"
+                "- next_week_plan: 下周计划（string，Markdown 分点，≤200 字）"
+            ),
         },
         {
             "role": "user",
@@ -395,9 +365,7 @@ async def generate_weekly_report(
                 f"项目：{project.ship_name if project else ''}\n"
                 f"周期：{week_start} 至 {week_end}\n\n"
                 f"本周日报汇总：\n{context}\n\n"
-                "请生成周报，分两部分：\n"
-                "1）本周工作摘要（用 Markdown 分点）；\n"
-                "2）下周计划（用 Markdown 分点）。每部分不超过 200 字。"
+                "请生成本周工作摘要与下周计划。"
             ),
         },
     ]
@@ -405,13 +373,13 @@ async def generate_weekly_report(
     summary = ""
     next_week_plan = ""
     try:
-        ai_response = await ai_client.chat(messages, temperature=0.5)
-        # 简单切分：模型按 1）/2）顺序输出，取后半作为下周计划
-        summary = ai_response
-        if "2）" in ai_response:
-            parts = ai_response.split("2）", 1)
-            summary = parts[0].replace("1）", "").strip()
-            next_week_plan = parts[1].strip()
+        data = await ai_client.chat_json(messages, temperature=0.5)
+        summary = str(data.get("summary") or "").strip()
+        next_week_plan = str(data.get("next_week_plan") or "").strip()
+        if not summary:
+            summary = f"{week_start} 至 {week_end} 共确认 {len(daily_reports)} 份日报。"
+        if not next_week_plan:
+            next_week_plan = "待制定"
         logger.info(f"AI-generated weekly report for project {project_id}")
     except Exception as e:
         logger.warning(f"AI generation failed for weekly report: {e}")

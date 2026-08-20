@@ -34,7 +34,7 @@ async def create_quick_save_text(
     db.add(save)
     await db.flush()
 
-    suggestions = await suggest_projects(db, recognition.get("recognized_text", ""))
+    suggestions = await suggest_projects(db, recognition.get("structured"), recognition.get("recognized_text", ""))
 
     return {
         "save": QuickSaveResponse.model_validate(save),
@@ -55,22 +55,19 @@ async def create_quick_save_image(
 
     storage_key = await upload_to_minio(content, ext="png")
 
-    recognition = await recognize_content("image", content)
-
+    # 图片不识别：直接存图，由用户手选项目关联
     save = QuickSave(
         content_type="image",
         file_key=storage_key,
-        recognized_text=recognition.get("recognized_text", ""),
+        recognized_text="",
         status="pending",
     )
     db.add(save)
     await db.flush()
 
-    suggestions = await suggest_projects(db, recognition.get("recognized_text", ""))
-
     return {
         "save": QuickSaveResponse.model_validate(save),
-        "suggestions": suggestions,
+        "suggestions": [],
     }
 
 

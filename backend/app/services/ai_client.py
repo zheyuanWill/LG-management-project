@@ -1,3 +1,5 @@
+import json
+import re
 from typing import Any
 
 import httpx
@@ -26,6 +28,40 @@ class AIClient:
         except httpx.HTTPError as e:
             logger.error(f"AI chat request failed: {e}")
             return f"AI服务暂时不可用: {e}"
+
+    async def chat_json(self, messages: list[dict], temperature: float = 0.3) -> Any:
+        """让 LLM 输出 JSON 并解析。
+
+        prompt 必须明确要求输出 JSON 对象或数组。容错策略：
+        去掉 ```json 代码块标记，截取首个 {/[ 到末尾 }/] 的子串再 json.loads。
+        DeepSeek 在 prompt 里要求 JSON 输出后配合此解析已足够稳定。
+        """
+        raw = await self.chat(messages, temperature=temperature)
+        if not raw or raw.startswith("AI服务暂时不可用"):
+            raise RuntimeError(f"AI service unavailable, raw: {raw[:120]}")
+
+        text = raw.strip()
+        # 去掉 ```json / ``` 代码块标记
+        text = re.sub(r"^```(?:json)?", "", text, flags=re.IGNORECASE).strip()
+        text = re.sub(r"```$", "", text).strip()
+
+        # 尝试找 { ... } 或 [ ... ] 边界
+        for start_char, end_char in [("{", "}"), ("[", "]")]:
+            start = text.find(start_char)
+            end = text.rfind(end_char)
+            if start != -1 and end > start:
+                candidate = text[start : end + 1]
+                try:
+                    return json.loads(candidate)
+                except json.JSONDecodeError:
+                    continue
+
+        # 兜底：尝试整体解析
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError as e:
+            logger.error(f"LLM 未返回有效 JSON: {raw[:200]}")
+            raise RuntimeError(f"LLM 返回非 JSON: {e}, raw: {raw[:200]}")
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
         url = f"{self.base_url}/v1/embed"

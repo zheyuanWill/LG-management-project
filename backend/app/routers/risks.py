@@ -5,12 +5,12 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.celery_app import celery_app
 from app.dependencies import get_current_user, get_db
 from app.models.project import Project
 from app.models.report import RiskEvent
 from app.models.user import User
 from app.schemas.report import RiskEventCreate, RiskEventResponse
+from app.services.risk_service import detect_risks_with_ai
 
 router = APIRouter()
 
@@ -67,29 +67,72 @@ async def list_risk_events(
 
 
 @router.post(
-    "/projects/{project_id}/risks/ai-detect",
+    "/projects/{project_id}/risks/scan",
+    response_model=list[RiskEventResponse],
 )
-async def ai_detect_risks(
+async def scan_risks(
     project_id: int,
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
+    """同步扫描：规则扫描 + RAG 检索 + LLM 综合判断，落库后返回风险列表。
+
+    命名诚实：从旧的 /ai-detect（实际只跑规则）改为 /scan。
+    Celery 异步任务壳已砍掉，API 调用即返回。
+    """
     project_result = await db.execute(
         select(Project).where(Project.id == project_id)
     )
     if not project_result.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="项目不存在")
 
-    task = celery_app.send_task(
-        "app.tasks.risk_tasks.detect_risks_task",
-        args=[project_id],
-    )
+    try:
+        risks_data = await detect_risks_with_ai(db, project_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
-    return {
-        "task_id": task.id,
-        "project_id": project_id,
-        "status": "pending",
+    # 落库：按 title 去重，已存在的同 title 跳过
+    existing_result = await db.execute(
+        select(RiskEvent).where(
+            RiskEvent.project_id == project_id,
+            RiskEvent.resolved.is_(False),
+        )
+    )
+    existing_titles = {
+        r.title for r in existing_result.scalars().all()
     }
+
+    new_risks: list[RiskEvent] = []
+    for risk in risks_data:
+        if risk["title"] in existing_titles:
+            continue
+        event = RiskEvent(
+            project_id=project_id,
+            title=risk["title"],
+            detail=risk.get("detail"),
+            risk_level=risk.get("risk_level", "info"),
+            resolved=False,
+        )
+        db.add(event)
+        new_risks.append(event)
+
+    await db.flush()
+    return [RiskEventResponse.model_validate(r) for r in new_risks]
+
+
+# 兼容旧路径别名：保留 /ai-detect 但实现为 /scan 的转发
+@router.post(
+    "/projects/{project_id}/risks/ai-detect",
+    response_model=list[RiskEventResponse],
+    deprecated=True,
+)
+async def ai_detect_risks_legacy(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """已废弃：保留只为兼容旧前端调用。新代码请用 /scan。"""
+    return await scan_risks(project_id=project_id, db=db, _=user)
 
 
 @router.patch(

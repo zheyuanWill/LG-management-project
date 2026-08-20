@@ -61,10 +61,20 @@ async def upload_document(
     db.add(doc)
     await db.flush()
 
-    task = celery_app.send_task(
-        "app.tasks.knowledge_tasks.ingest_document_task",
-        args=[doc.id],
-    )
+    # 同步 ingest：多格式清洗 + 按章节切分 + 向量化入库
+    # 原 Celery 异步任务壳已砍掉（worker 容器不在部署里，等异步反而吞错）。
+    try:
+        from app.services.rag_service import ingest_document
+        await ingest_document(db, doc.id, content, ext, title)
+        await db.commit()
+        await db.refresh(doc)
+    except Exception as e:
+        # ingest 失败不能影响文档上传本身——文档已落库，ingest 可后续重试
+        import logging
+        logging.getLogger("app.routers.knowledge").exception(
+            f"ingest failed for doc {doc.id}: {e}"
+        )
+        await db.rollback()
 
     return DocumentUploadResponse(
         id=doc.id,
@@ -205,6 +215,10 @@ async def query_knowledge(
             chunk_index=c["chunk_index"],
             chunk_text=c["chunk_text"],
             score=c["score"],
+            book_title=c.get("book_title"),
+            chapter=c.get("chapter"),
+            section=c.get("section"),
+            source=c.get("source"),
         )
         for c in result.get("citations", [])
     ]

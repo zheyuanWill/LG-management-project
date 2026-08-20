@@ -3,7 +3,7 @@
 > 每轮会话结束更新本文件；每轮新会话开始先读它。
 > 这是项目当前进展的**唯一真相来源**。
 
-## 当前已验证状态（2026-08-17）
+## 当前已验证状态（2026-08-19）
 
 - **仓库根目录**：`C:\dev\LG-management-project`（Git 仓库；`.workbuddy/` 为项目数据，勿删）
 - **标准启动路径**：
@@ -11,22 +11,55 @@
   - Linux/Mac：`bash init.sh`
   - 指定服务：`docker compose up -d postgres redis minio backend frontend ai-service`
 - **标准验证路径**：
-  - 后端健康：`curl -s localhost:8000/docs | head`
-  - 前端构建：`cd frontend && npm run build`（`node build.js`）
+  - 后端健康：`curl -s localhost:8000/docs | head`（实际用 `curl.exe` 避免 PS alias）
+  - 前端构建：`cd frontend && npm run build`（`node build.js` → `vite build`）
   - 前端类型检查：`cd frontend && npm run typecheck`（仅检查，不阻断构建）
-- **当前最高优先级未完成功能**：无（全部 14 项功能 `passing`，含原 4 个 `not_started`：`supervision-refresh` / `brokerage-404-ux` / `knowledge-chat-persist` / `realtime-websocket` 均已 live e2e 通过）。
+- **当前最高优先级未完成功能**：无（全部 14 项功能 `passing`；2026-08-19 AI 重构后新增 `e2e_ai.py` 覆盖 5 个 AI 功能，全 PASS）。
 - **当前 blocker**：无硬性 blocker；前端 `tsc --noEmit` 存在大量**历史**类型错误（number→string、`asChild` 等），但 `build.js` 仅跑 `vite build`（esbuild 不去类型），dist 生成即视为成功，不影响构建。
 
-## 已知全局约束（来自过往复盘）
+## 已知全局约束（来自过往复盘，2026-08-19 更新）
 
 - 后端 `GET/POST /users` 已是真实接口（admin 建用户）；用户管理唯一入口 `POST /auth/register`（仅 admin）。
-- 风险「AI 自动检测」= 规则引擎（阈值），前端标签已改「自动进度检查」。
-- 知识库 QA 聊天记录仅 `localStorage`（跨设备不同步）——已知限制。
-- `lib/websocket.ts` 死代码（后端无 Socket.IO 服务器）。
-- 文件下载依赖 `get_minio_public_client` 公开地址签名。
-- 经纪 / 修船 8 子资源未创建返 404 是设计性 UX 缺口（建议 200+null 或统一 `/info`）。
+- **风险检测已升级为「规则 + RAG + LLM 综合判断」**（2026-08-19）：`POST /risks/projects/{id}/risks/scan` 同步返回风险列表；旧 `/ai-detect` 保留为 deprecated 别名。前端标签可改为「风险扫描」。
+- 知识库 QA 聊天记录已**后端持久化**（2026-08-17 起 `KnowledgeChatMessage` + `/knowledge/chat-messages`），localStorage 仅作离线兜底。
+- `lib/websocket.ts` 已接通原生 WebSocket（2026-08-17 起，非死代码）。
+- 文件下载依赖 `get_minio_public_client` 公开地址签名（已 pin `region='us-east-1'`）。
+- 经纪 / 修船 8 子资源未创建返 200+null（2026-08-17 已修，非 404）。
+- **AI 调用走 DeepSeek API**（`ai_client.py`），`chat_json` 支持 structured output；RAG embedding 走 ai-service 的 fastembed（`BAAI/bge-small-zh-v1.5` 512 维）。
+- **Celery worker 容器不在部署里**：日报/周报/RAG ingest/风险扫描均已改为同步调用（API 调用即返回），不要写 `celery_app.send_task` 进新代码。
+- **ai-service 容器无源码卷挂载**（仅 `ai-cache:/cache`）：改 ai-service 代码后必须 `docker compose build ai-service`，重启无效。
 
 ## 会话记录
+
+### 2026-08-19 · AI 重构 + 全功能 e2e 验证（本轮）
+
+- **本轮目标**：用户要求「不为 AI 而 AI」重构项目 AI 部分，只在 LLM 擅长场景（自然语言生成、结构化提取、上下文问答）使用 AI；并跑全部 e2e 验证所有指标达标。
+- **已完成的 5 个 AI 功能重构**：
+  1. **RAG 多格式清洗 + 按章节切分**（`services/document_processor.py` 新建）：支持 PDF/DOCX/Markdown/TXT，扫描版 PDF/不支持的格式拒绝入库；按章节标题切分，chunk 前缀带 `【《书名》/ 第N章 / 第N节】` 元数据；`rag_service.ingest_document` 改同步调用（砍 Celery 壳）；`CitationItem` 扩展 `book_title/chapter/section/source` 字段，`/knowledge/query` 返回结构化 citation。
+  2. **风险检测「规则 + RAG + LLM 综合判断」**（`services/risk_service.detect_risks_with_ai`）：规则扫描打底 + RAG 检索知识库要点 + LLM 综合任务列表与知识上下文输出结构化风险事件 `[{title, detail, risk_level}]`；`POST /risks/projects/{id}/risks/scan` 同步返回，旧 `/ai-detect` 保留为 deprecated 别名。
+  3. **随手存文本 structured output**（`services/quick_save_service.recognize_content`）：砍掉图片识别 AI（图片直接存图由用户手选项目）；文本用 `ai_client.chat_json` 提取结构化字段供 `suggest_projects` 匹配活跃项目。
+  4. **日报 propose + finalize HITL**（`services/report_service.propose_daily_report`）：今日工作确定性生成 + AI 明日计划候选（`chat_json` 出 list）+ AI 项目级风险；砍掉素材压缩步骤（多花一次 API 调用，64k 上下文够用）；`/propose` 返回草稿，`/finalize` 落库 confirmed 日报。
+  5. **周报同步 generate + structured output**（`services/report_service.generate_weekly_report` + `routers/reports.py`）：砍掉 Celery 异步任务壳，API 调用即返回；DeepSeek `chat_json` 一次出 `{summary, next_week_plan}`；只统计 `confirmed=True` 的日报，无数据降级 `source=no_data`。
+  6. **ai_client 加 `chat_json`**：system prompt 强制 JSON 输出 + 调用方解析，支持 structured output 场景统一。
+- **运行过的验证**：
+  - `e2e_all.py`（2026-08-17 旧 4 功能回归）：supervision-refresh / brokerage-404-ux / knowledge-chat-persist / realtime-websocket 全 PASS ✅，确认 AI 重构未破坏现有功能。
+  - `e2e_ai.py`（本轮新建，5 AI 功能，DeepSeek 真实调用零 mock）：rag-multi-format（上传 Markdown→ingest→查询命中→章节化 citation→AI answer）/ risk-ai-scan（扫出 3 条风险）/ quick-save-text（AI 提取字段）/ daily-report-propose+finalize（结构化明日计划+风险，落库 confirmed）/ weekly-report-generate（source=ai，summary 非空）全 PASS ✅。
+  - 前端 `npm run build`（`node build.js`）：1855 模块，28.69s，构建成功 ✅。
+  - 后端健康 `curl.exe localhost:8000/docs` HTTP 200；ai-service `localhost:8001/health` HTTP 200；frontend `localhost:3000` HTTP 200。
+- **e2e 暴露并修复的接线问题**：
+  1. 日报/周报端点路径漏 `/reports` 前缀（reports router 挂在 `/api/v1/reports`，不是直接挂在 `/api/v1`）——e2e 脚本修正后通过。
+  2. 日报 propose 返回字段名是 `tomorrow_candidates`（不是 `tomorrow_items`，后者是 finalize 的入参）——e2e 断言修正后通过。
+  3. 周报 generate 只统计 `confirmed=True` 日报，需先 finalize 一份 confirmed 日报才能走 AI 路径——e2e 补 finalize 步骤后 source=ai 通过。
+- **已知风险或未解决问题**：
+  - `e2e_ai.py` 的 RAG ingest 用 Markdown 测试，PDF/DOCX 路径未实跑（需准备真实样本文件，且扫描版 PDF 拒绝路径未覆盖）。建议后续补 PDF 端到端样本。
+  - 风险扫描依赖 DeepSeek API，若 key 失效或限流，LLM 综合判断会降级（`detect_risks_with_ai` 内部 try/except 兜底，仅返回规则扫描结果）。e2e 当前在 key 可用前提下通过。
+  - 日报 propose 的 `today_work` 在无 TaskDailyUpdate 时返回「今日暂无任务更新记录」（非空但无实质内容）；建议前端建任务后引导用户先提交每日更新再生成日报。
+- **下一步最佳动作**：
+  1. （可选）补 PDF/DOCX 真实样本进 `e2e_ai.py`，覆盖扫描版 PDF 拒绝路径。
+  2. （可选）前端「自动进度检查」按钮文案改为「风险扫描」对齐新 `/risks/scan` 路径。
+  3. 长期：清理前端 `tsc --noEmit` 历史类型错误（不阻断构建，但污染日志）。
+
+---
 
 ### 2026-08-17 · 修理接线缺陷（本轮）
 

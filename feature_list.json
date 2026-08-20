@@ -1,6 +1,6 @@
 {
   "project": "LG 船舶管理 ERP",
-  "updated": "2026-08-17",
+  "updated": "2026-08-19",
   "rules": {
     "status_enum": ["not_started", "in_progress", "blocked", "passing"],
     "max_in_progress": 1,
@@ -60,71 +60,80 @@
       "priority": 25,
       "area": "reports",
       "title": "日报（AI 辅助 + 人在回路）",
-      "user_visible_behavior": "生成日报草稿（明日计划+风险，接知识库 RAG）→ 人工确认 → 下载。",
+      "user_visible_behavior": "生成日报草稿（今日工作确定性生成 + AI 明日计划候选 + AI 项目级风险）→ 人工逐条确认/自增 → 落库 → 下载。",
       "status": "passing",
       "verification": [
-        "POST .../daily-reports/propose 同步返回候选",
-        "POST .../daily-reports/finalize / PATCH .../confirm",
+        "POST /reports/projects/{pid}/daily-reports/propose 同步返回 {today_work, completed_items, tomorrow_candidates(list), risk_alert, existing_report_id}",
+        "POST /reports/projects/{pid}/daily-reports/finalize 落库 confirmed 日报（tomorrow_items 入参 → tomorrow_plan+tomorrow_candidates 字段）",
+        "POST /reports/daily-reports/{id}/confirm 切换 confirmed 状态",
         "前端 daily.$date.tsx 编辑器已接通"
       ],
-      "evidence": "功能与流程总览.md 模块8；监修模块组件流程.md 第9 节。"
+      "evidence": "e2e_ai.py（2026-08-19）：propose 返回结构化字段全齐 + tomorrow_candidates 是 list + today_work 非空；finalize 落库 200 + confirmed=True。ai_client.chat_json 出明日计划候选 list。砍掉素材压缩步骤（64k 上下文够用，省一次 API 调用）。",
+      "notes": "HITL 入口在 propose（返回候选），出口在 finalize（确认/自增后落库）。周报只统计 confirmed 日报。"
     },
     {
       "id": "weekly-report-ui",
       "priority": 30,
       "area": "reports",
-      "title": "周报生成 UI 接通",
-      "user_visible_behavior": "周报 Tab 有「生成周报」按钮，轮询 latest 刷新。",
+      "title": "周报同步生成（DeepSeek structured output）",
+      "user_visible_behavior": "周报 Tab「生成周报」按钮，API 调用即返回完整周报（无 Celery 异步轮询）。",
       "status": "passing",
       "verification": [
-        "POST .../weekly-reports/generate → Celery 任务",
-        "前端 WeeklyReportList 生成+轮询已接通（2026-08-14 新增）"
+        "POST /reports/projects/{pid}/weekly-reports/generate 同步返回 {summary, next_week_plan, source}",
+        "source=ai（有 confirmed 日报时走 DeepSeek chat_json）/ source=no_data（无 confirmed 日报降级）",
+        "前端 WeeklyReportList 生成按钮已接通（2026-08-14）"
       ],
-      "evidence": "功能与流程总览.md 模块8 标注 ✅ 已修；监修模块组件流程.md 第10 节。"
+      "evidence": "e2e_ai.py（2026-08-19）：先 finalize 一份 confirmed 日报 → weekly-reports/generate 返回 source=ai + summary 非空 + next_week_plan 非空。砍掉 Celery 异步任务壳（worker 容器不在部署里）。",
+      "notes": "只统计 confirmed=True 的日报；无数据时 summary/next_week_plan 为空字符串，source=no_data。"
     },
     {
       "id": "risk-rule-engine",
       "priority": 35,
       "area": "risks",
-      "title": "风险登记 + 规则引擎检测",
-      "user_visible_behavior": "风险登记、红点提示、「自动进度检查」按阈值规则登记风险。",
+      "title": "风险登记 + 规则+RAG+LLM 综合扫描",
+      "user_visible_behavior": "风险登记、红点提示、「风险扫描」按钮同步返回规则+AI 综合判断的风险列表。",
       "status": "passing",
       "verification": [
         "GET /risks/summary 未解决列表",
-        "POST .../risks/ai-detect 规则引擎（未开始>50%→warning；逾期→critical；完成率<30%→info）",
-        "前端按钮文案已改「自动进度检查」"
+        "GET /risks/projects/{pid}/risks 项目级风险列表",
+        "POST /risks/projects/{pid}/risks/scan 同步返回 [{title, detail, risk_level}]（规则打底 + RAG 检索知识库 + LLM 综合任务/知识上下文）",
+        "POST /risks/projects/{pid}/risks/ai-detect deprecated 别名转发到 /scan",
+        "PATCH /risks/risks/{id} 解决/更新；DELETE /risks/risks/{id}"
       ],
-      "evidence": "功能与流程总览.md 模块9；监修模块组件流程.md 第11 节。",
-      "notes": "强调：规则引擎非 LLM，勿误加 AI 调用。"
+      "evidence": "e2e_ai.py（2026-08-19）：风险扫描返回 200 + list，扫出 3 条风险（项目完成率偏低/主机大修缺少完工验收与试验安排/项目类型为监督但无监督活动记录），每条 title+risk_level 完整。detect_risks_with_ai 内部 try/except 兜底：LLM 失败时仅返回规则扫描结果。",
+      "notes": "命名诚实：从 /ai-detect（实为规则）改为 /scan；旧路径保留为 deprecated 别名。规则扫描（未开始>50%→warning；逾期→critical；完成率<30%→info）打底，LLM 在此基础上综合判断。"
     },
     {
       "id": "knowledge-rag",
       "priority": 40,
       "area": "knowledge",
-      "title": "知识库 RAG 向量问答",
-      "user_visible_behavior": "文档入库切块→向量→流式问答（引用可追溯）。",
+      "title": "知识库 RAG 向量问答（多格式清洗 + 章节切分）",
+      "user_visible_behavior": "上传 PDF/DOCX/Markdown/TXT → 多格式清洗 + 按章节切分 → 向量入库 → 查询返回结构化 citation（含书名/章节/小节）+ AI answer。",
       "status": "passing",
       "verification": [
-        "POST /knowledge/documents 上传→Celery 入库（bge-small 512 维）",
-        "POST /knowledge/query 与 /query/stream（SSE）",
-        "前端 QAChat 流式接通"
+        "POST /knowledge/documents（multipart）同步 ingest：document_processor 清洗 → sections_to_chunks 切分 → ai_client.embed（bge-small-zh-v1.5 512 维）入 pgvector",
+        "扫描版 PDF / 不支持的格式 → original_text 写 [INGEST REJECTED] ... 拒绝入库（不抛异常）",
+        "POST /knowledge/query 返回 {answer, citations[{document_id, document_title, chunk_text, score, book_title, chapter, section, source}]}",
+        "POST /knowledge/query/stream SSE：先 event:citations 再逐块 data:{delta}",
+        "GET/DELETE /knowledge/documents/{id}（级联删 embeddings）"
       ],
-      "evidence": "功能与流程总览.md 模块11。",
-      "notes": "QA 聊天记录仅 localStorage，跨设备不同步（已知限制）。"
+      "evidence": "e2e_ai.py（2026-08-19）：上传 Markdown 手册→ingest 后 original_text 已清洗填充→不支持的 .jpg 返回 400→/knowledge/query 命中刚上传手册 + citation 含 chapter/section 章节元数据 + answer 非空。CitationItem 扩展 book_title/chapter/section/source 字段。",
+      "notes": "QA 聊天记录已后端持久化（见 knowledge-chat-persist）。PDF/DOCX 端到端样本未跑（仅 Markdown），扫描版 PDF 拒绝路径未覆盖——建议后续补样本。"
     },
     {
       "id": "quick-save-wiring",
       "priority": 45,
       "area": "quick-save",
-      "title": "随手存前端接线（原 mock）",
-      "user_visible_behavior": "现场文字/图片记录 → AI 抽取 → 联想活跃项目 → 确认关联。",
+      "title": "随手存（文本 structured output + 砍图片识别）",
+      "user_visible_behavior": "现场文字记录 → LLM structured output 提取字段 → 联想活跃项目 → 确认关联；图片直接存图由用户手选项目（不再走 OCR/图片识别 AI）。",
       "status": "passing",
       "verification": [
-        "POST /quick-saves/text|image 接通",
-        "映射到 SuggestionList；确认 PATCH confirmed_project_id / 删除 status=deleted"
+        "POST /quick-saves/text?text=... → recognize_content 用 ai_client.chat_json 提取结构化字段 → 返回 {save, suggestions}",
+        "POST /quick-saves/image（multipart）→ 直接存 MinIO，recognized_text 留空，suggestions=[]",
+        "GET /quick-saves 列表；PATCH /quick-saves/{id}（confirmed_project_id / status=deleted）"
       ],
-      "evidence": "功能与流程总览.md 模块10 标注 ✅ 已修（2026-08-14）。",
-      "notes": "OCR 默认关闭，image 识别文本为空（后端配置）。"
+      "evidence": "e2e_ai.py（2026-08-19）：随手存文本创建 201 + recognized_text 非空（AI 提取）+ suggestions 是 list；PATCH status=deleted 清理 200。砍掉图片识别 AI（图片浪费 token 且 ai-service 不接 VLM）。",
+      "notes": "图片识别已砍：不再调 OCR/VLM，图片直接存图由用户手选项目关联。"
     },
     {
       "id": "users-real",

@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from typing import Any
 
 from loguru import logger
@@ -8,37 +9,61 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.models.knowledge import KnowledgeDocument, KnowledgeEmbedding
 from app.services.ai_client import get_ai_client
+from app.services.document_processor import process_document, sections_to_chunks
 from app.services.file_service import upload_to_minio, delete_from_minio
 
 
+# 旧常量保留只为兼容外部 import；新流程不再使用固定 500 字切分
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 
 
 def _chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
+    """已废弃：保留只为兼容旧调用。新流程使用 document_processor.sections_to_chunks。"""
     if not text:
         return []
-
     chunks = []
     start = 0
     text_len = len(text)
-
     while start < text_len:
         end = min(start + chunk_size, text_len)
         chunk = text[start:end]
-
         if end < text_len:
             boundary = chunk.rfind("。")
             if boundary > 0:
                 chunk = chunk[:boundary + 1]
                 end = start + boundary + 1
-
         if chunk.strip():
             chunks.append(chunk.strip())
-
         start = end - overlap if end < text_len else end
-
     return chunks
+
+
+# ── 出处前缀解析（用于 retrieve/query 返回结构化 citation） ──────
+
+_PREFIX_RE = re.compile(r"^【([^】]*)】")
+
+
+def _parse_chunk_prefix(chunk_text: str) -> dict[str, str]:
+    """从 chunk_text 前缀解析章节元数据。
+
+    chunk_text 形如：`【《书名》/ 第3章 / 第2节】实际内容...`
+    """
+    if not chunk_text:
+        return {}
+    m = _PREFIX_RE.match(chunk_text)
+    if not m:
+        return {}
+    parts = [p.strip() for p in m.group(1).split("/") if p.strip()]
+    meta: dict[str, str] = {}
+    for part in parts:
+        if part.startswith("《") and part.endswith("》"):
+            meta["book_title"] = part[1:-1]
+        elif "chapter" not in meta:
+            meta["chapter"] = part
+        elif "section" not in meta:
+            meta["section"] = part
+    return meta
 
 
 async def ingest_document(
@@ -48,51 +73,39 @@ async def ingest_document(
     file_type: str,
     title: str | None = None,
 ) -> None:
+    """ingest 阶段：多格式清洗 + 按章节切分 + 向量化入库。
+
+    扫描版 PDF / 不支持的格式 / 空内容 → 拒绝入库，写日志不抛异常。
+    """
     ai_client = get_ai_client()
 
-    text = ""
-    if file_type == "pdf":
-        try:
-            from PyPDF2 import PdfReader
-            import io
-            reader = PdfReader(io.BytesIO(file_content))
-            text = "\n".join([page.extract_text() or "" for page in reader.pages])
-        except ImportError:
-            logger.warning("PyPDF2 not installed, using basic extraction")
-            text = file_content.decode("utf-8", errors="ignore")
-    elif file_type in ("doc", "docx"):
-        try:
-            import io
-            from docx import Document
-            doc = Document(io.BytesIO(file_content))
-            text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
-            # Also extract from tables
-            for table in doc.tables:
-                for row in table.rows:
-                    row_text = " | ".join([cell.text.strip() for cell in row.cells if cell.text.strip()])
-                    if row_text.strip():
-                        text += "\n" + row_text
-        except ImportError:
-            logger.warning("python-docx not installed, cannot extract text from docx")
-            text = f"[Word document: {title or 'unknown'} - {len(file_content)} bytes]"
-    else:
-        text = file_content.decode("utf-8", errors="ignore")
+    result = process_document(file_content, file_type, title or "")
+    if result.rejected:
+        logger.warning(f"Document {doc_id} rejected: {result.rejected}")
+        # 把拒绝原因写到 original_text 供前端查看
+        doc_result = await db.execute(
+            select(KnowledgeDocument).where(KnowledgeDocument.id == doc_id)
+        )
+        doc = doc_result.scalar_one_or_none()
+        if doc is not None:
+            doc.original_text = f"[INGEST REJECTED] {result.rejected}"
+        await db.flush()
+        return
 
-    # Remove null bytes that can cause PostgreSQL encoding errors
-    text = text.replace("\x00", "")
-
-    if not text.strip():
-        text = f"[Binary content: {len(file_content)} bytes]"
-
-    chunks = _chunk_text(text)
-    logger.info(f"Document {doc_id} split into {len(chunks)} chunks")
+    chunks = sections_to_chunks(result.sections, title or "")
+    logger.info(f"Document {doc_id} split into {len(chunks)} chunks (format={file_type})")
 
     if not chunks:
         logger.warning(f"No chunks generated for document {doc_id}")
         return
 
+    # 把清洗后的全文存回 original_text（拼接所有 chunk 去前缀）
+    full_cleaned = "\n\n".join(
+        re.sub(r"^【[^】]*】", "", chunk) for chunk in chunks
+    )
+
     batch_size = 10
-    all_embeddings = []
+    all_embeddings: list[list[float]] = []
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i : i + batch_size]
         embeddings = await ai_client.embed(batch)
@@ -105,7 +118,7 @@ async def ingest_document(
     if doc is None:
         raise ValueError(f"Document not found: {doc_id}")
 
-    doc.original_text = text
+    doc.original_text = full_cleaned[:50000]  # 截断保护，避免 Text 列过大
 
     for idx, (chunk, embedding) in enumerate(zip(chunks, all_embeddings)):
         if not embedding:
@@ -195,18 +208,32 @@ async def query(
 
     context_chunks = []
     citations = []
+
+    # 预加载所有 doc 标题，避免 N+1
+    doc_ids_in_results = list({emb.document_id for emb, _ in rows})
+    docs_result = await db.execute(
+        select(KnowledgeDocument).where(KnowledgeDocument.id.in_(doc_ids_in_results))
+    )
+    docs_map = {d.id: d for d in docs_result.scalars().all()}
+
     for embedding, distance in rows:
         context_chunks.append(embedding.chunk_text)
-
-        doc_result = await db.execute(
-            select(KnowledgeDocument).where(KnowledgeDocument.id == embedding.document_id)
-        )
-        doc = doc_result.scalar_one_or_none()
+        doc = docs_map.get(embedding.document_id)
+        # 从 chunk 前缀解析章节元数据
+        meta = _parse_chunk_prefix(embedding.chunk_text)
         citations.append({
             "document_id": embedding.document_id,
             "document_title": doc.title if doc else "未知文档",
             "chunk_index": embedding.chunk_index,
-            "chunk_text": embedding.chunk_text[:200],
+            "chunk_text": embedding.chunk_text[:300],
+            "book_title": meta.get("book_title", ""),
+            "chapter": meta.get("chapter", ""),
+            "section": meta.get("section", ""),
+            "source": (
+                f"《{meta['book_title']}》"
+                + (f" / {meta['chapter']}" if meta.get("chapter") else "")
+                + (f" / {meta['section']}" if meta.get("section") else "")
+            ).lstrip("《》/ ") or (doc.title if doc else ""),
             "score": float(1.0 - distance),
         })
 

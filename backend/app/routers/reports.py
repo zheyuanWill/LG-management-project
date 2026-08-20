@@ -307,6 +307,10 @@ async def generate_weekly_report(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
+    """同步生成周报：DeepSeek structured output 一次出 {summary, next_week_plan}。
+
+    原 Celery 异步任务壳已砍掉，API 调用即返回完整周报数据。
+    """
     project_result = await db.execute(
         select(Project).where(Project.id == project_id)
     )
@@ -319,17 +323,33 @@ async def generate_weekly_report(
         monday = today - timedelta(days=today.weekday())
         week_start_date = monday
 
-    task = celery_app.send_task(
-        "app.tasks.report_tasks.generate_weekly_report_task",
-        args=[project_id, str(week_start_date)],
-    )
+    # 同步调用：直接拿 service 函数返回结果
+    from app.services.report_service import generate_weekly_report as _gen_weekly
+    result = await _gen_weekly(db, project_id, week_start_date)
 
-    return {
-        "task_id": task.id,
-        "project_id": project_id,
-        "week_start_date": str(week_start_date),
-        "status": "pending",
-    }
+    # 落库：如果有 AI 内容则保存 WeeklyReport
+    if result.get("source") == "ai" and result.get("summary"):
+        existing_result = await db.execute(
+            select(WeeklyReport).where(
+                WeeklyReport.project_id == project_id,
+                WeeklyReport.week_start_date == week_start_date,
+            )
+        )
+        wr = existing_result.scalar_one_or_none()
+        if wr is None:
+            wr = WeeklyReport(
+                project_id=project_id,
+                week_start_date=week_start_date,
+                week_end_date=week_start_date + timedelta(days=6),
+            )
+            db.add(wr)
+        wr.summary = result["summary"]
+        wr.next_week_plan = result.get("next_week_plan", "")
+        wr.confirmed = False
+        await db.flush()
+        result["report_id"] = wr.id
+
+    return result
 
 
 @router.patch(

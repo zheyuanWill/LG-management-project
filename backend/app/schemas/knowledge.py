@@ -27,6 +27,10 @@ class CitationItem(BaseModel):
     chunk_index: int
     chunk_text: str
     score: float
+    book_title: str | None = None
+    chapter: str | None = None
+    section: str | None = None
+    source: str | None = None
 
 
 class QueryResponse(BaseModel):

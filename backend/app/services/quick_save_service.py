@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.project import Project
@@ -10,74 +10,96 @@ from app.services.ai_client import get_ai_client
 
 
 async def recognize_content(content_type: str, content: str) -> dict:
-    ai_client = get_ai_client()
+    """随手存内容识别。
 
+    设计原则：图片是佐证不是内容，不做图转字识别（监修人员本来就要写日报文字，
+    让 AI 替他描述图片反而降低日报质量）。只有文本走 AI 提取结构化字段。
+    """
     if content_type == "text":
+        ai_client = get_ai_client()
         messages = [
             {
                 "role": "system",
-                "content": "你是一个船舶工程项目管理助手。请分析用户粘贴的文本，提取关键信息（项目名称、船舶名称、日期、金额等），并给出建议的分类。",
+                "content": (
+                    "你是船舶工程项目管理助手。从用户粘贴的文本中提取结构化信息，"
+                    "严格输出 JSON 对象，不要任何额外说明或代码块标记。\n"
+                    "字段定义：\n"
+                    "- ship_name: 提及的船名（string 或 null）\n"
+                    "- imo: 提及的 IMO 号（string 或 null）\n"
+                    "- date: 提及的日期 YYYY-MM-DD（string 或 null）\n"
+                    "- amount: 提及的金额数字（number 或 null）\n"
+                    "- keywords: 关键工作要点数组（string[]，每条 ≤15 字）\n"
+                    "- summary: 一句话摘要（string）"
+                ),
             },
             {
                 "role": "user",
-                "content": f"请分析以下文本，提取关键词和可能关联的项目信息：\n\n{content}",
+                "content": f"请提取以下文本的结构化信息：\n\n{content}",
             },
         ]
-        recognized = await ai_client.chat(messages, temperature=0.3)
-        return {
-            "recognized_text": recognized,
-            "keywords": _extract_keywords(recognized),
-        }
+        try:
+            data = await ai_client.chat_json(messages, temperature=0.2)
+            recognized_text = data.get("summary") or content
+            return {"recognized_text": recognized_text, "structured": data}
+        except Exception as e:
+            logger.warning(f"随手存文本 AI 提取失败：{e}")
+            return {"recognized_text": content, "structured": {}}
 
-    elif content_type == "image":
-        # OCR 已移除（依赖较重，按需再启用）。图片暂不提取文字，
-        # 后端直接返回空识别结果，前端会提示「图片暂不支持 AI 文字识别，已保存原图」。
-        return {"recognized_text": "", "keywords": [], "ocr_text": ""}
-
-    return {"recognized_text": "", "keywords": []}
+    # 图片不识别：图片是佐证不是内容，前端引导用户手选项目
+    return {"recognized_text": "", "structured": {}}
 
 
-def _extract_keywords(text: str) -> list[str]:
-    keywords = []
-    for line in text.split("\n"):
-        line = line.strip()
-        if line.startswith("-") or line.startswith("•"):
-            kw = line.lstrip("-• ").strip()
-            if kw and len(kw) > 1:
-                keywords.append(kw)
-    return keywords[:10]
+async def suggest_projects(db: AsyncSession, structured: dict | None, recognized_text: str = "") -> list[dict]:
+    """根据 structured 字段推荐项目。
 
-
-async def suggest_projects(db: AsyncSession, recognized_text: str) -> list[dict]:
-    if not recognized_text:
+    优先用 ship_name 做 DB LIKE 匹配；其次用 keywords 做 OR 模糊匹配；
+    都没有则返回 []。彻底替代旧的字符串 contains 方案。
+    """
+    if not structured:
         return []
 
-    keywords = _extract_keywords(recognized_text)
-    if not keywords:
+    ship_name = (structured.get("ship_name") or "").strip()
+    keywords = structured.get("keywords") or []
+    if isinstance(keywords, str):
+        keywords = [keywords]
+
+    conditions = []
+    if ship_name:
+        conditions.append(Project.ship_name.ilike(f"%{ship_name}%"))
+    for kw in keywords:
+        if kw and len(kw) > 1:
+            conditions.append(Project.ship_name.ilike(f"%{kw}%"))
+            conditions.append((Project.remarks or "").ilike(f"%{kw}%"))
+
+    if not conditions:
         return []
 
-    project_result = await db.execute(select(Project).where(Project.status == "active"))
-    projects = project_result.scalars().all()
+    query = select(Project).where(
+        Project.status == "active",
+        or_(*conditions),
+    )
+    result = await db.execute(query)
+    projects = result.scalars().all()
 
-    scored_projects = []
+    scored = []
     for project in projects:
         score = 0
-        project_text = f"{project.ship_name} {project.project_no} {project.remarks or ''}"
+        project_text = f"{project.ship_name} {project.project_no} {project.remarks or ''}".lower()
+        if ship_name and ship_name.lower() in project.ship_name.lower():
+            score += 5
         for kw in keywords:
-            if kw.lower() in project_text.lower():
+            if kw and kw.lower() in project_text:
                 score += 1
+        scored.append({
+            "id": project.id,
+            "project_no": project.project_no,
+            "ship_name": project.ship_name,
+            "type": project.type,
+            "match_score": score,
+        })
 
-        if score > 0:
-            scored_projects.append({
-                "id": project.id,
-                "project_no": project.project_no,
-                "ship_name": project.ship_name,
-                "type": project.type,
-                "match_score": score,
-            })
-
-    scored_projects.sort(key=lambda x: x["match_score"], reverse=True)
-    return scored_projects[:5]
+    scored.sort(key=lambda x: x["match_score"], reverse=True)
+    return scored[:5]
 
 
 async def confirm_save(db: AsyncSession, save_id: int, project_id: int) -> QuickSave:
